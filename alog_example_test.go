@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 0.1.2, 12/29/2020
+// Version 0.1.3, 12/29/2020
 
 package alog_test
 
@@ -41,12 +41,12 @@ func ExampleLogger_NewWriter() {
 	// Therefore only DEBUG/INFO with TEST2 will be printed
 	l.SetCategory(TEST2)
 
-	wT1D := l.NewWriter(alog.Ldebug, TEST1)
-	wT1I := l.NewWriter(alog.Linfo, TEST1)
-	wT2D := l.NewWriter(alog.Ldebug, TEST2)
-	wT2I := l.NewWriter(alog.Linfo, TEST2)
-	wT3D := l.NewWriter(alog.Ldebug, TEST3)
-	wT3I := l.NewWriter(alog.Linfo, TEST3)
+	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
+	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
+	wT2D := l.NewWriter(alog.Ldebug, TEST2, "T2D ")
+	wT2I := l.NewWriter(alog.Linfo, TEST2, "T2I ")
+	wT3D := l.NewWriter(alog.Ldebug, TEST3, "T3D ")
+	wT3I := l.NewWriter(alog.Linfo, TEST3, "T3I ")
 
 	fmt.Fprintf(wT1D, "test: %s fprintf", "T1D")
 	fmt.Fprintf(wT1I, "test: %s fprintf", "T1I")
@@ -56,8 +56,8 @@ func ExampleLogger_NewWriter() {
 	fmt.Fprintf(wT3I, "test: %s fprintf", "T3I")
 
 	// Output:
-	// nptest [DBG] test: T2D fprintf
-	// nptest [INF] test: T2I fprintf
+	// nptest [DBG] T2D test: T2D fprintf
+	// nptest [INF] T2I test: T2I fprintf
 }
 
 func ExampleLogger_NewPrint() {
@@ -68,10 +68,10 @@ func ExampleLogger_NewPrint() {
 	CAT2 := cat.Add()
 
 	l.SetCategory(CAT1) // Print only CAT1
-	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
-	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
-	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
-	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
+	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2W ")
+	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1T ")
+	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, "CAT2T ")
 
 	// Since category is set to CAT1, and default level is INFO,
 	// only item(s) with CAT1 and INFO and above will be printed.
@@ -81,7 +81,7 @@ func ExampleLogger_NewPrint() {
 	TraceCAT2("trace cat2 test")
 
 	// Output:
-	// nptest [WRN] warn cat1 test
+	// nptest [WRN] CAT1W warn cat1 test
 }
 
 func ExampleLogger_SetOutput() {
