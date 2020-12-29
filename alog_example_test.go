@@ -23,6 +23,30 @@ func ExampleNew() {
 	// test [ERR] hello error
 }
 
+func ExampleLogger_NewPrint() {
+	l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+
+	cat := alog.NewCategory()
+	CAT1 := cat.Add()
+	CAT2 := cat.Add()
+
+	l.SetCategory(CAT1) // Print only CAT1
+	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
+	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
+	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
+	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+
+	// Since category is set to CAT1, and default level is INFO,
+	// only item(s) with CAT1 and INFO and above will be printed.
+	WarnCAT1("warn cat1 test")
+	WarnCAT2("warn cat2 test")
+	TraceCAT1("trace cat1 test")
+	TraceCAT2("trace cat2 test")
+
+	// Output:
+	// nptest [WRN] warn cat1 test
+}
+
 func ExampleLogger_SetOutput() {
 	// When nil is used for output, it will use ioutil.Discard.
 	// Therefore, below will not be printed because it will output to ioutil.Discard
