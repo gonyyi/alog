@@ -1,10 +1,11 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 2, 12/21/2020
+// Version 0.1.2, 12/29/2020
 
 package alog_test
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gonyyi/alog"
 	"testing"
 )
@@ -131,6 +132,7 @@ func TestBasic(t *testing.T) {
 	})
 }
 
+// v0.1.1, 12/29/2020
 func TestNewPrint(t *testing.T) {
 	t.Run("NewPrint", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
@@ -154,6 +156,43 @@ func TestNewPrint(t *testing.T) {
 
 		actual := out.String()
 		expect := "nptest [WRN] warn cat1 test\n"
+		if expect != actual {
+			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
+		}
+	})
+}
+
+// v0.1.2, 12/29/2020
+func TestLogger_NewWriter(t *testing.T) {
+	t.Run("NewWriter", func(t2 *testing.T) {
+		out := &bytes.Buffer{}
+
+		l := alog.New(out, "nwtest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+
+		cat := alog.NewCategory()
+		TEST1 := cat.Add()
+		TEST2 := cat.Add()
+		TEST3 := cat.Add()
+
+		l.SetCategory(TEST2) // only show TEST2
+
+		wT1D := l.NewWriter(alog.Ldebug, TEST1)
+		wT1I := l.NewWriter(alog.Linfo, TEST1)
+		wT2D := l.NewWriter(alog.Ldebug, TEST2)
+		wT2I := l.NewWriter(alog.Linfo, TEST2)
+		wT3D := l.NewWriter(alog.Ldebug, TEST3)
+		wT3I := l.NewWriter(alog.Linfo, TEST3)
+
+		fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
+		fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
+		fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
+		fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
+		fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
+		fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
+
+		expect := "nwtest [INF] test: T2I fprintf\n"
+		actual := out.String()
+
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
