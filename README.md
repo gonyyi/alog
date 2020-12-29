@@ -115,6 +115,32 @@ func main() {
 ```
 
 
+### Using Buffered Writer (bufio)
+
+```go
+package main
+
+import (
+	"bufio"
+	"github.com/gonyyi/alog"
+	"os"
+)
+
+func main() {
+	cat := alog.NewCategory()
+	NAME := cat.Add()
+
+	fLog, _ := os.Create("./alogtest/test.log")
+	bLog := bufio.NewWriter(fLog)
+	l := alog.New(bLog, "", alog.Fdefault)
+	for i := 0; i < 500; i++ {
+		l.Printf(alog.Linfo, NAME, "Test %s %d", "info name", i)
+	}
+	bLog.Flush()
+}
+```
+
+
 ## Note: Formatted Output
 
 (_applies to `Tracef()`, `Debugf()`, `Infof()`, `Warnf()`, `Errorf()`, `Fatalf()` and `Printf()`_)
