@@ -19,8 +19,6 @@ Version 0.1.2 (12/29/2020)
     - [NewWriter](#newwriter)
 4. [Note: Formatted Output](#note-formatted-output)
 5. [Benchmark](#benchmark)
-    - [Baseline Go-Builtin Logger](#baseline-go-builtin-logger)
-    - [Alog Logger](#alog-logger)
 
 
 ## Introduction
@@ -286,34 +284,21 @@ Test was done on 2018 MacBook Pro (15-inch):
 - 32 GB 2400 MHz DDR4
 - Radeon Pro 560X 4 GB / Intel UHD Graphics 630 1536 MB
 
-[^Top](#alog)
-
-
-### Baseline Go-Builtin Logger
-
-| Name                           | Total   | TimeTook  | MemoryUsed | Allocation  |
-|:-------------------------------|:--------|:----------|:-----------|:------------|
-| BenchmarkBuiltinLoggerBasic-12 | 2883834 | 410 ns/op | 80 B/op    | 2 allocs/op |
-| BenchmarkBuiltinLoggerFmt-12   | 2396258 | 508 ns/op | 88 B/op    | 3 allocs/op |
-
-[^Top](#alog)
-
-
-### Alog Logger
-
-| Name                           | Total      | TimeTook   | MemoryUsed | Allocation  |
-|:-------------------------------|:-----------|:-----------|:-----------|:------------|
-| BenchmarkAlogPrintf-12         | 3314240    | 361 ns/op  | 0 B/op     | 0 allocs/op |
-| BenchmarkAlogPrint-12          | 4725747    | 250 ns/op  | 0 B/op     | 0 allocs/op |
-| BenchmarkAlogInfof-12          | 3195420    | 365 ns/op  | 0 B/op     | 0 allocs/op |
-| BenchmarkAlogInfo-12           | 4710241    | 258 ns/op  | 0 B/op     | 0 allocs/op |
-| Benchmark_ALog_Level_3-12      | 1482876    | 808 ns/op  | 0 B/op     | 0 allocs/op |
-| Benchmark_ALog_Levelf_3-12     | 974910     | 1191 ns/op | 0 B/op     | 0 allocs/op |
-| Benchmark_ALog_Levelf5_0-12    | 211717482  | 5.68 ns/op | 0 B/op     | 0 allocs/op |
-| Benchmark_ALog_Levelf1_0-12    | 1000000000 | 1.19 ns/op | 0 B/op     | 0 allocs/op |
-| Benchmark_ALogPrint_Cat5_1-12  | 4502719    | 263 ns/op  | 0 B/op     | 0 allocs/op |
-| Benchmark_ALogPrint_Cat5_2-12  | 2311810    | 518 ns/op  | 0 B/op     | 0 allocs/op |
-| Benchmark_ALogPrintf_Cat5_1-12 | 2869698    | 403 ns/op  | 0 B/op     | 0 allocs/op |
-| Benchmark_ALogPrintf_Cat5_2-12 | 1564646    | 774 ns/op  | 0 B/op     | 0 allocs/op |
+| Type    | Name                           | Test               | Count      | Speed       | Mem     | Alloc       |
+|:--------|:-------------------------------|:-------------------|:-----------|:------------|:--------|:------------|
+| Builtin | BenchmarkBuiltinLoggerBasic-12 |                    | 2969100    | 408 ns/op   | 80 B/op | 2 allocs/op |
+| Builtin | BenchmarkBuiltinLoggerFmt-12   |                    | 2534346    | 477 ns/op   | 88 B/op | 3 allocs/op |
+| Alog    | BenchmarkLogger_Info           | 1_eval_0_print-12  | 1000000000 | 0.420 ns/op | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Info           | 5_eval_0_prints-12 | 651124946  | 1.89 ns/op  | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Info           | 5_eval_3_prints-12 | 1517264    | 777 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Infof          | 1_eval_0_print-12  | 1000000000 | 1.10 ns/op  | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Infof          | 5_eval_0_prints-12 | 227060984  | 5.48 ns/op  | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Infof          | 5_eval_3_prints-12 | 1078039    | 1112 ns/op  | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Print          | 5_eval_1_prints-12 | 4073192    | 304 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Print          | 5_eval_2_prints-12 | 2320356    | 478 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Printf         | 5_eval_1_prints-12 | 2938634    | 419 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_Printf         | 5_eval_2_prints-12 | 1502662    | 805 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewPrint-12    |                    | 3890760    | 318 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewWriter-12   |                    | 2894322    | 427 ns/op   | 0 B/op  | 0 allocs/op |
 
 [^Top](#alog)
