@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 0.1.2, 12/29/2020
+// Version 0.1.3, 12/29/2020
 
 package alog
 
@@ -378,20 +378,28 @@ func (l *Logger) Writer() io.Writer {
 // This is to make such as custom `*Logger.Debug()` that has category
 // predefined. Added for v0.1.1.
 // For printf, due to memory allocation occurred it is not included.
-func (l *Logger) NewPrint(lvl level, cat Category) func(string) {
+func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
 	return func(s string) {
-		l.Print(lvl, cat, s)
+		if l.check(lvl, cat) {
+			t := time.Now()
+			l.mu.Lock()
+			l.header(&l.buf, t, lvl)
+			l.buf = append(l.buf, append([]byte(prefix), s...)...)
+			l.finalize()
+			l.mu.Unlock()
+		}
 	}
 }
 
 // NewWriter takes level and category and create an Alog writer (alogw)
 // that is compatible with io.Writer interface. This can be used as a
 // logger hook.
-func (l *Logger) NewWriter(lvl level, cat Category) *alogw {
+func (l *Logger) NewWriter(lvl level, cat Category, prefix string) *alogw {
 	return &alogw{
 		l:   l,
 		lvl: lvl,
 		cat: cat,
+		prefix: []byte(prefix),
 	}
 }
 
@@ -424,6 +432,7 @@ type alogw struct {
 	l   *Logger
 	lvl level
 	cat Category
+	prefix []byte
 }
 
 // Write is to be used as io.Writer interface
@@ -432,6 +441,7 @@ func (w *alogw) Write(b []byte) (n int, err error) {
 		t := time.Now()
 		w.l.mu.Lock()
 		w.l.header(&w.l.buf, t, w.lvl)
+		w.l.buf = append(w.l.buf, w.prefix...)
 		w.l.buf = append(w.l.buf, b...)
 		n, err := w.l.finalize()
 		w.l.mu.Unlock()
