@@ -1,13 +1,14 @@
 # Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
-Version 0.1.2 (12/29/2020)
+Version 0.1.3 (12/29/2020)
 
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
+    - [v0.1.3](#v013)
     - [v0.1.2](#v012)
     - [v0.1.1](#v011)
     - [v0.1.0](#v010)
@@ -26,13 +27,23 @@ Version 0.1.2 (12/29/2020)
 Alog is a simple dependency-free logger with a goal of zero memory allocation.
 Alog supports leveled logging with optional category support.
 
-If you find any bug/conceren about performance, 
+If you find any bug/concern about performance, 
 please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 [^Top](#alog)
 
 
 ## Changes
+
+### v0.1.3
+
+NewWriter and NewPrint now takes additional string argument for prefix.
+
+- `*Logger.NewWriter(level, Category, string) *alogw`
+- `*Logger.NewPrint(level, Category, string) func(string)`
+
+[^Top](#alog)
+
 
 ### v0.1.2
 
@@ -298,7 +309,7 @@ Test was done on 2018 MacBook Pro (15-inch):
 | Alog    | BenchmarkLogger_Print          | 5_eval_2_prints-12 | 2320356    | 478 ns/op   | 0 B/op  | 0 allocs/op |
 | Alog    | BenchmarkLogger_Printf         | 5_eval_1_prints-12 | 2938634    | 419 ns/op   | 0 B/op  | 0 allocs/op |
 | Alog    | BenchmarkLogger_Printf         | 5_eval_2_prints-12 | 1502662    | 805 ns/op   | 0 B/op  | 0 allocs/op |
-| Alog    | BenchmarkLogger_NewPrint-12    |                    | 3890760    | 318 ns/op   | 0 B/op  | 0 allocs/op |
-| Alog    | BenchmarkLogger_NewWriter-12   |                    | 2894322    | 427 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewPrint-12    |                    | 3516364    | 337 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewWriter-12   |                    | 2853715    | 409 ns/op   | 0 B/op  | 0 allocs/op |
 
 [^Top](#alog)
