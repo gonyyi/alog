@@ -127,15 +127,18 @@ import (
 )
 
 func main() {
-	cat := alog.NewCategory()
-	NAME := cat.Add()
-
+	// Create a file and bufio writer
 	fLog, _ := os.Create("./alogtest/test.log")
 	bLog := bufio.NewWriter(fLog)
-	l := alog.New(bLog, "", alog.Fdefault)
+
+	// Create an Alog with default option (MMDD, Time, Level) + UTC time.
+	l := alog.New(bLog, "", alog.Fdefault|alog.FtimeUTC)
+
 	for i := 0; i < 500; i++ {
-		l.Printf(alog.Linfo, NAME, "Test %s %d", "info name", i)
+		l.Infof("Test %s %d", "info name", i)
 	}
+
+	// Flush bufio writer
 	bLog.Flush()
 }
 ```
