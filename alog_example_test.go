@@ -1,6 +1,10 @@
+// (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
+// Version 0.1.2, 12/29/2020
+
 package alog_test
 
 import (
+	"fmt"
 	"github.com/gonyyi/alog"
 	"os"
 )
@@ -21,6 +25,39 @@ func ExampleNew() {
 	// test [INF] hello info
 	// test [WRN] hello warn
 	// test [ERR] hello error
+}
+
+func ExampleLogger_NewWriter() {
+	l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+
+	l.SetLevel(alog.Ldebug) // set logging level to DEBUG
+
+	cat := alog.NewCategory()
+	TEST1 := cat.Add()
+	TEST2 := cat.Add()
+	TEST3 := cat.Add()
+
+	// only show TEST2 here.
+	// Therefore only DEBUG/INFO with TEST2 will be printed
+	l.SetCategory(TEST2)
+
+	wT1D := l.NewWriter(alog.Ldebug, TEST1)
+	wT1I := l.NewWriter(alog.Linfo, TEST1)
+	wT2D := l.NewWriter(alog.Ldebug, TEST2)
+	wT2I := l.NewWriter(alog.Linfo, TEST2)
+	wT3D := l.NewWriter(alog.Ldebug, TEST3)
+	wT3I := l.NewWriter(alog.Linfo, TEST3)
+
+	fmt.Fprintf(wT1D, "test: %s fprintf", "T1D")
+	fmt.Fprintf(wT1I, "test: %s fprintf", "T1I")
+	fmt.Fprintf(wT2D, "test: %s fprintf", "T2D")
+	fmt.Fprintf(wT2I, "test: %s fprintf", "T2I")
+	fmt.Fprintf(wT3D, "test: %s fprintf", "T3D")
+	fmt.Fprintf(wT3I, "test: %s fprintf", "T3I")
+
+	// Output:
+	// nptest [DBG] test: T2D fprintf
+	// nptest [INF] test: T2I fprintf
 }
 
 func ExampleLogger_NewPrint() {
