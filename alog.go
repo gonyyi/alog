@@ -32,8 +32,8 @@ const (
 	FdateYYMMDD                                            // FdateYYMMDD will show 06/01/02 date formats.
 	FdateYYYYMMDD                                          // FdateYYYYMMDD will show 2006/01/02 date formats.
 	Fprefix                                                // Fprefix will show prefix when printing log message
-	Flevel                                                 // Flevel show level in the log messsage. (v0.1.4)
-	Fnewline                                               // Fnewline will enable newlines within the log
+	Flevel                                                 // Flevel show level in the log messsage. 
+	Fnewline                                               // Fnewline will enable newlines within the log (v0.1.4)
 	Fdefault      = FdateMMDD | Ftime | Flevel             // Fdefault will show month/day with time, and level of logging.
 )
 
