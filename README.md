@@ -1,8 +1,8 @@
-# Alog 0.1.0
+# Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
-Last update: 12/28/2020  
-Version 0.1.0  
+Version 0.1.1  
+Last update: 12/29/2020
 
 
 ## Introduction
@@ -14,7 +14,17 @@ If you find any bug/conceren about performance,
 please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
-## Changes in 0.1.0
+## Changes
+
+
+### v0.1.1
+
+- Added new method `*Logger.NewPrint(level, Category) func(string)`
+    - This will be used to create custom logging with defining category each time.
+    - `Printf` has not been implemented due to memory allocation.
+
+
+### v0.1.0
 
 - **Removed buffer flags**: this can be replaced with `bufio.Writer`.
 - **Removed logging level flags from constructor**: constructor `New()` was taking
