@@ -130,3 +130,32 @@ func TestBasic(t *testing.T) {
 		}
 	})
 }
+
+func TestNewPrint(t *testing.T) {
+	t.Run("NewPrint", func(t2 *testing.T) {
+		out := &bytes.Buffer{}
+
+		l := alog.New(out, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+
+		cat := alog.NewCategory()
+		CAT1 := cat.Add()
+		CAT2 := cat.Add()
+
+		l.SetCategory(CAT1) // Print only CAT1
+		WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
+		WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
+		TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
+		TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+
+		WarnCAT1("warn cat1 test")
+		WarnCAT2("warn cat2 test")
+		TraceCAT1("trace cat1 test")
+		TraceCAT2("trace cat2 test")
+
+		actual := out.String()
+		expect := "nptest [WRN] warn cat1 test\n"
+		if expect != actual {
+			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
+		}
+	})
+}
