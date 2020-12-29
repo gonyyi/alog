@@ -223,8 +223,8 @@ func main() {
 
 	l.SetCategory(USER)
 
-	UserInfo := l.NewPrint(alog.Linfo, USER)
-	DBInfo := l.NewPrint(alog.Linfo, DB)
+	UserInfo := l.NewPrint(alog.Linfo, USER, "USER: ")
+	DBInfo := l.NewPrint(alog.Linfo, DB, "DB: ")
 
 	UserInfo("test cat: user, lvl: info") // Printed
 	DBInfo("test cat: DB, lvl: info")     // Not printed as category is set to USER
@@ -255,8 +255,8 @@ func main() {
 	cat := alog.NewCategory()
 	TEST1 := cat.Add()
 
-	wT1D := l.NewWriter(alog.Ldebug, TEST1)
-	wT1I := l.NewWriter(alog.Linfo, TEST1)
+	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D: ")
+	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I: ")
 
     // Assume API takes an io.Writer interface,
 	fmt.Fprintf(wT1D, "test: %s fprintf", "T1D")
