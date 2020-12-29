@@ -1,14 +1,14 @@
 # Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
-Version 0.1.1  
-Last update: 12/29/2020
+Version 0.1.2 (12/29/2020)
 
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
+    - [v0.1.2](#v012)
     - [v0.1.1](#v011)
     - [v0.1.0](#v010)
 3. [Examples](#examples)
@@ -16,6 +16,7 @@ Last update: 12/29/2020
     - [Category Support](#category-support)
     - [With a Buffered Writer](#with-a-buffered-writer)
     - [NewPrint](#newprint)
+    - [NewWriter](#newwriter)
 4. [Note: Formatted Output](#note-formatted-output)
 5. [Benchmark](#benchmark)
     - [Baseline Go-Builtin Logger](#baseline-go-builtin-logger)
@@ -34,6 +35,14 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
 ## Changes
+
+### v0.1.2
+
+- Added new method `*Logger.NewWriter(level, Category) *alogw`
+    - This is compatible with io.Writer interface.
+    - This can be used as a log hook for libraries.
+
+[^Top](#alog)
 
 
 ### v0.1.1
@@ -210,6 +219,39 @@ func main() {
 
 	UserInfo("test cat: user, lvl: info") // Printed
 	DBInfo("test cat: DB, lvl: info")     // Not printed as category is set to USER
+}
+```
+
+[^Top](#alog)
+
+
+### NewWriter
+
+`*Logger.NewWriter` takes a level and a category then creates an alogw object which is io.Writer compatible.
+This can be used as a writer hook. Assume there is an API that takes io.Writer, you can preset the level and
+category and just plug it in.
+
+```go
+package main
+
+import (
+	"github.com/gonyyi/alog"
+	"os"
+)
+
+func main() {
+	l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+	l.SetLevel(alog.Ldebug) // set logging level to DEBUG
+
+	cat := alog.NewCategory()
+	TEST1 := cat.Add()
+
+	wT1D := l.NewWriter(alog.Ldebug, TEST1)
+	wT1I := l.NewWriter(alog.Linfo, TEST1)
+
+    // Assume API takes an io.Writer interface,
+	fmt.Fprintf(wT1D, "test: %s fprintf", "T1D")
+	fmt.Fprintf(wT1I, "test: %s fprintf", "T1I")
 }
 ```
 
