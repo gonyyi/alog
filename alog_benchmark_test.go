@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 0.1.2, 12/29/2020
+// Version 0.1.3, 12/29/2020
 
 package alog_test
 
@@ -32,8 +32,10 @@ Based on MacBook Pro (15-inch, 2018)
 | Alog    | BenchmarkLogger_Print          | 5_eval_2_prints-12 | 2320356    | 478 ns/op   | 0 B/op  | 0 allocs/op |
 | Alog    | BenchmarkLogger_Printf         | 5_eval_1_prints-12 | 2938634    | 419 ns/op   | 0 B/op  | 0 allocs/op |
 | Alog    | BenchmarkLogger_Printf         | 5_eval_2_prints-12 | 1502662    | 805 ns/op   | 0 B/op  | 0 allocs/op |
-| Alog    | BenchmarkLogger_NewPrint-12    |                    | 3890760    | 318 ns/op   | 0 B/op  | 0 allocs/op |
-| Alog    | BenchmarkLogger_NewWriter-12   |                    | 2894322    | 427 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewPrint-12    |                    | 3516364    | 337 ns/op   | 0 B/op  | 0 allocs/op |
+| Alog    | BenchmarkLogger_NewWriter-12   |                    | 2853715    | 409 ns/op   | 0 B/op  | 0 allocs/op |
+
+
 */
 
 var (
@@ -183,9 +185,8 @@ func BenchmarkLogger_Infof(b *testing.B) {
 	})
 }
 
-
 func BenchmarkLogger_Print(b *testing.B) {
-	b.Run("5 eval 1 prints", func(b2 *testing.B){
+	b.Run("5 eval 1 prints", func(b2 *testing.B) {
 		// S1: 382 ns/op	       0 B/op	       0 allocs/op
 		// S2: 269 ns/op	       0 B/op	       0 allocs/op
 		// S2: 300 ns/op	       0 B/op	       0 allocs/op
@@ -213,7 +214,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 		})
 	})
 
-	b.Run("5 eval 2 prints", func(b2 *testing.B){
+	b.Run("5 eval 2 prints", func(b2 *testing.B) {
 		// S1: 725 ns/op	       0 B/op	       0 allocs/op
 		// S2: 482 ns/op	       0 B/op	       0 allocs/op
 		// S2: 511 ns/op	       0 B/op	       0 allocs/op
@@ -243,7 +244,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 }
 
 func BenchmarkLogger_Printf(b *testing.B) {
-	b.Run("5 eval 1 prints", func(b2 *testing.B){
+	b.Run("5 eval 1 prints", func(b2 *testing.B) {
 		// S1: 698 ns/op	       0 B/op	       0 allocs/op
 		// S2: 414 ns/op	       0 B/op	       0 allocs/op
 		// S2: 380 ns/op	       0 B/op	       0 allocs/op
@@ -271,7 +272,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 		})
 	})
 
-	b.Run("5 eval 2 prints", func(b2 *testing.B){
+	b.Run("5 eval 2 prints", func(b2 *testing.B) {
 		// S1: 1393 ns/op	       0 B/op	       0 allocs/op
 		// S2:  770 ns/op	       0 B/op	       0 allocs/op
 
@@ -307,10 +308,10 @@ func BenchmarkLogger_NewPrint(b *testing.B) {
 	CAT1 := cat.Add()
 	CAT2 := cat.Add()
 	l.SetCategory(CAT1)
-	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
-	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
-	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
-	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
+	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2w ")
+	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1t ")
+	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, "CAT2t ")
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -338,12 +339,12 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 
 	l.SetCategory(TEST2) // only show TEST2
 
-	wT1D := l.NewWriter(alog.Ldebug, TEST1)
-	wT1I := l.NewWriter(alog.Linfo, TEST1)
-	wT2D := l.NewWriter(alog.Ldebug, TEST2)
-	wT2I := l.NewWriter(alog.Linfo, TEST2)
-	wT3D := l.NewWriter(alog.Ldebug, TEST3)
-	wT3I := l.NewWriter(alog.Linfo, TEST3)
+	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
+	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
+	wT2D := l.NewWriter(alog.Ldebug, TEST2, "T2D ")
+	wT2I := l.NewWriter(alog.Linfo, TEST2, "T2I ")
+	wT3D := l.NewWriter(alog.Ldebug, TEST3, "T3D ")
+	wT3I := l.NewWriter(alog.Linfo, TEST3, "T3I ")
 
 	b.ReportAllocs()
 	b.ResetTimer()
