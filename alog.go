@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 2, 12/21/2020
+// Version 0.1.2, 12/29/2020
 
 package alog
 
@@ -211,7 +211,7 @@ func (l *Logger) header(buf *[]byte, t time.Time, lvl level) {
 
 // finalize will add newline to the end of log if missing,
 // also write it to writer, and clear the buffer.
-func (l *Logger) finalize() {
+func (l *Logger) finalize() (n int, err error) {
 	// If the log message doesn't end with newline, add a newline.
 	if curBufSize := len(l.buf); curBufSize > 1 && l.buf[curBufSize-1] != newline {
 		l.buf = append(l.buf, newline)
@@ -219,8 +219,9 @@ func (l *Logger) finalize() {
 
 	// If bufUseBuffer is false or current size is bigger than the buffer size,
 	// print the buffer and reset it.
-	l.out.Write(l.buf)
+	n, err = l.out.Write(l.buf)
 	l.buf = l.buf[:0]
+	return n, err
 }
 
 // Check method will check if level and category given is
@@ -383,6 +384,17 @@ func (l *Logger) NewPrint(lvl level, cat Category) func(string) {
 	}
 }
 
+// NewWriter takes level and category and create an Alog writer (alogw)
+// that is compatible with io.Writer interface. This can be used as a
+// logger hook.
+func (l *Logger) NewWriter(lvl level, cat Category) *alogw {
+	return &alogw{
+		l:   l,
+		lvl: lvl,
+		cat: cat,
+	}
+}
+
 // Category is a bit-flag used to show only necessary part of process to show
 // in the log. For instance, if there's an web service, there can be different
 // category such as UI, HTTP request, HTTP response, etc. By setting category
@@ -405,6 +417,27 @@ func (c *Category) Add() Category {
 	}
 	*c *= 2
 	return *c
+}
+
+// alogw is a writer with predefined level and category.
+type alogw struct {
+	l   *Logger
+	lvl level
+	cat Category
+}
+
+// Write is to be used as io.Writer interface
+func (w *alogw) Write(b []byte) (n int, err error) {
+	if w.l.check(w.lvl, w.cat) {
+		t := time.Now()
+		w.l.mu.Lock()
+		w.l.header(&w.l.buf, t, w.lvl)
+		w.l.buf = append(w.l.buf, b...)
+		n, err := w.l.finalize()
+		w.l.mu.Unlock()
+		return n, err
+	}
+	return 0, nil
 }
 
 // devNull is a type for discard
