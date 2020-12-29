@@ -373,6 +373,16 @@ func (l *Logger) Writer() io.Writer {
 	return l.out
 }
 
+// NewPrint takes level and category and create a print function.
+// This is to make such as custom `*Logger.Debug()` that has category
+// predefined. Added for v0.1.1.
+// For printf, due to memory allocation occurred it is not included.
+func (l *Logger) NewPrint(lvl level, cat Category) func(string) {
+	return func(s string) {
+		l.Print(lvl, cat, s)
+	}
+}
+
 // Category is a bit-flag used to show only necessary part of process to show
 // in the log. For instance, if there's an web service, there can be different
 // category such as UI, HTTP request, HTTP response, etc. By setting category
