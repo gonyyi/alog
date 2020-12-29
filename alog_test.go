@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 0.1.2, 12/29/2020
+// Version 0.1.3, 12/29/2020
 
 package alog_test
 
@@ -144,10 +144,14 @@ func TestNewPrint(t *testing.T) {
 		CAT2 := cat.Add()
 
 		l.SetCategory(CAT1) // Print only CAT1
-		WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
-		WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
-		TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
-		TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+		WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
+		WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2W ")
+		TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1T ")
+		TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, "CAT2T ")
+		// WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, []byte("CAT1W "))
+		// WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, []byte("CAT2W "))
+		// TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, []byte("CAT1T "))
+		// TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, []byte("CAT2T "))
 
 		WarnCAT1("warn cat1 test")
 		WarnCAT2("warn cat2 test")
@@ -155,7 +159,7 @@ func TestNewPrint(t *testing.T) {
 		TraceCAT2("trace cat2 test")
 
 		actual := out.String()
-		expect := "nptest [WRN] warn cat1 test\n"
+		expect := "nptest [WRN] CAT1W warn cat1 test\n"
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
@@ -176,12 +180,12 @@ func TestLogger_NewWriter(t *testing.T) {
 
 		l.SetCategory(TEST2) // only show TEST2
 
-		wT1D := l.NewWriter(alog.Ldebug, TEST1)
-		wT1I := l.NewWriter(alog.Linfo, TEST1)
-		wT2D := l.NewWriter(alog.Ldebug, TEST2)
-		wT2I := l.NewWriter(alog.Linfo, TEST2)
-		wT3D := l.NewWriter(alog.Ldebug, TEST3)
-		wT3I := l.NewWriter(alog.Linfo, TEST3)
+		wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
+		wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
+		wT2D := l.NewWriter(alog.Ldebug, TEST2, "T2D ")
+		wT2I := l.NewWriter(alog.Linfo, TEST2, "T2I ")
+		wT3D := l.NewWriter(alog.Ldebug, TEST3, "T3D ")
+		wT3I := l.NewWriter(alog.Linfo, TEST3, "T3I ")
 
 		fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
 		fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
@@ -190,7 +194,7 @@ func TestLogger_NewWriter(t *testing.T) {
 		fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
 		fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
 
-		expect := "nwtest [INF] test: T2I fprintf\n"
+		expect := "nwtest [INF] T2I test: T2I fprintf\n"
 		actual := out.String()
 
 		if expect != actual {
