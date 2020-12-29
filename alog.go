@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
-// Version 0.1.3, 12/29/2020
+// Version 0.1.4, 12/29/2020
 
 package alog
 
@@ -25,16 +25,16 @@ var unsuppType = []byte("?{unexp}")
 type formatflag uint32
 
 const (
-	Ftime         formatflag = 1 << iota // Ftime will show HH:MM:SS formats such as 05:02:03
-	FtimeMs                              // FtimeMs will show millisecond in its time such as 10:12:13.1234
-	FtimeUTC                             // FtimeUTC will show UTC time formats
-	FdateMMDD                            // FdateMMDD will show 01/02 date formats.
-	FdateYYMMDD                          // FdateYYMMDD will show 06/01/02 date formats.
-	FdateYYYYMMDD                        // FdateYYYYMMDD will show 2006/01/02 date formats.
-	Fprefix                              // Fprefix will show prefix when printing log message
-	Flevel                               // Flevel show level in the log messsage.
-
-	Fdefault = FdateMMDD | Ftime | Flevel // Fdefault will show month/day with time, and level of logging.
+	Ftime         formatflag                   = 1 << iota // Ftime will show HH:MM:SS formats such as 05:02:03
+	FtimeMs                                                // FtimeMs will show millisecond in its time such as 10:12:13.1234
+	FtimeUTC                                               // FtimeUTC will show UTC time formats
+	FdateMMDD                                              // FdateMMDD will show 01/02 date formats.
+	FdateYYMMDD                                            // FdateYYMMDD will show 06/01/02 date formats.
+	FdateYYYYMMDD                                          // FdateYYYYMMDD will show 2006/01/02 date formats.
+	Fprefix                                                // Fprefix will show prefix when printing log message
+	Flevel                                                 // Flevel show level in the log messsage. (v0.1.4)
+	Fnewline                                               // Fnewline will enable newlines within the log
+	Fdefault      = FdateMMDD | Ftime | Flevel             // Fdefault will show month/day with time, and level of logging.
 )
 
 // LevelPrefix is a bit-flag used for different level of log activity:
@@ -212,8 +212,20 @@ func (l *Logger) header(buf *[]byte, t time.Time, lvl level) {
 // finalize will add newline to the end of log if missing,
 // also write it to writer, and clear the buffer.
 func (l *Logger) finalize() (n int, err error) {
-	// If the log message doesn't end with newline, add a newline.
-	if curBufSize := len(l.buf); curBufSize > 1 && l.buf[curBufSize-1] != newline {
+
+	if l.flag&Fnewline != 0 {
+		// If the log message doesn't end with newline, add a newline.
+		if curBufSize := len(l.buf); curBufSize > 1 && l.buf[curBufSize-1] != newline {
+			l.buf = append(l.buf, newline)
+		}
+	} else {
+		// Remove all newlines
+		for i, v := range l.buf {
+			if v == newline {
+				l.buf[i] = byte(' ')
+			}
+		}
+		// Append a newline at the end
 		l.buf = append(l.buf, newline)
 	}
 
@@ -396,9 +408,9 @@ func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
 // logger hook.
 func (l *Logger) NewWriter(lvl level, cat Category, prefix string) *alogw {
 	return &alogw{
-		l:   l,
-		lvl: lvl,
-		cat: cat,
+		l:      l,
+		lvl:    lvl,
+		cat:    cat,
 		prefix: []byte(prefix),
 	}
 }
@@ -429,9 +441,9 @@ func (c *Category) Add() Category {
 
 // alogw is a writer with predefined level and category.
 type alogw struct {
-	l   *Logger
-	lvl level
-	cat Category
+	l      *Logger
+	lvl    level
+	cat    Category
 	prefix []byte
 }
 
