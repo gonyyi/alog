@@ -125,7 +125,7 @@ func main() {
 ```
 
 
-### Using Buffered Writer (bufio)
+### With a Buffered Writer (bufio)
 
 ```go
 package main
@@ -150,6 +150,35 @@ func main() {
 
 	// Flush bufio writer
 	bLog.Flush()
+}
+```
+
+
+### NewPrint
+
+```go
+package main
+
+import (
+	"github.com/gonyyi/alog"
+	"os"
+)
+
+func main() {
+	// Create an Alog with default option (MMDD, Time, Level)
+	l := alog.New(os.Stderr, "", alog.Fdefault)
+
+	cat := alog.NewCategory()
+	USER := cat.Add()
+	DB := cat.Add()
+
+	l.SetCategory(USER)
+
+	UserInfo := l.NewPrint(alog.Linfo, USER)
+	DBInfo := l.NewPrint(alog.Linfo, DB)
+
+	UserInfo("test cat: user, lvl: info") // Printed
+	DBInfo("test cat: DB, lvl: info")     // Not printed as category is set to USER
 }
 ```
 
