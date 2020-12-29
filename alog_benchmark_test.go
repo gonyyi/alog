@@ -296,3 +296,28 @@ func Benchmark_ALogPrintf_Cat5_2(b *testing.B) {
 		}
 	})
 }
+// Added as of 0.1.1 update
+func Benchmark_ALog_NewPrint(b *testing.B) {
+	// S2:  293 ns/op	       0 B/op	       0 allocs/op
+	l := alog.New(nil, "test ", alog.Fdefault)
+	cat := alog.NewCategory()
+	CAT1 := cat.Add()
+	CAT2 := cat.Add()
+	l.SetCategory(CAT1)
+	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1)
+	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2)
+	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1)
+	TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			WarnCAT1("warn cat1 test")
+			WarnCAT2("warn cat2 test")
+			TraceCAT1("trace cat1 test")
+			TraceCAT2("trace cat2 test")
+		}
+	})
+}
+
