@@ -5,6 +5,23 @@ Version 0.1.1
 Last update: 12/29/2020
 
 
+## Table of Contents
+
+1. [Introduction](#introduction)
+2. [Changes](#changes)
+    - [v0.1.1](#v011)
+    - [v0.1.0](#v010)
+3. [Examples](#examples)
+    - [Leveled Log](#leveled-log)
+    - [Category Support](#category-support)
+    - [With a Buffered Writer](#with-a-buffered-writer)
+    - [NewPrint](#newprint)
+4. [Note: Formatted Output](#note-formatted-output)
+5. [Benchmark](#benchmark)
+    - [Baseline Go-Builtin Logger](#baseline-go-builtin-logger)
+    - [Alog Logger](#alog-logger)
+
+
 ## Introduction
 
 Alog is a simple dependency-free logger with a goal of zero memory allocation.
@@ -12,6 +29,8 @@ Alog supports leveled logging with optional category support.
 
 If you find any bug/conceren about performance, 
 please [create an issue](https://github.com/gonyyi/alog/issues/new).
+
+[^Top](#alog)
 
 
 ## Changes
@@ -22,6 +41,8 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 - Added new method `*Logger.NewPrint(level, Category) func(string)`
     - This will be used to create custom logging with defining category each time.
     - `Printf` has not been implemented due to memory allocation.
+
+[^Top](#alog)
 
 
 ### v0.1.0
@@ -51,6 +72,8 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     gain, many codes where it has multiple if-else blocks are now converted to
     switch for better code readability.
 
+[^Top](#alog)
+
 
 ## Examples
 
@@ -61,6 +84,8 @@ $ godoc -http=:8080
 ```
 
 Then, visit <http://localhost:8080/pkg/github.com/gonyyi/alog/>
+
+[^Top](#alog)
 
 
 ### Leveled Log
@@ -86,6 +111,8 @@ func main() {
     l.Error("hello error")
 }
 ```
+
+[^Top](#alog)
 
 
 ### Category Support
@@ -124,8 +151,10 @@ func main() {
 }
 ```
 
+[^Top](#alog)
 
-### With a Buffered Writer (bufio)
+
+### With a Buffered Writer
 
 ```go
 package main
@@ -152,6 +181,8 @@ func main() {
 	bLog.Flush()
 }
 ```
+
+[^Top](#alog)
 
 
 ### NewPrint
@@ -182,6 +213,8 @@ func main() {
 }
 ```
 
+[^Top](#alog)
+
 
 ## Note: Formatted Output
 
@@ -198,6 +231,8 @@ as `fmt.Printf`:
 - For float, current version does round down, and this can cause a difference
 	in 2nd decimal place.
 
+[^Top](#alog)
+
 
 ## Benchmark 
 
@@ -209,6 +244,8 @@ Test was done on 2018 MacBook Pro (15-inch):
 - 32 GB 2400 MHz DDR4
 - Radeon Pro 560X 4 GB / Intel UHD Graphics 630 1536 MB
 
+[^Top](#alog)
+
 
 ### Baseline Go-Builtin Logger
 
@@ -216,6 +253,8 @@ Test was done on 2018 MacBook Pro (15-inch):
 |:-------------------------------|:--------|:----------|:-----------|:------------|
 | BenchmarkBuiltinLoggerBasic-12 | 2883834 | 410 ns/op | 80 B/op    | 2 allocs/op |
 | BenchmarkBuiltinLoggerFmt-12   | 2396258 | 508 ns/op | 88 B/op    | 3 allocs/op |
+
+[^Top](#alog)
 
 
 ### Alog Logger
@@ -234,3 +273,5 @@ Test was done on 2018 MacBook Pro (15-inch):
 | Benchmark_ALogPrint_Cat5_2-12  | 2311810    | 518 ns/op  | 0 B/op     | 0 allocs/op |
 | Benchmark_ALogPrintf_Cat5_1-12 | 2869698    | 403 ns/op  | 0 B/op     | 0 allocs/op |
 | Benchmark_ALogPrintf_Cat5_2-12 | 1564646    | 774 ns/op  | 0 B/op     | 0 allocs/op |
+
+[^Top](#alog)
