@@ -1,13 +1,14 @@
 # Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
-Version 0.1.3 (12/29/2020)
+Version 0.1.4 (12/29/2020)
 
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
+    - [v0.1.4](#v014)
     - [v0.1.3](#v013)
     - [v0.1.2](#v012)
     - [v0.1.1](#v011)
@@ -34,6 +35,15 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
 ## Changes
+
+### v0.1.4
+
+New flag option `Fnewline` has been added. The default behavior is not allowing newline
+within the log message. However, using this option will allow newlines in the log message.
+
+
+[^Top](#alog)
+
 
 ### v0.1.3
 
