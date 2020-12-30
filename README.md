@@ -3,6 +3,9 @@
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
 Version 0.1.4 (12/29/2020)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog)
+[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENCE)
+
 
 ## Table of Contents
 
