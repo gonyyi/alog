@@ -4,6 +4,7 @@
 // 0.1.6c2: for methods that can be often called by other logger compatible interfaces, Debugf() may be used just as
 //    a Debug() without additional params of interface (a). So, new version will check the length of additional param
 //    and if it's zero (0), then run it as Debug() instead of Debugf().
+// 0.1.6c3: Added `*Logger.IfError(error)` and `*Logger.IfFatal(error)` which only log when error is not nil.
 
 package alog
 
@@ -393,6 +394,16 @@ func (l *Logger) Warnf(format string, a ...interface{}) {
 	}
 }
 
+// IfError will check and log error if exist (not nil)
+// For instance, when running multiple lines of error check
+// This can save error checking.
+// added as v0.1.6c3, 12/30/2020
+func (l *Logger) IfError(e error) {
+	if e != nil {
+		l.Print(Lerror, noCategory, e.Error())
+	}
+}
+
 // Error will take a single string and print log without category
 func (l *Logger) Error(s string) {
 	l.Print(Lerror, noCategory, s)
@@ -408,6 +419,18 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 		l.mu.Lock()
 		l.printf(Lerror, 0, format, a...)
 		l.mu.Unlock()
+	}
+}
+
+// IfFatal will check and log error if exist (not nil)
+// For instance, when running multiple lines of error check
+// This can save error checking.
+// Unlikee IfError, IfFatal will exit the program
+// added as v0.1.6c3, 12/30/2020
+func (l *Logger) IfFatal(e error) {
+	if e != nil {
+		l.Print(Lfatal, noCategory, e.Error())
+		os.Exit(1)
 	}
 }
 
