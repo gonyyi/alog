@@ -1,10 +1,12 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.6c2, 12/29/2020
+// Version 0.1.6, 12/30/2020
 
 // 0.1.6c2: for methods that can be often called by other logger compatible interfaces, Debugf() may be used just as
 //    a Debug() without additional params of interface (a). So, new version will check the length of additional param
 //    and if it's zero (0), then run it as Debug() instead of Debugf().
 // 0.1.6c3: Added `*Logger.IfError(error)` and `*Logger.IfFatal(error)` which only log when error is not nil.
+// 0.1.6c4: Added `*Logger.Close()` method.
+
 
 package alog
 
@@ -427,22 +429,27 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 // This can save error checking.
 // Unlikee IfError, IfFatal will exit the program
 // added as v0.1.6c3, 12/30/2020
+// updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) IfFatal(e error) {
 	if e != nil {
 		l.Print(Lfatal, noCategory, e.Error())
+		l.Close()
 		os.Exit(1)
 	}
 }
 
 // Fatal will take a single string and print log without category
 // and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatal(s string) {
 	l.Print(Lfatal, noCategory, s)
+	l.Close()
 	os.Exit(1)
 }
 
 // Fatalf will formats and print log without category
 // and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatalf(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Lfatal, noCategory, format)
@@ -453,12 +460,22 @@ func (l *Logger) Fatalf(format string, a ...interface{}) {
 		l.printf(Lfatal, noCategory, format, a...)
 		l.mu.Unlock()
 	}
+	l.Close()
 	os.Exit(1)
 }
 
 // Writer returns the output destination for the logger.
 func (l *Logger) Writer() io.Writer {
 	return l.out
+}
+
+// Close will call .Close() method if supported
+// Added for v0.1.6c4, 12/30/2020
+func (l *Logger) Close() error {
+	if c, ok := l.out.(io.Closer); ok && c != nil {
+		return c.Close()
+	}
+	return nil
 }
 
 // NewPrint takes level and category and create a print function.
