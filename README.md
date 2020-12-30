@@ -92,7 +92,7 @@ NewWriter and NewPrint now takes additional string argument for prefix.
     aren't the same kind, logging level flag has been removed. Default logging
     level is `INFO`, and a user can reset it by using `*logger.SetLevel()` method.
     - [Issue #8](https://github.com/gonyyi/alog/issues/8) type Format should be renamed to configuration or something
-- **Removd `SetExitOnFatal()`**: `*logger.SetExitOnFatal()` was used to set if
+- **Removed `SetExitOnFatal()`**: `*logger.SetExitOnFatal()` was used to set if
     a user want to exit when fatal level log is received. Now, `Print()` and `Printf()`
     will not exit when received fatal level log, but `Fatal()` and `Fatalf()` will
     exit with exit code 1.
