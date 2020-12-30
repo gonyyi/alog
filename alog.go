@@ -1,5 +1,9 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.6c, 12/29/2020
+// Version 0.1.6c2, 12/29/2020
+
+// 0.1.6c2: for methods that can be often called by other logger compatible interfaces, Debugf() may be used just as
+//    a Debug() without additional params of interface (a). So, new version will check the length of additional param
+//    and if it's zero (0), then run it as Debug() instead of Debugf().
 
 package alog
 
@@ -324,6 +328,10 @@ func (l *Logger) Trace(s string) {
 
 // Tracef will formats and print log without category
 func (l *Logger) Tracef(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Ltrace, noCategory, format)
+		return
+	}
 	if l.check(Ltrace, noCategory) {
 		l.mu.Lock()
 		l.printf(Ltrace, noCategory, format, a...)
@@ -338,6 +346,10 @@ func (l *Logger) Debug(s string) {
 
 // Debugf will formats and print log without category
 func (l *Logger) Debugf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Ldebug, noCategory, format)
+		return
+	}
 	if l.check(Ldebug, noCategory) {
 		l.mu.Lock()
 		l.printf(Ldebug, noCategory, format, a...)
@@ -352,6 +364,10 @@ func (l *Logger) Info(s string) {
 
 // Infof will formats and print log without category
 func (l *Logger) Infof(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Linfo, noCategory, format)
+		return
+	}
 	if l.check(Linfo, noCategory) {
 		l.mu.Lock()
 		l.printf(Linfo, noCategory, format, a...)
@@ -366,6 +382,10 @@ func (l *Logger) Warn(s string) {
 
 // Warnf will formats and print log without category
 func (l *Logger) Warnf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lwarn, noCategory, format)
+		return
+	}
 	if l.check(Lwarn, noCategory) {
 		l.mu.Lock()
 		l.printf(Lwarn, noCategory, format, a...)
@@ -380,6 +400,10 @@ func (l *Logger) Error(s string) {
 
 // Errorf will formats and print log without category
 func (l *Logger) Errorf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lerror, noCategory, format)
+		return
+	}
 	if l.check(Lerror, noCategory) {
 		l.mu.Lock()
 		l.printf(Lerror, 0, format, a...)
@@ -397,6 +421,10 @@ func (l *Logger) Fatal(s string) {
 // Fatalf will formats and print log without category
 // and this will terminate process with exit code 1
 func (l *Logger) Fatalf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lfatal, noCategory, format)
+		return
+	}
 	if l.check(Lfatal, noCategory) {
 		l.mu.Lock()
 		l.printf(Lfatal, noCategory, format, a...)
