@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.4, 12/29/2020
+// Version 0.1.6c, 12/29/2020
 
 package alog
 
@@ -19,22 +19,32 @@ const (
 // unsuppType is a slice of byte and will be used when unknown formats string is being used in
 // any formatted prints such as `printf`, `infof`, `debugf`, etc. This is pre-converted to
 // a byte slice and reused to save process time.
-var unsuppType = []byte("?{unexp}")
+var unsuppType = []byte("{??}")
 
 // formatflag a bit-flag flag options that is used for variety of configuration.
 type formatflag uint32
 
 const (
-	Ftime         formatflag                   = 1 << iota // Ftime will show HH:MM:SS formats such as 05:02:03
-	FtimeMs                                                // FtimeMs will show millisecond in its time such as 10:12:13.1234
-	FtimeUTC                                               // FtimeUTC will show UTC time formats
-	FdateMMDD                                              // FdateMMDD will show 01/02 date formats.
-	FdateYYMMDD                                            // FdateYYMMDD will show 06/01/02 date formats.
-	FdateYYYYMMDD                                          // FdateYYYYMMDD will show 2006/01/02 date formats.
-	Fprefix                                                // Fprefix will show prefix when printing log message
-	Flevel                                                 // Flevel show level in the log messsage. 
-	Fnewline                                               // Fnewline will enable newlines within the log (v0.1.4)
-	Fdefault      = FdateMMDD | Ftime | Flevel             // Fdefault will show month/day with time, and level of logging.
+	// Ftime will show HH:MM:SS formats such as 05:02:03
+	Ftime         formatflag                   = 1 << iota
+	// FtimeMs will show millisecond in its time such as 10:12:13.1234
+	FtimeMs
+	// FtimeUTC will show UTC time formats
+	FtimeUTC
+	// FdateMMDD will show 01/02 date formats.
+	FdateMMDD
+	// FdateYYMMDD will show 06/01/02 date formats.
+	FdateYYMMDD
+	// FdateYYYYMMDD will show 2006/01/02 date formats.
+	FdateYYYYMMDD
+	// Fprefix will show prefix when printing log message
+	Fprefix
+	// Flevel show level in the log messsage.
+	Flevel
+	// Fnewline will enable newlines within the log (v0.1.4)
+	Fnewline
+	// Fdefault will show month/day with time, and level of logging.
+	Fdefault      = FdateMMDD | Ftime | Flevel
 )
 
 // LevelPrefix is a bit-flag used for different level of log activity:
@@ -47,14 +57,28 @@ const (
 type level uint8
 
 const (
-	Ltrace level = iota + 1 // Ltrace: detailed debugging level
-	Ldebug                  // Ldebug: general debugging level
-	Linfo                   // Linfo: information level
-	Lwarn                   // Lwarn: warning
-	Lerror                  // Lerror: error
-	Lfatal                  // Lfatal: fatal, the process will can be terminated
+	// Ltrace shows trace level, thee most detailed debugging level.
+	// This will show everything.
+	Ltrace level = iota + 1
+	// Ldebug shows debug level or higher
+	Ldebug
+	// Linfo shows information level or higher
+	Linfo
+	// Lwarn shows warning level or higher
+	Lwarn
+	// Lerror shows error level or higher
+	Lerror
+	// Lfatal shows fatal level or higher
+	// If Fatal() or Fatalf() is called, it will exit the process with
+	// os.Exit(1)
+	Lfatal
 )
 
+// Logger is a main struct for logger.
+// Available methods are:
+//    Simple: Print(), Trace(), Debug(), Info(), Warn(), Error(), Fatal()
+//    Format: Printf(), Tracef(), Debugf(), Infof(), Warnf(), Errorf(), Fatalf()
+//    Other:  NewPrint(), NewWriter()
 type Logger struct {
 	flag  formatflag
 	level level
@@ -403,11 +427,11 @@ func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
 	}
 }
 
-// NewWriter takes level and category and create an Alog writer (alogw)
+// NewWriter takes level and category and create an Alog writer (AlWriter)
 // that is compatible with io.Writer interface. This can be used as a
 // logger hook.
-func (l *Logger) NewWriter(lvl level, cat Category, prefix string) *alogw {
-	return &alogw{
+func (l *Logger) NewWriter(lvl level, cat Category, prefix string) *AlWriter {
+	return &AlWriter{
 		l:      l,
 		lvl:    lvl,
 		cat:    cat,
@@ -439,8 +463,8 @@ func (c *Category) Add() Category {
 	return *c
 }
 
-// alogw is a writer with predefined level and category.
-type alogw struct {
+// AlWriter is a writer with predefined level and category.
+type AlWriter struct {
 	l      *Logger
 	lvl    level
 	cat    Category
@@ -448,7 +472,7 @@ type alogw struct {
 }
 
 // Write is to be used as io.Writer interface
-func (w *alogw) Write(b []byte) (n int, err error) {
+func (w *AlWriter) Write(b []byte) (n int, err error) {
 	if w.l.check(w.lvl, w.cat) {
 		t := time.Now()
 		w.l.mu.Lock()
