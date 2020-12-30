@@ -1,7 +1,7 @@
 # Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
-Version 0.1.4 (12/29/2020)
+Version 0.1.5 (12/29/2020)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog)
 [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENCE)
@@ -11,6 +11,7 @@ Version 0.1.4 (12/29/2020)
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
+    - [v0.1.5](#v015)
     - [v0.1.4](#v014)
     - [v0.1.3](#v013)
     - [v0.1.2](#v012)
@@ -39,11 +40,18 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ## Changes
 
+
+### v0.1.5
+
+Added a license (MIT) <https://raw.githubusercontent.com/gonyyi/alog/master/LICENCE>
+
+[^Top](#alog)
+
+
 ### v0.1.4
 
 New flag option `Fnewline` has been added. The default behavior is not allowing newline
 within the log message. However, using this option will allow newlines in the log message.
-
 
 [^Top](#alog)
 
