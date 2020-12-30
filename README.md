@@ -4,7 +4,7 @@
 Version 0.1.5 (12/29/2020)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog)
-[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENCE)
+[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
 
 ## Table of Contents
@@ -43,7 +43,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ### v0.1.5
 
-Added a license (MIT) <https://raw.githubusercontent.com/gonyyi/alog/master/LICENCE>
+Added a license (MIT) <https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE>
 
 [^Top](#alog)
 
