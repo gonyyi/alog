@@ -1,4 +1,4 @@
-// (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
+// (c) 2020 Gon Y Yi. <https://gonyyi.com>
 // Version 0.1.4, 12/29/2020
 
 package alog
