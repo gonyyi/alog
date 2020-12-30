@@ -1,6 +1,6 @@
 # Alog
 
-(c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>  
+(c) 2020 Gon Y Yi. <https://gonyyi.com>  
 Version 0.1.5 (12/29/2020)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog)
