@@ -27,6 +27,36 @@ func ExampleNew() {
 	// test [ERR] hello error
 }
 
+func ExampleLogger_Do() {
+	myconf1 := func(l *alog.Logger) {
+		l.SetPrefix("log ")
+		l.SetLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
+	}
+	myconf2 := func(l *alog.Logger) {
+		l.SetLevelPrefix(
+			"[TRACE] ",
+			"[DEBUG] ",
+			"[INFO]  ",
+			"[WARN]  ",
+			"[ERROR] ",
+			"[FATAL] ")
+	}
+
+	l := alog.New(os.Stdout).Do(myconf1, myconf2)
+
+	l.Print(alog.Ltrace, 0, "testTrace")
+	l.Print(alog.Ldebug, 0, "testDebug")
+	l.Print(alog.Linfo, 0, "testInfo")
+	l.Print(alog.Lwarn, 0, "testWarn")
+	l.Print(alog.Lerror, 0, "testError")
+
+	// Output:
+	// log [DEBUG] testDebug
+	// log [INFO]  testInfo
+	// log [WARN]  testWarn
+	// log [ERROR] testError
+}
+
 func ExampleLogger_NewWriter() {
 	l := alog.New(os.Stdout).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLevel(alog.Ldebug)
 

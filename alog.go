@@ -148,6 +148,17 @@ func New(output io.Writer) *Logger {
 	return l
 }
 
+// Do can run a function(s) that were created by a user
+// An example would be set level prefix with ANSI color
+// or series of frequentyly used settings.
+// planned for v0.2.1 release.
+func (l *Logger) Do(fn ...func(*Logger)) *Logger {
+	for _, f := range fn {
+		f(l)
+	}
+	return l
+}
+
 // SetOutput can redefined the output after logger has been created.
 // If output is nil, the logger will set it to ioutil.Discard instead.
 func (l *Logger) SetOutput(output io.Writer) *Logger {

@@ -38,6 +38,34 @@ func TestLogger_IfError(t *testing.T) {
 	}
 }
 
+// Added for Do - 0.2.1 release
+func TestLogger_Do(t *testing.T) {
+	out := &bytes.Buffer{}
+	myfunc := func(l *alog.Logger) {
+		l.SetPrefix("log ")
+		l.SetLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
+		l.SetLevelPrefix(
+			"[TRACE] ",
+			"[DEBUG] ",
+			"[INFO]  ",
+			"[WARN]  ",
+			"[ERROR] ",
+			"[FATAL] ")
+	}
+	// l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+	l := alog.New(out).Do(myfunc)
+	l.Print(alog.Ltrace, 0, "testTrace")
+	l.Print(alog.Ldebug, 0, "testDebug")
+	l.Print(alog.Linfo, 0, "testInfo")
+	l.Print(alog.Lwarn, 0, "testWarn")
+	l.Print(alog.Lerror, 0, "testError")
+	expected := "log [DEBUG] testDebug\nlog [INFO]  testInfo\nlog [WARN]  testWarn\nlog [ERROR] testError\n"
+
+	if expected != out.String() {
+		t.Errorf("expected=<%s>, actual=<%s>", expected, out.String())
+	}
+}
+
 func TestBasic(t *testing.T) {
 	// NoLevel will use INFO as its level.
 	t.Run("Print,NoLevel", func(t2 *testing.T) {
