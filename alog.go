@@ -6,7 +6,8 @@
 //    and if it's zero (0), then run it as Debug() instead of Debugf().
 // 0.1.6c3: Added `*Logger.IfError(error)` and `*Logger.IfFatal(error)` which only log when error is not nil.
 // 0.1.6c4: Added `*Logger.Close()` method.
-
+// 0.1.7c1: IfFatal, Fatal, Fatalf will have additional write to stderr IF output wasn't sent to stderr/stdout.
+//    but need to check memory allocation.. prolly not as those will be the last run.. TODO: check memory alloc
 
 package alog
 
@@ -33,7 +34,7 @@ type formatflag uint32
 
 const (
 	// Ftime will show HH:MM:SS formats such as 05:02:03
-	Ftime         formatflag                   = 1 << iota
+	Ftime formatflag = 1 << iota
 	// FtimeMs will show millisecond in its time such as 10:12:13.1234
 	FtimeMs
 	// FtimeUTC will show UTC time formats
@@ -51,7 +52,7 @@ const (
 	// Fnewline will enable newlines within the log (v0.1.4)
 	Fnewline
 	// Fdefault will show month/day with time, and level of logging.
-	Fdefault      = FdateMMDD | Ftime | Flevel
+	Fdefault = FdateMMDD | Ftime | Flevel
 )
 
 // LevelPrefix is a bit-flag used for different level of log activity:
@@ -433,6 +434,15 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 func (l *Logger) IfFatal(e error) {
 	if e != nil {
 		l.Print(Lfatal, noCategory, e.Error())
+
+		// When fatal, if output was not sent to stdout/stderr,
+		// then, write it to stderr.
+		// TODO: may accept a flag?? or not?
+		if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
+			os.Stderr.WriteString(e.Error())
+			os.Stderr.Write([]byte(newline))
+		}
+
 		l.Close()
 		os.Exit(1)
 	}
@@ -443,6 +453,12 @@ func (l *Logger) IfFatal(e error) {
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatal(s string) {
 	l.Print(Lfatal, noCategory, s)
+	// When fatal, if output was not sent to stdout/stderr,
+	// then, write it to stderr.
+	if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
+		os.Stderr.WriteString(s)
+		os.Stderr.Write([]byte(newline))
+	}
 	l.Close()
 	os.Exit(1)
 }
@@ -453,11 +469,19 @@ func (l *Logger) Fatal(s string) {
 func (l *Logger) Fatalf(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Lfatal, noCategory, format)
-		return
-	}
-	if l.check(Lfatal, noCategory) {
+	} else if l.check(Lfatal, noCategory) {
 		l.mu.Lock()
 		l.printf(Lfatal, noCategory, format, a...)
+		l.mu.Unlock()
+	}
+	// When fatal, if output was not sent to stdout/stderr,
+	// then, write it to stderr.
+	if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
+		l.mu.Lock()
+		l.buf = l.buf[:0]
+		formats(&l.buf, format, a...)
+		l.buf = append(l.buf, newline)
+		os.Stderr.Write(l.buf)
 		l.mu.Unlock()
 	}
 	l.Close()
