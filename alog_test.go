@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"github.com/gonyyi/alog"
 	"testing"
+	"errors"
 )
-
 
 // added as v0.1.6c3, 12/30/2020
 func TestLogger_IfError(t *testing.T) {
