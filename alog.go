@@ -8,6 +8,9 @@
 // 0.1.6c4: Added `*Logger.Close()` method.
 // 0.1.7c1: IfFatal, Fatal, Fatalf will have additional write to stderr IF output wasn't sent to stderr/stdout.
 //    but need to check memory allocation.. prolly not as those will be the last run.. TODO: check memory alloc
+// 0.1.7c2:
+//   - Scratch 0.1.7c1
+//   - Add type flag setting? eg. alog.New(os.Stderr).SetPrefix("abc: ").SetFormat(alog.Fdefault) ??
 
 package alog
 
@@ -29,12 +32,15 @@ const (
 // a byte slice and reused to save process time.
 var unsuppType = []byte("{??}")
 
-// formatflag a bit-flag flag options that is used for variety of configuration.
-type formatflag uint32
+// flags a bit-flag flag options that is used for variety of configuration.
+type flags uint32
 
 const (
+	Fall  = flags(^uint32(0))
+	Fnone = flags(uint32(0))
+
 	// Ftime will show HH:MM:SS formats such as 05:02:03
-	Ftime formatflag = 1 << iota
+	Ftime flags = 1 << iota
 	// FtimeMs will show millisecond in its time such as 10:12:13.1234
 	FtimeMs
 	// FtimeUTC will show UTC time formats
@@ -88,7 +94,7 @@ const (
 //    Format: Printf(), Tracef(), Debugf(), Infof(), Warnf(), Errorf(), Fatalf()
 //    Other:  NewPrint(), NewWriter()
 type Logger struct {
-	flag  formatflag
+	flag  flags
 	level level
 	cat   Category
 
@@ -112,11 +118,15 @@ type Logger struct {
 	levelString [7][]byte
 }
 
-// New function creates new logger. This takes three arguments:
-// 1. output: io.Writer
-// 2. prefix: any prefix messages to be printed,
-// 3. flag: for detail configuration.
-func New(output io.Writer, prefix string, flag formatflag) *Logger {
+// New function creates new logger. This takes an output writer for its argument (v0.2.0 change)
+// All methods with suffix "Set" returns `*Logger`, therefore can be used together with `*Logger.New`.
+// This is a v0.2.0 change that broke the backward compatibility, however, most of the time, people
+// don't set logger prefix, also uses basic default setting. Therefore it's bit cumbersome to require
+// two (prefix, flag), often, unused parameters. Duct-taping can be done following way:
+// 1. alog.New(nil).SetOutput(os.Stderr) // initially set discard for output but overridden to os.Stderr
+// 2. alog.New(os.Stderr).SetPrefix("TestLog: ").SetLevel(alog.Linfo) // set prefix and level
+// 3. alog.New(os.Stderr).SetPrefix("TestLog: ").SetFlag(alog.Fdefault|alog.FtimeUTC)
+func New(output io.Writer) *Logger {
 	// If output is given as `nil`, it will use io.discard as a default.
 	if output == nil {
 		output = discard
@@ -128,22 +138,19 @@ func New(output io.Writer, prefix string, flag formatflag) *Logger {
 	//     level will not be changed. Therefore default level should be defined here.
 	l := &Logger{
 		out:    output,
-		prefix: []byte(prefix), // prefix will be saved as a byte slice to prevent need to be converted later.
-		level:  Linfo,          // default logging level to INFO
+		prefix: []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
+		level:  Linfo,      // default logging level to INFO
+		flag:   Fdefault,   // default flag is given
 	}
-
-	// Parse and set configuration flags.
-	l.SetFlag(flag)
 
 	// Default prefixes for each level. This can be changed by a user using *alog.SetLevelPrefix()
 	l.SetLevelPrefix("[TRC] ", "[DBG] ", "[INF] ", "[WRN] ", "[ERR] ", "[FTL] ")
-
 	return l
 }
 
 // SetOutput can redefined the output after logger has been created.
 // If output is nil, the logger will set it to ioutil.Discard instead.
-func (l *Logger) SetOutput(output io.Writer) {
+func (l *Logger) SetOutput(output io.Writer) *Logger {
 	l.mu.Lock()
 	if output == nil {
 		l.out = discard
@@ -151,27 +158,30 @@ func (l *Logger) SetOutput(output io.Writer) {
 		l.out = output
 	}
 	l.mu.Unlock()
+	return l
 }
 
 // SetPrefix can redefine prefix after the logger has been created.
-func (l *Logger) SetPrefix(s string) {
+func (l *Logger) SetPrefix(s string) *Logger {
 	l.mu.Lock()
 	l.prefix = []byte(s)
 	l.mu.Unlock()
+	return l
 }
 
 // SetFlag will reconfigure the logger after it has been created.
 // This will first copy flag into *alog.flag, and sets few that
 // need additional parsing.
-func (l *Logger) SetFlag(flag formatflag) {
+func (l *Logger) SetFlag(flag flags) *Logger {
 	l.mu.Lock()
 	l.flag = flag
 	l.mu.Unlock()
+	return l
 }
 
 // SetLevelPrefix will set different prefixes for each levelled log messages.
 // eg. "[DEBUG]".
-func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) {
+func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) *Logger {
 	l.levelString[0] = []byte("")
 	l.levelString[1] = []byte(trace)
 	l.levelString[2] = []byte(debug)
@@ -179,17 +189,20 @@ func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) {
 	l.levelString[4] = []byte(warn)
 	l.levelString[5] = []byte(error)
 	l.levelString[6] = []byte(fatal)
+	return l
 }
 
 // SetLevel will set the minimum logging level. If this is set to INFO, anything below
 // info, such as TRACE/DEBUG, will be not printed.
-func (l *Logger) SetLevel(lvl level) {
+func (l *Logger) SetLevel(lvl level) *Logger {
 	l.level = lvl
+	return l
 }
 
 // SetCategory will take a bit-flag Category and sets what categories will be printed.
-func (l *Logger) SetCategory(category Category) {
+func (l *Logger) SetCategory(category Category) *Logger {
 	l.cat = category
+	return l
 }
 
 // header will add date/time/prefix/level.
@@ -285,7 +298,8 @@ func (l *Logger) check(lvl level, cat Category) bool {
 }
 
 // printf creates formatted string
-func (l *Logger) printf(lvl level, cat Category, format string, a ...interface{}) {
+// v0.2.0: as cat here isn't necessary, remove it
+func (l *Logger) printf(lvl level, format string, a ...interface{}) {
 	t := time.Now()
 	// Format the header and add it to buffer
 	l.header(&l.buf, t, lvl)
@@ -293,7 +307,7 @@ func (l *Logger) printf(lvl level, cat Category, format string, a ...interface{}
 	formats(&l.buf, format, a...)
 	// Check newline at the end, if missing add it.
 	// Then, print log, reset the buffer.
-	l.finalize()
+	_, _ = l.finalize()
 }
 
 // Print prints a single string log message.
@@ -307,7 +321,7 @@ func (l *Logger) Print(lvl level, cat Category, s string) {
 		l.mu.Lock()
 		l.header(&l.buf, t, lvl)
 		l.buf = append(l.buf, s...)
-		l.finalize()
+		_, _ = l.finalize()
 		l.mu.Unlock()
 	}
 }
@@ -320,7 +334,7 @@ func (l *Logger) Printf(lvl level, cat Category, format string, a ...interface{}
 	// If cat is 0, then all cat.
 	if l.check(lvl, cat) {
 		l.mu.Lock()
-		l.printf(lvl, cat, format, a...)
+		l.printf(lvl, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -338,7 +352,7 @@ func (l *Logger) Tracef(format string, a ...interface{}) {
 	}
 	if l.check(Ltrace, noCategory) {
 		l.mu.Lock()
-		l.printf(Ltrace, noCategory, format, a...)
+		l.printf(Ltrace, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -356,7 +370,7 @@ func (l *Logger) Debugf(format string, a ...interface{}) {
 	}
 	if l.check(Ldebug, noCategory) {
 		l.mu.Lock()
-		l.printf(Ldebug, noCategory, format, a...)
+		l.printf(Ldebug, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -374,7 +388,7 @@ func (l *Logger) Infof(format string, a ...interface{}) {
 	}
 	if l.check(Linfo, noCategory) {
 		l.mu.Lock()
-		l.printf(Linfo, noCategory, format, a...)
+		l.printf(Linfo, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -392,7 +406,7 @@ func (l *Logger) Warnf(format string, a ...interface{}) {
 	}
 	if l.check(Lwarn, noCategory) {
 		l.mu.Lock()
-		l.printf(Lwarn, noCategory, format, a...)
+		l.printf(Lwarn, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -420,7 +434,7 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 	}
 	if l.check(Lerror, noCategory) {
 		l.mu.Lock()
-		l.printf(Lerror, 0, format, a...)
+		l.printf(Lerror, format, a...)
 		l.mu.Unlock()
 	}
 }
@@ -434,16 +448,7 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 func (l *Logger) IfFatal(e error) {
 	if e != nil {
 		l.Print(Lfatal, noCategory, e.Error())
-
-		// When fatal, if output was not sent to stdout/stderr,
-		// then, write it to stderr.
-		// TODO: may accept a flag?? or not?
-		if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
-			os.Stderr.WriteString(e.Error())
-			os.Stderr.Write([]byte(newline))
-		}
-
-		l.Close()
+		_ = l.Close()
 		os.Exit(1)
 	}
 }
@@ -453,13 +458,7 @@ func (l *Logger) IfFatal(e error) {
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatal(s string) {
 	l.Print(Lfatal, noCategory, s)
-	// When fatal, if output was not sent to stdout/stderr,
-	// then, write it to stderr.
-	if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
-		os.Stderr.WriteString(s)
-		os.Stderr.Write([]byte(newline))
-	}
-	l.Close()
+	_ = l.Close()
 	os.Exit(1)
 }
 
@@ -471,20 +470,10 @@ func (l *Logger) Fatalf(format string, a ...interface{}) {
 		l.Print(Lfatal, noCategory, format)
 	} else if l.check(Lfatal, noCategory) {
 		l.mu.Lock()
-		l.printf(Lfatal, noCategory, format, a...)
+		l.printf(Lfatal, format, a...)
 		l.mu.Unlock()
 	}
-	// When fatal, if output was not sent to stdout/stderr,
-	// then, write it to stderr.
-	if l.out != nil && l.out != os.Stderr && l.out != os.Stdout {
-		l.mu.Lock()
-		l.buf = l.buf[:0]
-		formats(&l.buf, format, a...)
-		l.buf = append(l.buf, newline)
-		os.Stderr.Write(l.buf)
-		l.mu.Unlock()
-	}
-	l.Close()
+	_ = l.Close()
 	os.Exit(1)
 }
 
@@ -513,7 +502,7 @@ func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
 			l.mu.Lock()
 			l.header(&l.buf, t, lvl)
 			l.buf = append(l.buf, append([]byte(prefix), s...)...)
-			l.finalize()
+			_, _ = l.finalize()
 			l.mu.Unlock()
 		}
 	}
@@ -584,7 +573,7 @@ type devNull int
 // discard is defined here to get rid of needs to import of ioutil package.
 var discard io.Writer = devNull(0)
 
-func (devNull) Write(p []byte) (int, error) {
+func (devNull) Write([]byte) (int, error) {
 	return 0, nil
 }
 
@@ -593,7 +582,7 @@ func (devNull) Write(p []byte) (int, error) {
 // due to limit on int type, 19 digit max; 18 digit is safe.
 func itoa(dst *[]byte, i int, minLength int) {
 	var b [20]byte
-	var positiveNum bool = true
+	var positiveNum = true
 	if i < 0 {
 		positiveNum = false
 		i = -i // change the sign to positive
@@ -627,7 +616,7 @@ func ftoa(dst *[]byte, f float64, decPlace int) {
 	if decPlace > 0 {
 		// if decPlace == 3, multiplier will be 1000
 		// get nth power
-		var multiplier int = 1
+		var multiplier = 1
 		for i := decPlace; i > 0; i-- {
 			multiplier = multiplier * 10
 		}
@@ -646,7 +635,7 @@ func ftoa(dst *[]byte, f float64, decPlace int) {
 func formats(dst *[]byte, s string, a ...interface{}) {
 	flagKeyword := false
 
-	var aIdx int = 0
+	var aIdx = 0
 	var aLen = len(a)
 
 	// Reset bufFormat
