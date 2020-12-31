@@ -1,24 +1,20 @@
 # Alog
 
-(c) 2020 Gon Y Yi. <https://gonyyi.com>  
-Version 0.1.6 (12/29/2020)
+(c) 2020 Gon Y Yi. <https://gonyyi.com>
+[MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
+
+Version 0.2.0 (12/31/2020)
 
 [![GoDoc](https://godoc.org/github.com/gonyyi/alog?status.svg)](https://godoc.org/github.com/gonyyi/alog)
-[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.1.5)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.2.0)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 [![Coverage](http://gocover.io/_badge/github.com/gonyyi/alog)](http://gocover.io/github.com/gonyyi/alog)
+
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
-    - [v0.1.6](#v016)
-    - [v0.1.5](#v015)
-    - [v0.1.4](#v014)
-    - [v0.1.3](#v013)
-    - [v0.1.2](#v012)
-    - [v0.1.1](#v011)
-    - [v0.1.0](#v010)
 3. [Examples](#examples)
     - [Leveled Log](#leveled-log)
     - [Category Support](#category-support)
@@ -42,86 +38,91 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ## Changes
 
-### v0.1.6
+Due to backward compability issue, the version went up from v0.1.6 to v0.2.0. This is mainly
+because of the changes of constructor: `alog.New(io.Writer, string, flag) *Logger`
+became `alog.New(io.Writer) *Logger`.
 
-- Added a badge for a coverage
-- Any level-predefined and formatted methods such as `Tracef`, `Debugf`, ... `Fatalf` will evaluate if any additional arguments are present besides format string. If there is no additional argument, it will run without formatting to save processing time.
-- `*.Logger.IfError(error)`, `*.Logger.IfFatal(error)` has been added. These methods are taking error (or `nil`) for an argument. If it's `nil`, it will ignore, but if actual error is given, it will log the error message. 
-- `*Logger.Close()` method has been added back. If an `io.Writer` that logger uses have `Close()` method, it will call the `Close()` method of the writer.
-- `Fatal`, `Fatalf`, `IfFatal` will call `*Logger.Close()` right before the `os.Exit()`
+1. `alog.New(io.Writer) *Logger`: Constructor Most of the time, people don't set logger
+   prefix, also uses basic default setting. Therefore it's bit cumbersome to require
+   two (prefix, flag), often, unused parameters.
 
-[^Top](#alog)
+2. `SetOutput`, `SetPrefix`, `SetFlag`, `SetLevel`, `SetLevelPrefix`, `SetCategory` are now
+   returning `*Logger` pointer which means, when a logger is created, you can add a
+   configuration only when it's necessary.
 
+    - Initially set discard for output but overridden to os.Stderr
 
-### v0.1.5
+        ```go
+        l := alog.New(nil).SetOutput(os.Stderr)
+        ```
 
-Added a license (MIT) <https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE>
+   - Set prefix and level
 
-[^Top](#alog)
+        ```go
+        l = alog.New(os.Stderr).SetPrefix("TestLog: ").SetLevel(alog.Linfo)
+        ```
 
+   - Set prefix, flag together, and level separately
 
-### v0.1.4
+        ```go
+        l := alog.New(os.Stderr).SetPrefix("TestLog: ").SetFlag(alog.Fdefault|alog.FtimeUTC)
+        l.SetLevel(alog.Ltrace)
 
-New flag option `Fnewline` has been added. The default behavior is not allowing newline
-within the log message. However, using this option will allow newlines in the log message.
-
-[^Top](#alog)
-
-
-### v0.1.3
-
-NewWriter and NewPrint now takes additional string argument for prefix.
-
-- `*Logger.NewWriter(level, Category, string) *alogw`
-- `*Logger.NewPrint(level, Category, string) func(string)`
-
-[^Top](#alog)
+        ```
 
 
-### v0.1.2
+Other updates since v0.1.0
 
-- Added new method `*Logger.NewWriter(level, Category) *alogw`
-    - This is compatible with io.Writer interface.
-    - This can be used as a log hook for libraries.
-
-[^Top](#alog)
-
-
-### v0.1.1
-
-- Added new method `*Logger.NewPrint(level, Category) func(string)`
-    - This will be used to create custom logging with defining category each time.
-    - `Printf` has not been implemented due to memory allocation.
-
-[^Top](#alog)
-
-
-### v0.1.0
-
-- **Removed buffer flags**: this can be replaced with `bufio.Writer`.
-- **Removed logging level flags from constructor**: constructor `New()` was taking
-    configuration bitflag for formatting as well as logging level. As those two
-    aren't the same kind, logging level flag has been removed. Default logging
-    level is `INFO`, and a user can reset it by using `*logger.SetLevel()` method.
-    - [Issue #8](https://github.com/gonyyi/alog/issues/8) type Format should be renamed to configuration or something
-- **Removed `SetExitOnFatal()`**: `*logger.SetExitOnFatal()` was used to set if
-    a user want to exit when fatal level log is received. Now, `Print()` and `Printf()`
-    will not exit when received fatal level log, but `Fatal()` and `Fatalf()` will
-    exit with exit code 1.
-- **Renamed `SetLevels()` into `SetLevelPrefix()`**: A method `SetLevels()` was
-    not an intuitive name, created confusion. So, renamed it to `SetLevelPrefix()`
-- **Unexport few types**: previously, alog exported type for `Level` and `Format`. 
-    those two types are not unexported.
-    - [Issue #8](https://github.com/gonyyi/alog/issues/8) type Format should be renamed to configuration or something
-- **Added Writer()**: `*logger.Writer()` will return `io.Writer` used in the logger.
-- **Documentation update**: added comments and examples for many code base and 
-    compatible with GoDoc. 
-    - [Issue #7](https://github.com/gonyyi/alog/issues/7) Add `example_` files
-    - [Issue #4](https://github.com/gonyyi/alog/issues/4) Make compatible with Godoc
-    - [Issue #3](https://github.com/gonyyi/alog/issues/3) Add a comparison for internal functions
-- **Use more of switch instead of if-else**: although there isn't any performance
-    gain, many codes where it has multiple if-else blocks are now converted to
-    switch for better code readability.
+- v0.1.6
+    - Added a badge for a coverage
+    - Any level-predefined and formatted methods such as `Tracef`, `Debugf`, ... `Fatalf` will evaluate if any additional arguments are present besides format string. If there is no additional argument, it will run without formatting to save processing time.
+    - `*.Logger.IfError(error)`, `*.Logger.IfFatal(error)` has been added. These methods are taking error (or `nil`) for an argument. If it's `nil`, it will ignore, but if actual error is given, it will log the error message.
+    - `*Logger.Close()` method has been added back. If an `io.Writer` that logger uses have `Close()` method, it will call the `Close()` method of the writer.
+    - `Fatal`, `Fatalf`, `IfFatal` will call `*Logger.Close()` right before the `os.Exit()`
+- v0.1.5
+    - Added a license (MIT) <https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE>
+- v0.1.4
+    - New flag option `Fnewline` has been added. The default behavior is not allowing newline
+      within the log message. However, using this option will allow newlines in the log message.
+- v0.1.3
+    - NewWriter and NewPrint now takes additional string argument for prefix.
+        - `*Logger.NewWriter(level, Category, string) *alogw`
+        - `*Logger.NewPrint(level, Category, string) func(string)`
+- v0.1.2
+    - Added new method `*Logger.NewWriter(level, Category) *alogw`
+        - This is compatible with io.Writer interface.
+        - This can be used as a log hook for libraries.
+- v0.1.1
+    - Added new method `*Logger.NewPrint(level, Category) func(string)`
+        - This will be used to create custom logging with defining category each time.
+        - `Printf` has not been implemented due to memory allocation.
+- v0.1.0
+    - **Removed buffer flags**: this can be replaced with `bufio.Writer`.
+    - **Removed logging level flags from constructor**: constructor `New()` was taking
+      configuration bitflag for formatting as well as logging level. As those two
+      aren't the same kind, logging level flag has been removed. Default logging
+      level is `INFO`, and a user can reset it by using `*logger.SetLevel()` method.
+    - [Issue #8](https://github.com/gonyyi/alog/issues/8) type Format should be renamed
+      to configuration or something
+    - **Removed `SetExitOnFatal()`**: `*logger.SetExitOnFatal()` was used to set if
+      a user want to exit when fatal level log is received. Now, `Print()` and `Printf()`
+      will not exit when received fatal level log, but `Fatal()` and `Fatalf()` will
+      exit with exit code 1.
+    - **Renamed `SetLevels()` into `SetLevelPrefix()`**: A method `SetLevels()` was
+      not an intuitive name, created confusion. So, renamed it to `SetLevelPrefix()`
+    - **Unexport few types**: previously, alog exported type for `Level` and `Format`.
+      those two types are not unexported.
+        - [Issue #8](https://github.com/gonyyi/alog/issues/8) type Format should be renamed to
+          configuration or something
+    - **Added Writer()**: `*logger.Writer()` will return `io.Writer` used in the logger.
+    - **Documentation update**: added comments and examples for many code base and
+      compatible with GoDoc.
+        - [Issue #7](https://github.com/gonyyi/alog/issues/7) Add `example_` files
+        - [Issue #4](https://github.com/gonyyi/alog/issues/4) Make compatible with Godoc
+        - [Issue #3](https://github.com/gonyyi/alog/issues/3) Add a comparison for internal functions
+    - **Use more of switch instead of if-else**: although there isn't any performance
+      gain, many codes where it has multiple if-else blocks are now converted to
+      switch for better code readability.
 
 [^Top](#alog)
 
@@ -150,7 +151,7 @@ import (
 )
 
 func main() {
-    l := alog.New(os.Stdout, "test ", alog.Fprefix|alog.Flevel)
+    l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix|alog.Flevel)
 
     // Trace/Debug will NOT be printed
     l.Trace("hello trace")
@@ -172,33 +173,31 @@ func main() {
 package main
 
 import (
-    "github.com/gonyyi/alog"
-    "os"
+	"github.com/gonyyi/alog"
+	"os"
 )
 
 func main() {
-    cat := alog.NewCategory()
-    BACK := cat.Add()
-    FRONT := cat.Add()
-    USER := cat.Add()
-    l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-    l.SetLevel(alog.Ltrace)
+	cat := alog.NewCategory()
+	BACK := cat.Add()
+	FRONT := cat.Add()
+	USER := cat.Add()
 
-    // Assume I want to see BACK and FRONT with a level INFO or above.
-    l.SetCategory(BACK | FRONT) // only show BACK and FRONT
-    l.SetLevel(alog.Linfo)      // this will override config "alog.CLevelTrace"
+	// Assume I want to see BACK and FRONT with a level DEBUG or above.
+	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix | alog.Flevel).
+		SetLevel(alog.Ldebug).SetCategory(BACK | FRONT)
 
-    f := func(c alog.Category, s string) {
-        l.Printf(alog.Ltrace, c, "%s.trace", s)
-        l.Printf(alog.Ldebug, c, "%s.debug", s)
-        l.Printf(alog.Linfo, c, "%s.info", s)
-        l.Printf(alog.Lwarn, c, "%s.warn", s)
-        l.Printf(alog.Lerror, c, "%s.error", s)
-    }
+	f := func(c alog.Category, s string) {
+		l.Printf(alog.Ltrace, c, "%s.trace", s)
+		l.Printf(alog.Ldebug, c, "%s.debug", s)
+		l.Printf(alog.Linfo, c, "%s.info", s)
+		l.Printf(alog.Lwarn, c, "%s.warn", s)
+		l.Printf(alog.Lerror, c, "%s.error", s)
+	}
 
-    f(BACK, "BACK")
-    f(FRONT, "FRONT")
-    f(USER, "USER")
+	f(BACK, "BACK")   // prints debug-error
+	f(FRONT, "FRONT") // prints debug-error
+	f(USER, "USER")   // not print anything
 }
 ```
 
@@ -218,11 +217,11 @@ import (
 
 func main() {
 	// Create a file and bufio writer
-	fLog, _ := os.Create("./alogtest/test.log")
+	fLog, _ := os.Create("./test.log")
 	bLog := bufio.NewWriter(fLog)
 
 	// Create an Alog with default option (MMDD, Time, Level) + UTC time.
-	l := alog.New(bLog, "", alog.Fdefault|alog.FtimeUTC)
+	l := alog.New(bLog).SetFlag(alog.Fdefault|alog.FtimeUTC)
 
 	for i := 0; i < 500; i++ {
 		l.Infof("Test %s %d", "info name", i)
@@ -248,7 +247,11 @@ import (
 
 func main() {
 	// Create an Alog with default option (MMDD, Time, Level)
-	l := alog.New(os.Stderr, "", alog.Fdefault)
+	// For v0.2.0+, the constructor has been simplified and only takes io.Writer values.
+	l := alog.New(os.Stderr)
+
+	// v0.1.6 and before, it was required all three params even when default values are used.
+	// l := alog.New(os.Stderr, "", alog.Fdefault) // v0.1.6
 
 	cat := alog.NewCategory()
 	USER := cat.Add()
@@ -282,8 +285,7 @@ import (
 )
 
 func main() {
-	l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
-	l.SetLevel(alog.Ldebug) // set logging level to DEBUG
+	l := alog.New(os.Stdout).SetPrefix("nptest ").SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
 
 	cat := alog.NewCategory()
 	TEST1 := cat.Add()
@@ -327,6 +329,8 @@ Test was done on 2018 MacBook Pro (15-inch):
 - 2.9 GHz 6-Core Intel Core i9
 - 32 GB 2400 MHz DDR4
 - Radeon Pro 560X 4 GB / Intel UHD Graphics 630 1536 MB
+
+Below benchmark is as of v0.1.6. No significant changes in v0.2.0.
 
 | Type    | Name                           | Test               | Count      | Speed       | Mem     | Alloc       |
 |:--------|:-------------------------------|:-------------------|:-----------|:------------|:--------|:------------|

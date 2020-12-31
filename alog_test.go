@@ -5,16 +5,21 @@ package alog_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/gonyyi/alog"
 	"testing"
-	"errors"
 )
 
 // added as v0.1.6c3, 12/30/2020
 func TestLogger_IfError(t *testing.T) {
 	out := &bytes.Buffer{}
-	l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+	// v0.1.6 Code:
+	// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+	// v0.1.7 Code:
+	l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 	// create a new error object, at this point this should be nil, and calling err.Error() will cause a panic
 	var err error
@@ -37,7 +42,13 @@ func TestBasic(t *testing.T) {
 	// NoLevel will use INFO as its level.
 	t.Run("Print,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.Print(alog.Ltrace, 0, "testTrace")
 		l.Print(alog.Ldebug, 0, "testDebug")
 		l.Print(alog.Linfo, 0, "testInfo")
@@ -51,7 +62,13 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Printf,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
 		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
 		l.Printf(alog.Linfo, 0, "test%s", "Info")
@@ -65,7 +82,13 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Print,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.SetLevel(alog.Ltrace)
 		l.Print(alog.Ltrace, 0, "testTrace")
 		l.Print(alog.Ldebug, 0, "testDebug")
@@ -80,7 +103,13 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Printf,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.SetLevel(alog.Ltrace)
 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
 		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
@@ -95,7 +124,13 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Print,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.SetLevel(alog.Lfatal)
 		l.Print(alog.Ltrace, 0, "testTrace")
 		l.Print(alog.Ldebug, 0, "testDebug")
@@ -110,8 +145,14 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Printf,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		l.SetLevel(alog.Lfatal)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+		// l.SetLevel(alog.Lfatal)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLevel(alog.Lfatal)
+
 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
 		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
 		l.Printf(alog.Linfo, 0, "test%s", "Info")
@@ -125,8 +166,14 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Predefined,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		l.SetLevel(alog.Linfo)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+		// l.SetLevel(alog.Linfo)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLevel(alog.Linfo)
+
 		l.Trace("testForTrace")
 		l.Debug("testForDebug")
 		l.Info("testForInfo")
@@ -140,8 +187,15 @@ func TestBasic(t *testing.T) {
 	})
 	t.Run("Predefined,Formatted,level", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-		l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		l.SetLevel(alog.Linfo)
+
+		// v0.1.6 Code:
+		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+		// l.SetLevel(alog.Linfo)
+
+		// v0.1.7 Code:
+		// level info is default level and can be ignored
+		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+
 		l.Tracef("testFor%s", "Trace")
 		l.Debugf("testFor%s", "Debug")
 		l.Infof("testFor%s", "Info")
@@ -160,7 +214,11 @@ func TestNewPrint(t *testing.T) {
 	t.Run("NewPrint", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		l := alog.New(out, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+		// v0.1.6 Code:
+		// l := alog.New(out, "nptest ", alog.Fprefix|alog.Flevel)
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("nptest ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		cat := alog.NewCategory()
 		CAT1 := cat.Add()
@@ -194,7 +252,11 @@ func TestLogger_NewWriter(t *testing.T) {
 	t.Run("NewWriter", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		l := alog.New(out, "nwtest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+		// v0.1.6 Code:
+		// l := alog.New(out, "nwtest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+
+		// v0.1.7 Code:
+		l := alog.New(out).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		cat := alog.NewCategory()
 		TEST1 := cat.Add()
@@ -210,12 +272,12 @@ func TestLogger_NewWriter(t *testing.T) {
 		wT3D := l.NewWriter(alog.Ldebug, TEST3, "T3D ")
 		wT3I := l.NewWriter(alog.Linfo, TEST3, "T3I ")
 
-		fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
-		fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
-		fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
-		fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
-		fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
-		fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
+		_, _ = fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
+		_, _ = fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
+		_, _ = fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
+		_, _ = fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
+		_, _ = fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
+		_, _ = fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
 
 		expect := "nwtest [INF] T2I test: T2I fprintf\n"
 		actual := out.String()
@@ -224,4 +286,13 @@ func TestLogger_NewWriter(t *testing.T) {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
+}
+
+func TestEnum(t *testing.T) {
+	if alog.Fall != 4294967295 {
+		t.Fatalf("Unexpected alog.Fall value, exp=%d vs act=%d", 4294967295, alog.Fall)
+	}
+	if alog.Fnone != 0 {
+		t.Fatalf("Unexpected alog.Fnone value, exp=%d vs act=%d", 0, alog.Fall)
+	}
 }

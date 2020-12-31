@@ -1,5 +1,5 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.3, 12/29/2020
+// Version 0.2.0, 12/31/2020
 
 package alog_test
 
@@ -76,7 +76,7 @@ func BenchmarkLogger_Info(b *testing.B) {
 		// S1: 4.09 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.12 ns/op	       0 B/op	       0 allocs/op
 		// S2: 0.406 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		l.SetLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -93,7 +93,7 @@ func BenchmarkLogger_Info(b *testing.B) {
 		// S1: 19.4 ns/op	       0 B/op	       0 allocs/op
 		// S2: 5.30 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.85 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		l.SetLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -113,7 +113,7 @@ func BenchmarkLogger_Info(b *testing.B) {
 		// S1: 2013 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1119 ns/op	       0 B/op	       0 allocs/op
 		// S2:  762 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
@@ -133,7 +133,7 @@ func BenchmarkLogger_Infof(b *testing.B) {
 		// S1: 4.09 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.12 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.05 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		l.SetLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -150,7 +150,7 @@ func BenchmarkLogger_Infof(b *testing.B) {
 		// S1: 19.4 ns/op	       0 B/op	       0 allocs/op
 		// S2: 5.30 ns/op	       0 B/op	       0 allocs/op
 		// S2: 4.96 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		l.SetLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -170,7 +170,7 @@ func BenchmarkLogger_Infof(b *testing.B) {
 		// S1: 2013 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1119 ns/op	       0 B/op	       0 allocs/op
 		// S3: 1073 ns/op	       0 B/op	       0 allocs/op
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
@@ -191,7 +191,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 		// S2: 269 ns/op	       0 B/op	       0 allocs/op
 		// S2: 300 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 		cat := alog.NewCategory()
 		BACK := cat.Add()
@@ -219,7 +219,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 		// S2: 482 ns/op	       0 B/op	       0 allocs/op
 		// S2: 511 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 		cat := alog.NewCategory()
 		BACK := cat.Add()
@@ -249,7 +249,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 		// S2: 414 ns/op	       0 B/op	       0 allocs/op
 		// S2: 380 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 		cat := alog.NewCategory()
 		BACK := cat.Add()
@@ -276,7 +276,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 		// S1: 1393 ns/op	       0 B/op	       0 allocs/op
 		// S2:  770 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(ioutil.Discard, "test ", alog.Fdefault)
+		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 		cat := alog.NewCategory()
 		BACK := cat.Add()
@@ -303,7 +303,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 // Added as of 0.1.1 update, 12/29/2020
 func BenchmarkLogger_NewPrint(b *testing.B) {
 	// S2:  293 ns/op	       0 B/op	       0 allocs/op
-	l := alog.New(nil, "test ", alog.Fdefault)
+	l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 	cat := alog.NewCategory()
 	CAT1 := cat.Add()
 	CAT2 := cat.Add()
@@ -330,7 +330,7 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 	// S2: 401 ns/op	       0 B/op	       0 allocs/op
 	// S2: 438 ns/op	       0 B/op	       0 allocs/op
 
-	l := alog.New(nil, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
+	l := alog.New(nil).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 
 	cat := alog.NewCategory()
 	TEST1 := cat.Add()
@@ -350,12 +350,12 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
-			fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
-			fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
-			fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
-			fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
-			fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
+			_, _ = fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
+			_, _ = fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
+			_, _ = fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
+			_, _ = fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
+			_, _ = fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
+			_, _ = fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
 		}
 	})
 }
