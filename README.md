@@ -1,7 +1,7 @@
 # Alog
 
 (c) 2020 Gon Y Yi. <https://gonyyi.com>  
-Version 0.1.5 (12/29/2020)
+Version 0.1.6 (12/29/2020)
 
 [![GoDoc](https://godoc.org/github.com/gonyyi/alog?status.svg)](https://godoc.org/github.com/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.1.5)
@@ -12,6 +12,7 @@ Version 0.1.5 (12/29/2020)
 
 1. [Introduction](#introduction)
 2. [Changes](#changes)
+    - [v0.1.6](#v016)
     - [v0.1.5](#v015)
     - [v0.1.4](#v014)
     - [v0.1.3](#v013)
@@ -40,6 +41,16 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
 ## Changes
+
+### v0.1.6
+
+- Added a badge for a coverage
+- Any level-predefined and formatted methods such as `Tracef`, `Debugf`, ... `Fatalf` will evaluate if any additional arguments are present besides format string. If there is no additional argument, it will run without formatting to save processing time.
+- `*.Logger.IfError(error)`, `*.Logger.IfFatal(error)` has been added. These methods are taking error (or `nil`) for an argument. If it's `nil`, it will ignore, but if actual error is given, it will log the error message. 
+- `*Logger.Close()` method has been added back. If an `io.Writer` that logger uses have `Close()` method, it will call the `Close()` method of the writer.
+- `Fatal`, `Fatalf`, `IfFatal` will call `*Logger.Close()` right before the `os.Exit()`
+
+[^Top](#alog)
 
 
 ### v0.1.5
