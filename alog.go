@@ -1,5 +1,12 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.6c, 12/29/2020
+// Version 0.1.6, 12/30/2020
+
+// 0.1.6c2: for methods that can be often called by other logger compatible interfaces, Debugf() may be used just as
+//    a Debug() without additional params of interface (a). So, new version will check the length of additional param
+//    and if it's zero (0), then run it as Debug() instead of Debugf().
+// 0.1.6c3: Added `*Logger.IfError(error)` and `*Logger.IfFatal(error)` which only log when error is not nil.
+// 0.1.6c4: Added `*Logger.Close()` method.
+
 
 package alog
 
@@ -324,6 +331,10 @@ func (l *Logger) Trace(s string) {
 
 // Tracef will formats and print log without category
 func (l *Logger) Tracef(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Ltrace, noCategory, format)
+		return
+	}
 	if l.check(Ltrace, noCategory) {
 		l.mu.Lock()
 		l.printf(Ltrace, noCategory, format, a...)
@@ -338,6 +349,10 @@ func (l *Logger) Debug(s string) {
 
 // Debugf will formats and print log without category
 func (l *Logger) Debugf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Ldebug, noCategory, format)
+		return
+	}
 	if l.check(Ldebug, noCategory) {
 		l.mu.Lock()
 		l.printf(Ldebug, noCategory, format, a...)
@@ -352,6 +367,10 @@ func (l *Logger) Info(s string) {
 
 // Infof will formats and print log without category
 func (l *Logger) Infof(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Linfo, noCategory, format)
+		return
+	}
 	if l.check(Linfo, noCategory) {
 		l.mu.Lock()
 		l.printf(Linfo, noCategory, format, a...)
@@ -366,10 +385,24 @@ func (l *Logger) Warn(s string) {
 
 // Warnf will formats and print log without category
 func (l *Logger) Warnf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lwarn, noCategory, format)
+		return
+	}
 	if l.check(Lwarn, noCategory) {
 		l.mu.Lock()
 		l.printf(Lwarn, noCategory, format, a...)
 		l.mu.Unlock()
+	}
+}
+
+// IfError will check and log error if exist (not nil)
+// For instance, when running multiple lines of error check
+// This can save error checking.
+// added as v0.1.6c3, 12/30/2020
+func (l *Logger) IfError(e error) {
+	if e != nil {
+		l.Print(Lerror, noCategory, e.Error())
 	}
 }
 
@@ -380,6 +413,10 @@ func (l *Logger) Error(s string) {
 
 // Errorf will formats and print log without category
 func (l *Logger) Errorf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lerror, noCategory, format)
+		return
+	}
 	if l.check(Lerror, noCategory) {
 		l.mu.Lock()
 		l.printf(Lerror, 0, format, a...)
@@ -387,27 +424,58 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 	}
 }
 
+// IfFatal will check and log error if exist (not nil)
+// For instance, when running multiple lines of error check
+// This can save error checking.
+// Unlikee IfError, IfFatal will exit the program
+// added as v0.1.6c3, 12/30/2020
+// updated with Close() as v0.1.6c4, 12/30/2020
+func (l *Logger) IfFatal(e error) {
+	if e != nil {
+		l.Print(Lfatal, noCategory, e.Error())
+		l.Close()
+		os.Exit(1)
+	}
+}
+
 // Fatal will take a single string and print log without category
 // and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatal(s string) {
 	l.Print(Lfatal, noCategory, s)
+	l.Close()
 	os.Exit(1)
 }
 
 // Fatalf will formats and print log without category
 // and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatalf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lfatal, noCategory, format)
+		return
+	}
 	if l.check(Lfatal, noCategory) {
 		l.mu.Lock()
 		l.printf(Lfatal, noCategory, format, a...)
 		l.mu.Unlock()
 	}
+	l.Close()
 	os.Exit(1)
 }
 
 // Writer returns the output destination for the logger.
 func (l *Logger) Writer() io.Writer {
 	return l.out
+}
+
+// Close will call .Close() method if supported
+// Added for v0.1.6c4, 12/30/2020
+func (l *Logger) Close() error {
+	if c, ok := l.out.(io.Closer); ok && c != nil {
+		return c.Close()
+	}
+	return nil
 }
 
 // NewPrint takes level and category and create a print function.

@@ -10,6 +10,29 @@ import (
 	"testing"
 )
 
+
+// added as v0.1.6c3, 12/30/2020
+func TestLogger_IfError(t *testing.T) {
+	out := &bytes.Buffer{}
+	l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
+
+	// create a new error object, at this point this should be nil, and calling err.Error() will cause a panic
+	var err error
+	l.IfError(err)
+	err = errors.New("test error") // now error exists
+	l.IfError(err)
+	err = nil // empty err again with nil
+	l.IfError(err)
+	err = errors.New("again another one") // now error exists again
+	l.IfError(err)
+
+	expected := "log [ERR] test error\nlog [ERR] again another one\n"
+
+	if expected != out.String() {
+		t.Errorf("expected=<%s>, actual=<%s>", expected, out.String())
+	}
+}
+
 func TestBasic(t *testing.T) {
 	// NoLevel will use INFO as its level.
 	t.Run("Print,NoLevel", func(t2 *testing.T) {
