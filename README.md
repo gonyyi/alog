@@ -151,7 +151,7 @@ import (
 )
 
 func main() {
-    l := alog.New(os.Stdout, "test ", alog.Fprefix|alog.Flevel)
+    l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix|alog.Flevel)
 
     // Trace/Debug will NOT be printed
     l.Trace("hello trace")
@@ -173,33 +173,31 @@ func main() {
 package main
 
 import (
-    "github.com/gonyyi/alog"
-    "os"
+	"github.com/gonyyi/alog"
+	"os"
 )
 
 func main() {
-    cat := alog.NewCategory()
-    BACK := cat.Add()
-    FRONT := cat.Add()
-    USER := cat.Add()
-    l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-    l.SetLevel(alog.Ltrace)
+	cat := alog.NewCategory()
+	BACK := cat.Add()
+	FRONT := cat.Add()
+	USER := cat.Add()
 
-    // Assume I want to see BACK and FRONT with a level INFO or above.
-    l.SetCategory(BACK | FRONT) // only show BACK and FRONT
-    l.SetLevel(alog.Linfo)      // this will override config "alog.CLevelTrace"
+	// Assume I want to see BACK and FRONT with a level DEBUG or above.
+	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix | alog.Flevel).
+		SetLevel(alog.Ldebug).SetCategory(BACK | FRONT)
 
-    f := func(c alog.Category, s string) {
-        l.Printf(alog.Ltrace, c, "%s.trace", s)
-        l.Printf(alog.Ldebug, c, "%s.debug", s)
-        l.Printf(alog.Linfo, c, "%s.info", s)
-        l.Printf(alog.Lwarn, c, "%s.warn", s)
-        l.Printf(alog.Lerror, c, "%s.error", s)
-    }
+	f := func(c alog.Category, s string) {
+		l.Printf(alog.Ltrace, c, "%s.trace", s)
+		l.Printf(alog.Ldebug, c, "%s.debug", s)
+		l.Printf(alog.Linfo, c, "%s.info", s)
+		l.Printf(alog.Lwarn, c, "%s.warn", s)
+		l.Printf(alog.Lerror, c, "%s.error", s)
+	}
 
-    f(BACK, "BACK")
-    f(FRONT, "FRONT")
-    f(USER, "USER")
+	f(BACK, "BACK")   // prints debug-error
+	f(FRONT, "FRONT") // prints debug-error
+	f(USER, "USER")   // not print anything
 }
 ```
 
@@ -219,11 +217,11 @@ import (
 
 func main() {
 	// Create a file and bufio writer
-	fLog, _ := os.Create("./alogtest/test.log")
+	fLog, _ := os.Create("./test.log")
 	bLog := bufio.NewWriter(fLog)
 
 	// Create an Alog with default option (MMDD, Time, Level) + UTC time.
-	l := alog.New(bLog, "", alog.Fdefault|alog.FtimeUTC)
+	l := alog.New(bLog).SetFlag(alog.Fdefault|alog.FtimeUTC)
 
 	for i := 0; i < 500; i++ {
 		l.Infof("Test %s %d", "info name", i)
@@ -249,7 +247,11 @@ import (
 
 func main() {
 	// Create an Alog with default option (MMDD, Time, Level)
-	l := alog.New(os.Stderr, "", alog.Fdefault)
+	// For v0.2.0+, the constructor has been simplified and only takes io.Writer values.
+	l := alog.New(os.Stderr)
+
+	// v0.1.6 and before, it was required all three params even when default values are used.
+	// l := alog.New(os.Stderr, "", alog.Fdefault) // v0.1.6
 
 	cat := alog.NewCategory()
 	USER := cat.Add()
@@ -283,8 +285,7 @@ import (
 )
 
 func main() {
-	l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
-	l.SetLevel(alog.Ldebug) // set logging level to DEBUG
+	l := alog.New(os.Stdout).SetPrefix("nptest ").SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
 
 	cat := alog.NewCategory()
 	TEST1 := cat.Add()
@@ -328,6 +329,8 @@ Test was done on 2018 MacBook Pro (15-inch):
 - 2.9 GHz 6-Core Intel Core i9
 - 32 GB 2400 MHz DDR4
 - Radeon Pro 560X 4 GB / Intel UHD Graphics 630 1536 MB
+
+Below benchmark is as of v0.1.6. No significant changes in v0.2.0.
 
 | Type    | Name                           | Test               | Count      | Speed       | Mem     | Alloc       |
 |:--------|:-------------------------------|:-------------------|:-----------|:------------|:--------|:------------|
