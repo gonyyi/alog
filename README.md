@@ -202,11 +202,47 @@ func main() {
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D: ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I: ")
 
-    // Assume API takes an io.Writer interface,
+	// Assume API takes an io.Writer interface,
 	fmt.Fprintf(wT1D, "test: %s fprintf", "T1D")
 	fmt.Fprintf(wT1I, "test: %s fprintf", "T1I")
 }
 ```
+
+
+### Using a Custom/Predefined Configuration Function(s)
+
+Preconfigured configuration function can be created and used using `*Logger.Do`.
+
+```go
+package main
+
+import (
+	"github.com/gonyyi/alog"
+	"os"
+)
+
+func main() {
+	myFunc := func(al *alog.Logger) {
+		al.SetPrefix("alogtest ").
+			SetFlag(alog.Fprefix | alog.Flevel).
+			SetLevel(alog.Ltrace)
+	}
+
+	// use myFunc defined above, 
+	// and also use color level by using predefined alog.DoColor function.
+	// `Do` takes any number of `Do` functions.
+	l := alog.New(os.Stderr).Do(myFunc, alog.DoColor)
+
+	// Output below will print colored level as output is set to os.Stderr in this example.
+	l.Trace("test trace test")
+	l.Debug("test debug test")
+	l.Info("test info test")
+	l.Warn("test warn test")
+	l.Error("test error test")
+	l.Fatal("test fatal test")
+}
+```
+
 
 [^Top](#alog)
 
