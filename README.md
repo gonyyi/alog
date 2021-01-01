@@ -20,6 +20,7 @@ Version 0.2.0 (12/31/2020)
     - [With a Buffered Writer](#with-a-buffered-writer)
     - [NewPrint](#newprint)
     - [NewWriter](#newwriter)
+    - [Using a Custom/Predefined Configuration](#using-a-custompredefined-configuration)
 3. [Changes](#changes)
 4. [Note: Formatted Output](#note-formatted-output)
 5. [Benchmark](#benchmark)
@@ -209,7 +210,7 @@ func main() {
 ```
 
 
-### Using a Custom/Predefined Configuration Function(s)
+### Using a Custom/Predefined Configuration
 
 Preconfigured configuration function can be created and used using `*Logger.Do`.
 
