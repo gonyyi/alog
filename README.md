@@ -41,7 +41,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 - v0.2.1a - added .Do
 - v0.2.1b - added .Do example (DoColor)
 
-### 0.2.0
+### v0.2.0
 
 Due to backward compability issue, the version went up from v0.1.6 to v0.2.0. This is mainly
 because of the changes of constructor: `alog.New(io.Writer, string, flag) *Logger`
@@ -76,7 +76,7 @@ became `alog.New(io.Writer) *Logger`.
         ```
 
 
-### Other updates since v0.1.0
+### v0.1.x
 
 - v0.1.6
     - Added a badge for a coverage
