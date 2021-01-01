@@ -1,6 +1,6 @@
 # Alog
 
-(c) 2020 Gon Y Yi. <https://gonyyi.com>
+(c) 2020 Gon Y Yi. <https://gonyyi.com>  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
 Version 0.2.0 (12/31/2020)
@@ -38,8 +38,10 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ## Changes
 
-v0.2.1a - added .Do
-v0.2.1b - added .Do example (DoColor)
+- v0.2.1a - added .Do
+- v0.2.1b - added .Do example (DoColor)
+
+### 0.2.0
 
 Due to backward compability issue, the version went up from v0.1.6 to v0.2.0. This is mainly
 because of the changes of constructor: `alog.New(io.Writer, string, flag) *Logger`
@@ -74,7 +76,7 @@ became `alog.New(io.Writer) *Logger`.
         ```
 
 
-Other updates since v0.1.0
+### Other updates since v0.1.0
 
 - v0.1.6
     - Added a badge for a coverage
@@ -353,3 +355,6 @@ Below benchmark is as of v0.1.6. No significant changes in v0.2.0.
 | Alog    | BenchmarkLogger_NewWriter-12   |                    | 2853715    | 409 ns/op   | 0 B/op  | 0 allocs/op |
 
 [^Top](#alog)
+
+
+EOF
