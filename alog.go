@@ -717,3 +717,29 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 		}
 	}
 }
+
+// DoColor is a do-function for alog, and is an example for `*Logger.Do` application.
+// This will color the level IF output is set to os.Stderr OR os.Stdout
+// Usage: `alog.New(os.Stderr).Do(alog.DoColor)`
+func DoColor(l *Logger) {
+	// IF output is set to os.Stderr OR os.Stdout
+	if l.Writer() != nil && (l.Writer() == os.Stderr || l.Writer() == os.Stdout) {
+		l.SetLevelPrefix(
+			"[\u001B[0;35mTRC\u001B[0m] ",
+			"[\u001B[0;36mDBG\u001B[0m] ",
+			"[\u001B[0;34mINF\u001B[0m] ",
+			"[\u001B[1;33mWRN\u001B[0m] ",
+			"[\u001B[1;31mERR\u001B[0m] ",
+			"[\u001B[1;41;30mFTL\u001B[0m] ",
+		)
+	} else {
+		l.SetLevelPrefix(
+			"[TRC] ",
+			"[DBG] ",
+			"[INF] ",
+			"[WRN] ",
+			"[ERR] ",
+			"[FTL] ",
+		)
+	}
+}
