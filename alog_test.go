@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gonyyi/alog"
-	"os"
 	"testing"
 )
 
@@ -48,37 +47,14 @@ func TestLogger_Do(t *testing.T) {
 		l.SetLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
 	}
 
-	// fnconf2 will ANSI color the level if the output is set to stdout/stderr
-	fnconf2 := func(l *alog.Logger) {
-		if l.Writer() != nil && l.Writer() == os.Stderr && l.Writer() == os.Stdout {
-			l.SetLevelPrefix(
-				"[\u001B[0;35mTRACE\u001B[0m] ",
-				"[\u001B[0;36mDEBUG\u001B[0m] ",
-				"[\u001B[0;34mINFO\u001B[0m]  ",
-				"[\u001B[1;33mWARN\u001B[0m]  ",
-				"[\u001B[1;31mERROR\u001B[0m] ",
-				"[\u001B[1;41;30mFATAL\u001B[0m] ",
-			)
-		} else {
-			l.SetLevelPrefix(
-				"[TRACE] ",
-				"[DEBUG] ",
-				"[INFO]  ",
-				"[WARN]  ",
-				"[ERROR] ",
-				"[FATAL] ",
-			)
-		}
-	}
-
-	l := alog.New(out).Do(fnconf1, fnconf2)
+	l := alog.New(out).Do(fnconf1, alog.DoColor)
 	l.Print(alog.Ltrace, 0, "testTrace")
 	l.Print(alog.Ldebug, 0, "testDebug")
 	l.Print(alog.Linfo, 0, "testInfo")
 	l.Print(alog.Lwarn, 0, "testWarn")
 	l.Print(alog.Lerror, 0, "testError")
 	//l.Print(alog.Lfatal, 0, "testFatal")
-	expected := "log [DEBUG] testDebug\nlog [INFO]  testInfo\nlog [WARN]  testWarn\nlog [ERROR] testError\n"
+	expected := "log [DBG] testDebug\nlog [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
 
 	if expected != out.String() {
 		t.Errorf("expected=<%s>, actual=<%s>", expected, out.String())
