@@ -47,14 +47,18 @@ func TestLogger_Do(t *testing.T) {
 		l.SetLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
 	}
 
-	l := alog.New(out).Do(fnconf1, alog.DoColor)
+	l := alog.New(out).Do(fnconf1, alog.DoColor("", "", "", "", "", ""))
 	l.Print(alog.Ltrace, 0, "testTrace")
 	l.Print(alog.Ldebug, 0, "testDebug")
 	l.Print(alog.Linfo, 0, "testInfo")
 	l.Print(alog.Lwarn, 0, "testWarn")
 	l.Print(alog.Lerror, 0, "testError")
 	//l.Print(alog.Lfatal, 0, "testFatal")
-	expected := "log [DBG] testDebug\nlog [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
+
+	expected := "log \u001B[0;36m[DBG] \u001B[0mtestDebug\n" +
+		"log \u001B[0;34m[INF] \u001B[0mtestInfo\n" +
+		"log \u001B[1;33m[WRN] \u001B[0mtestWarn\n" +
+		"log \u001B[1;31m[ERR] \u001B[0mtestError\n"
 
 	if expected != out.String() {
 		t.Errorf("expected=<%s>, actual=<%s>", expected, out.String())
