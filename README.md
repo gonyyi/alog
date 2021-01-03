@@ -3,7 +3,7 @@
 (c) 2020 Gon Y Yi. <https://gonyyi.com>  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.2.0 (12/31/2020)
+Version 0.3.0 (1/3/2020)
 
 [![GoDoc](https://godoc.org/github.com/gonyyi/alog?status.svg)](https://godoc.org/github.com/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.2.0)
@@ -16,7 +16,7 @@ Version 0.2.0 (12/31/2020)
 1. [Introduction](#introduction)
 2. [Examples](#examples)
     - [Leveled Log](#leveled-log)
-    - [Category Support](#category-support)
+    - [Tag Support](#tag-support)
     - [With a Buffered Writer](#with-a-buffered-writer)
     - [NewPrint](#newprint)
     - [NewWriter](#newwriter)
@@ -29,7 +29,7 @@ Version 0.2.0 (12/31/2020)
 ## Introduction
 
 Alog is a simple dependency-free logger with a goal of zero memory allocation.
-Alog supports leveled logging with optional category support.
+Alog supports leveled logging and tagging.
 
 If you find any bug/concern about performance, 
 please [create an issue](https://github.com/gonyyi/alog/issues/new).
@@ -56,28 +56,29 @@ Then, visit <http://localhost:8080/pkg/github.com/gonyyi/alog/>
 package main
 
 import (
-    "github.com/gonyyi/alog"
-    "os"
+	"github.com/gonyyi/alog"
+	"os"
 )
 
 func main() {
-    l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix|alog.Flevel)
+	// Without SetLevel defined, the default value for level is Info.
+	l := alog.New(os.Stdout).SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
 
-    // Trace/Debug will NOT be printed
-    l.Trace("hello trace")
-    l.Debug("hello debug")
+	// Trace will NOT be printed
+	l.Trace("hello trace")
 
-    // Info/Warn/Error/Fatal will be printed
-    l.Info("hello info")
-    l.Warn("hello warn")
-    l.Error("hello error")
+	// Debug/Info/Warn/Error/Fatal will be printed
+	l.Debug("hello debug")
+	l.Info("hello info")
+	l.Warn("hello warn")
+	l.Error("hello error")
 }
 ```
 
 [^Top](#alog)
 
 
-### Category Support
+### Tag Support
 
 ```go
 package main
@@ -88,16 +89,13 @@ import (
 )
 
 func main() {
-	cat := alog.NewCategory()
-	BACK := cat.Add()
-	FRONT := cat.Add()
-	USER := cat.Add()
+	var BACK, FRONT, USER alog.Tag
 
 	// Assume I want to see BACK and FRONT with a level DEBUG or above.
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix | alog.Flevel).
-		SetLevel(alog.Ldebug).SetCategory(BACK | FRONT)
+		SetLevel(alog.Ldebug).SetTags(&BACK, &FRONT, &USER).SetFilter(BACK | FRONT)
 
-	f := func(c alog.Category, s string) {
+	f := func(c alog.Tag, s string) {
 		l.Printf(alog.Ltrace, c, "%s.trace", s)
 		l.Printf(alog.Ldebug, c, "%s.debug", s)
 		l.Printf(alog.Linfo, c, "%s.info", s)
@@ -157,23 +155,19 @@ import (
 
 func main() {
 	// Create an Alog with default option (MMDD, Time, Level)
-	// For v0.2.0+, the constructor has been simplified and only takes io.Writer values.
 	l := alog.New(os.Stderr)
 
-	// v0.1.6 and before, it was required all three params even when default values are used.
-	// l := alog.New(os.Stderr, "", alog.Fdefault) // v0.1.6
+	// Another way of adding tags instead of SetTags() are assign each tag with NewTag()
+	USER := l.NewTag()
+	DB := l.NewTag()
 
-	cat := alog.NewCategory()
-	USER := cat.Add()
-	DB := cat.Add()
-
-	l.SetCategory(USER)
+	l.SetFilter(USER)
 
 	UserInfo := l.NewPrint(alog.Linfo, USER, "USER: ")
 	DBInfo := l.NewPrint(alog.Linfo, DB, "DB: ")
 
 	UserInfo("test cat: user, lvl: info") // Printed
-	DBInfo("test cat: DB, lvl: info")     // Not printed as category is set to USER
+	DBInfo("test cat: DB, lvl: info")     // Not printed as tag is set to USER
 }
 ```
 
@@ -182,14 +176,15 @@ func main() {
 
 ### NewWriter
 
-`*Logger.NewWriter` takes a level and a category then creates an alogw object which is io.Writer compatible.
+`*Logger.NewWriter` takes a level and a tag then creates an alogw object which is io.Writer compatible.
 This can be used as a writer hook. Assume there is an API that takes io.Writer, you can preset the level and
-category and just plug it in.
+tag and just plug it in.
 
 ```go
 package main
 
 import (
+	"fmt"
 	"github.com/gonyyi/alog"
 	"os"
 )
@@ -197,8 +192,7 @@ import (
 func main() {
 	l := alog.New(os.Stdout).SetPrefix("nptest ").SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
 
-	cat := alog.NewCategory()
-	TEST1 := cat.Add()
+	TEST1 := l.NewTag()
 
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D: ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I: ")
@@ -229,10 +223,10 @@ func main() {
 			SetLevel(alog.Ltrace)
 	}
 
-	// use myFunc defined above, 
+	// use myFunc defined above,
 	// and also use color level by using predefined alog.DoColor function.
 	// `Do` takes any number of `Do` functions.
-	l := alog.New(os.Stderr).Do(myFunc, alog.DoColor("", "", "", "", "", "") // Using default values with color
+	l := alog.New(os.Stderr).Do(myFunc, alog.DoColor()) // now with color
 
 	// Output below will print colored level as output is set to os.Stderr in this example.
 	l.Trace("test trace test")
@@ -251,8 +245,13 @@ func main() {
 
 ## Changes
 
-- v0.2.1a - added .Do
-- v0.2.1b - added .Do example (DoColor)
+### v0.3.0
+
+1. New `*alog.Do(*Logger)` method.
+2. New `*alog.NewTag() Tag`, this replaced `alog.NewCategory()`.
+3. New `*alog.SetTags(...*alog.Tag)` method. This will set tags for given pointers.
+4. New `*alog.Output(lvl level, tag Tag, b []byte)` method. This takes byte slice and
+   should be used where bytes are used.
 
 
 ### v0.2.0
