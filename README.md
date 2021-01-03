@@ -253,7 +253,7 @@ func main() {
 
 - v0.2.1a - added .Do
 - v0.2.1b - added .Do example (DoColor)
-- v0.2.1c - .Do now takes arguments
+
 
 ### v0.2.0
 

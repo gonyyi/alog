@@ -47,7 +47,7 @@ func TestLogger_Do(t *testing.T) {
 		l.SetLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
 	}
 
-	l := alog.New(out).Do(fnconf1, alog.DoColor("", "", "", "", "", ""))
+	l := alog.New(out).Do(fnconf1, alog.DoColor())
 	l.Print(alog.Ltrace, 0, "testTrace")
 	l.Print(alog.Ldebug, 0, "testDebug")
 	l.Print(alog.Linfo, 0, "testInfo")

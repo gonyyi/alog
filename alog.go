@@ -720,21 +720,14 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 
 // DoColor is an example of Do function creation.
 // This function returns do-function for alog, and is an example for `*Logger.Do` application.
-// If no value is given, it will use default.
-// Usage: `alog.New(os.Stderr).Do(alog.DoColor("", "", "", "", "", ""))`
-func DoColor(Trace, Debug, Info, Warn, Error, Fatal string) func(*Logger) {
-	fDft := func(def, new string) string {
-		if new != "" {
-			return new
-		}
-		return def
-	}
-	trc := fDft("[TRC] ", Trace)
-	dbg := fDft("[DBG] ", Debug)
-	inf := fDft("[INF] ", Info)
-	wrn := fDft("[WRN] ", Warn)
-	err := fDft("[ERR] ", Error)
-	ftl := fDft("[FTL] ", Fatal)
+// Usage: `alog.New(os.Stderr).Do(alog.DoColor())`
+func DoColor() func(*Logger) {
+	trc := "[TRC] "
+	dbg := "[DBG] "
+	inf := "[INF] "
+	wrn := "[WRN] "
+	err := "[ERR] "
+	ftl := "[FTL] "
 
 	return func(l *Logger) {
 		l.SetLevelPrefix(
