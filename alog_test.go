@@ -48,12 +48,12 @@ func TestLogger_Do(t *testing.T) {
 	}
 
 	l := alog.New(out).Do(fnconf1, alog.DoColor())
-	l.Print(alog.Ltrace, 0, "testTrace")
-	l.Print(alog.Ldebug, 0, "testDebug")
-	l.Print(alog.Linfo, 0, "testInfo")
-	l.Print(alog.Lwarn, 0, "testWarn")
-	l.Print(alog.Lerror, 0, "testError")
-	//l.Print(alog.Lfatal, 0, "testFatal")
+	l.Output(alog.Ltrace, 0, "testTrace")
+	l.Output(alog.Ldebug, 0, "testDebug")
+	l.Output(alog.Linfo, 0, "testInfo")
+	l.Output(alog.Lwarn, 0, "testWarn")
+	l.Output(alog.Lerror, 0, "testError")
+	//l.Output(alog.Lfatal, 0, "testFatal")
 
 	expected := "log \u001B[0;36m[DBG] \u001B[0mtestDebug\n" +
 		"log \u001B[0;34m[INF] \u001B[0mtestInfo\n" +
@@ -67,7 +67,7 @@ func TestLogger_Do(t *testing.T) {
 
 func TestBasic(t *testing.T) {
 	// NoLevel will use INFO as its level.
-	t.Run("Print,NoLevel", func(t2 *testing.T) {
+	t.Run("Output,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -76,18 +76,18 @@ func TestBasic(t *testing.T) {
 		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
-		l.Print(alog.Ltrace, 0, "testTrace")
-		l.Print(alog.Ldebug, 0, "testDebug")
-		l.Print(alog.Linfo, 0, "testInfo")
-		l.Print(alog.Lwarn, 0, "testWarn")
-		l.Print(alog.Lerror, 0, "testError")
+		l.Output(alog.Ltrace, 0, "testTrace")
+		l.Output(alog.Ldebug, 0, "testDebug")
+		l.Output(alog.Linfo, 0, "testInfo")
+		l.Output(alog.Lwarn, 0, "testWarn")
+		l.Output(alog.Lerror, 0, "testError")
 		expect := "log [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
 		actual := out.String()
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
-	t.Run("Printf,NoLevel", func(t2 *testing.T) {
+	t.Run("Outputf,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -96,18 +96,18 @@ func TestBasic(t *testing.T) {
 		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
-		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
-		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
-		l.Printf(alog.Linfo, 0, "test%s", "Info")
-		l.Printf(alog.Lwarn, 0, "test%s", "Warn")
-		l.Printf(alog.Lerror, 0, "test%s", "Error")
+		l.Outputf(alog.Ltrace, 0, "test%s", "Trace")
+		l.Outputf(alog.Ldebug, 0, "test%s", "Debug")
+		l.Outputf(alog.Linfo, 0, "test%s", "Info")
+		l.Outputf(alog.Lwarn, 0, "test%s", "Warn")
+		l.Outputf(alog.Lerror, 0, "test%s", "Error")
 		expect := "log [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
 		actual := out.String()
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
-	t.Run("Print,Trace", func(t2 *testing.T) {
+	t.Run("Output,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -117,18 +117,18 @@ func TestBasic(t *testing.T) {
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Ltrace)
-		l.Print(alog.Ltrace, 0, "testTrace")
-		l.Print(alog.Ldebug, 0, "testDebug")
-		l.Print(alog.Linfo, 0, "testInfo")
-		l.Print(alog.Lwarn, 0, "testWarn")
-		l.Print(alog.Lerror, 0, "testError")
+		l.Output(alog.Ltrace, 0, "testTrace")
+		l.Output(alog.Ldebug, 0, "testDebug")
+		l.Output(alog.Linfo, 0, "testInfo")
+		l.Output(alog.Lwarn, 0, "testWarn")
+		l.Output(alog.Lerror, 0, "testError")
 		expect := "log [TRC] testTrace\nlog [DBG] testDebug\nlog [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
 		actual := out.String()
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
-	t.Run("Printf,Trace", func(t2 *testing.T) {
+	t.Run("Outputf,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -138,18 +138,18 @@ func TestBasic(t *testing.T) {
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Ltrace)
-		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
-		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
-		l.Printf(alog.Linfo, 0, "test%s", "Info")
-		l.Printf(alog.Lwarn, 0, "test%s", "Warn")
-		l.Printf(alog.Lerror, 0, "test%s", "Error")
+		l.Outputf(alog.Ltrace, 0, "test%s", "Trace")
+		l.Outputf(alog.Ldebug, 0, "test%s", "Debug")
+		l.Outputf(alog.Linfo, 0, "test%s", "Info")
+		l.Outputf(alog.Lwarn, 0, "test%s", "Warn")
+		l.Outputf(alog.Lerror, 0, "test%s", "Error")
 		expect := "log [TRC] testTrace\nlog [DBG] testDebug\nlog [INF] testInfo\nlog [WRN] testWarn\nlog [ERR] testError\n"
 		actual := out.String()
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
-	t.Run("Print,Fatal", func(t2 *testing.T) {
+	t.Run("Output,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -159,18 +159,18 @@ func TestBasic(t *testing.T) {
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Lfatal)
-		l.Print(alog.Ltrace, 0, "testTrace")
-		l.Print(alog.Ldebug, 0, "testDebug")
-		l.Print(alog.Linfo, 0, "testInfo")
-		l.Print(alog.Lwarn, 0, "testWarn")
-		l.Print(alog.Lerror, 0, "testError")
+		l.Output(alog.Ltrace, 0, "testTrace")
+		l.Output(alog.Ldebug, 0, "testDebug")
+		l.Output(alog.Linfo, 0, "testInfo")
+		l.Output(alog.Lwarn, 0, "testWarn")
+		l.Output(alog.Lerror, 0, "testError")
 		expect := ""
 		actual := out.String()
 		if expect != actual {
 			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
 		}
 	})
-	t.Run("Printf,Fatal", func(t2 *testing.T) {
+	t.Run("Outputf,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
 		// v0.1.6 Code:
@@ -180,11 +180,11 @@ func TestBasic(t *testing.T) {
 		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLevel(alog.Lfatal)
 
-		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
-		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
-		l.Printf(alog.Linfo, 0, "test%s", "Info")
-		l.Printf(alog.Lwarn, 0, "test%s", "Warn")
-		l.Printf(alog.Lerror, 0, "test%s", "Error")
+		l.Outputf(alog.Ltrace, 0, "test%s", "Trace")
+		l.Outputf(alog.Ldebug, 0, "test%s", "Debug")
+		l.Outputf(alog.Linfo, 0, "test%s", "Info")
+		l.Outputf(alog.Lwarn, 0, "test%s", "Warn")
+		l.Outputf(alog.Lerror, 0, "test%s", "Error")
 		expect := ""
 		actual := out.String()
 		if expect != actual {
@@ -247,11 +247,11 @@ func TestNewPrint(t *testing.T) {
 		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("nptest ").SetFlag(alog.Fprefix | alog.Flevel)
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		CAT1 := cat.Add()
 		CAT2 := cat.Add()
 
-		l.SetCategory(CAT1) // Print only CAT1
+		l.SetTag(CAT1) // Output only CAT1
 		WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
 		WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2W ")
 		TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1T ")
@@ -285,12 +285,12 @@ func TestLogger_NewWriter(t *testing.T) {
 		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		TEST1 := cat.Add()
 		TEST2 := cat.Add()
 		TEST3 := cat.Add()
 
-		l.SetCategory(TEST2) // only show TEST2
+		l.SetTag(TEST2) // only show TEST2
 
 		wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 		wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")

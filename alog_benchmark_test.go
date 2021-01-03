@@ -193,23 +193,23 @@ func BenchmarkLogger_Print(b *testing.B) {
 
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		BACK := cat.Add()
 		FRNT := cat.Add()
 		CAT1 := cat.Add()
 		CAT2 := cat.Add()
 		CAT3 := cat.Add()
-		l.SetCategory(BACK)
+		l.SetTag(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Print(alog.Lwarn, BACK, testLogMsg)
-				l.Print(alog.Lwarn, FRNT, testLogMsg)
-				l.Print(alog.Lwarn, CAT1, testLogMsg)
-				l.Print(alog.Lwarn, CAT2, testLogMsg)
-				l.Print(alog.Lwarn, CAT3, testLogMsg)
+				l.Output(alog.Lwarn, BACK, testLogMsg)
+				l.Output(alog.Lwarn, FRNT, testLogMsg)
+				l.Output(alog.Lwarn, CAT1, testLogMsg)
+				l.Output(alog.Lwarn, CAT2, testLogMsg)
+				l.Output(alog.Lwarn, CAT3, testLogMsg)
 			}
 		})
 	})
@@ -221,23 +221,23 @@ func BenchmarkLogger_Print(b *testing.B) {
 
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		BACK := cat.Add()
 		FRNT := cat.Add()
 		CAT1 := cat.Add()
 		CAT2 := cat.Add()
 		CAT3 := cat.Add()
-		l.SetCategory(BACK | CAT1)
+		l.SetTag(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Print(alog.Lwarn, BACK, testLogMsg)
-				l.Print(alog.Lwarn, FRNT, testLogMsg)
-				l.Print(alog.Lwarn, CAT1, testLogMsg)
-				l.Print(alog.Lwarn, CAT2, testLogMsg)
-				l.Print(alog.Lwarn, CAT3, testLogMsg)
+				l.Output(alog.Lwarn, BACK, testLogMsg)
+				l.Output(alog.Lwarn, FRNT, testLogMsg)
+				l.Output(alog.Lwarn, CAT1, testLogMsg)
+				l.Output(alog.Lwarn, CAT2, testLogMsg)
+				l.Output(alog.Lwarn, CAT3, testLogMsg)
 			}
 		})
 	})
@@ -251,23 +251,23 @@ func BenchmarkLogger_Printf(b *testing.B) {
 
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		BACK := cat.Add()
 		FRNT := cat.Add()
 		CAT1 := cat.Add()
 		CAT2 := cat.Add()
 		CAT3 := cat.Add()
-		l.SetCategory(BACK)
+		l.SetTag(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Printf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
 			}
 		})
 	})
@@ -278,23 +278,23 @@ func BenchmarkLogger_Printf(b *testing.B) {
 
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		cat := alog.NewCategory()
+		cat := alog.NewTag()
 		BACK := cat.Add()
 		FRNT := cat.Add()
 		CAT1 := cat.Add()
 		CAT2 := cat.Add()
 		CAT3 := cat.Add()
-		l.SetCategory(BACK | CAT1)
+		l.SetTag(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Printf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Printf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Outputf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
 			}
 		})
 	})
@@ -304,10 +304,10 @@ func BenchmarkLogger_Printf(b *testing.B) {
 func BenchmarkLogger_NewPrint(b *testing.B) {
 	// S2:  293 ns/op	       0 B/op	       0 allocs/op
 	l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-	cat := alog.NewCategory()
+	cat := alog.NewTag()
 	CAT1 := cat.Add()
 	CAT2 := cat.Add()
-	l.SetCategory(CAT1)
+	l.SetTag(CAT1)
 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
 	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2w ")
 	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1t ")
@@ -332,12 +332,12 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 
 	l := alog.New(nil).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 
-	cat := alog.NewCategory()
+	cat := alog.NewTag()
 	TEST1 := cat.Add()
 	TEST2 := cat.Add()
 	TEST3 := cat.Add()
 
-	l.SetCategory(TEST2) // only show TEST2
+	l.SetTag(TEST2) // only show TEST2
 
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
