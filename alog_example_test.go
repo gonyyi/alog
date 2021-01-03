@@ -10,7 +10,7 @@ import (
 )
 
 func ExampleNew() {
-	l := alog.New(os.Stdout).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("test ")
+	l := alog.New(os.Stdout).SetFlag(alog.Fprefix | alog.Flevel)
 
 	// Trace/Debug will NOT be printed
 	l.Trace("hello trace")
@@ -22,9 +22,9 @@ func ExampleNew() {
 	l.Error("hello error")
 
 	// Output:
-	// test [INF] hello info
-	// test [WRN] hello warn
-	// test [ERR] hello error
+	// [INF] hello info
+	// [WRN] hello warn
+	// [ERR] hello error
 }
 
 func ExampleLogger_Do() {
@@ -44,11 +44,11 @@ func ExampleLogger_Do() {
 
 	l := alog.New(os.Stdout).Do(myconf1, myconf2)
 
-	l.Output(alog.Ltrace, 0, "testTrace")
-	l.Output(alog.Ldebug, 0, "testDebug")
-	l.Output(alog.Linfo, 0, "testInfo")
-	l.Output(alog.Lwarn, 0, "testWarn")
-	l.Output(alog.Lerror, 0, "testError")
+	l.Print(alog.Ltrace, 0, "testTrace")
+	l.Print(alog.Ldebug, 0, "testDebug")
+	l.Print(alog.Linfo, 0, "testInfo")
+	l.Print(alog.Lwarn, 0, "testWarn")
+	l.Print(alog.Lerror, 0, "testError")
 
 	// Output:
 	// log [DEBUG] testDebug
@@ -58,16 +58,17 @@ func ExampleLogger_Do() {
 }
 
 func ExampleLogger_NewWriter() {
-	l := alog.New(os.Stdout).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLevel(alog.Ldebug)
-
-	cat := alog.NewTag()
-	TEST1 := cat.Add()
-	TEST2 := cat.Add()
-	TEST3 := cat.Add()
+	var TEST1, TEST2, TEST3 alog.Tag
+	l := alog.New(os.Stdout).Do(
+		func(l2 *alog.Logger) {
+			TEST1 = l2.NewTag()
+			TEST2 = l2.NewTag()
+			TEST3 = l2.NewTag()
+		}).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLevel(alog.Ldebug)
 
 	// only show TEST2 here.
 	// Therefore only DEBUG/INFO with TEST2 will be printed
-	l.SetTag(TEST2)
+	l.SetFilter(TEST2)
 
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
@@ -89,17 +90,19 @@ func ExampleLogger_NewWriter() {
 }
 
 func ExampleLogger_NewPrint() {
-	cat := alog.NewTag()
-	CAT1 := cat.Add()
-	CAT2 := cat.Add()
+	var CAT1, CAT2 alog.Tag
 
 	// v0.1.6 Code:
 	// l := alog.New(os.Stdout, "nptest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
 
 	// v0.2.0 Code:
-	l := alog.New(os.Stdout).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetTag(CAT1)
+	l := alog.New(os.Stdout).Do(
+		func(l2 *alog.Logger) {
+			CAT1 = l2.NewTag()
+			CAT2 = l2.NewTag()
+		}).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetFilter(CAT1)
 
-	l.SetTag(CAT1) // Output only CAT1
+	l.SetFilter(CAT1) // Print only CAT1
 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
 	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2W ")
 	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1T ")
@@ -121,8 +124,8 @@ func ExampleLogger_SetOutput() {
 	// Therefore, below will not be printed because it will output to ioutil.Discard
 
 	// v0.1.6 Code:
-	//l := alog.New(nil, "test ", alog.Flevel|alog.Fprefix)
-	//l.SetLevel(alog.Ltrace)
+	// l := alog.New(nil, "test ", alog.Flevel|alog.Fprefix)
+	// l.SetLevel(alog.Ltrace)
 
 	// v0.2.0 Code:
 	l := alog.New(nil).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix).SetLevel(alog.Ltrace)
@@ -210,8 +213,8 @@ func ExampleLogger_SetLevelPrefix() {
 	l.Warn("1 warn")
 	l.Error("1 error")
 	// if logger.Fatal() is called, it will exit with 1,
-	// so for testing, using Output() instead.
-	l.Output(alog.Lfatal, 0, "1 fatal")
+	// so for testing, using Print() instead.
+	l.Print(alog.Lfatal, 0, "1 fatal")
 
 	// Not switch level prefix:
 	l.SetLevelPrefix("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] ", "[FATAL] ")
@@ -220,7 +223,7 @@ func ExampleLogger_SetLevelPrefix() {
 	l.Info("2 info")
 	l.Warn("2 warn")
 	l.Error("2 error")
-	l.Output(alog.Lfatal, 0, "2 fatal")
+	l.Print(alog.Lfatal, 0, "2 fatal")
 
 	// Output:
 	// test [INF] 1 info
@@ -233,37 +236,66 @@ func ExampleLogger_SetLevelPrefix() {
 	// test [FATAL] 2 fatal
 }
 
-func ExampleLogger_SetCategory() {
+func ExampleLogger_SetTags() {
 	// v0.1.6 Code:
 	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
 
 	// v0.2.0 Code:
-	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
 
 	// Assume there are 4 categories: SYSTEM, DISK, REQUEST, RESPONSE
-	mycat := alog.NewTag()
-	SYSTEM := mycat.Add()
-	DISK := mycat.Add()
-	REQUEST := mycat.Add()
-	RESPONSE := mycat.Add()
+	var SYSTEM, DISK, REQUEST, RESPONSE alog.Tag
+	l := alog.New(os.Stdout).
+		SetTags(&SYSTEM, &DISK, &REQUEST, &RESPONSE). // assign tag values to tag pointers
+		SetPrefix("test ").
+		SetFlag(alog.Flevel | alog.Fprefix)
 
 	// And the user only wants to see REQUEST and RESPONSE logs with INFO or above level.
 	l.SetLevel(alog.Linfo)
-	l.SetTag(REQUEST | RESPONSE)
+
+	l.SetFilter(REQUEST | RESPONSE) // only REQUEST and RESPONSE tag will be shown.
 
 	// Debug logs won't be printed
-	l.Output(alog.Ldebug, SYSTEM, "1 debug + system")
-	l.Output(alog.Ldebug, DISK, "1 debug + disk")
-	l.Output(alog.Ldebug, REQUEST, "1 debug + request")
-	l.Output(alog.Ldebug, RESPONSE, "1 debug + response")
+	l.Print(alog.Ldebug, SYSTEM, "1 debug + system")
+	l.Print(alog.Ldebug, DISK, "1 debug + disk")
+	l.Print(alog.Ldebug, REQUEST, "1 debug + request")
+	l.Print(alog.Ldebug, RESPONSE, "1 debug + response")
 
 	// INFO will be printed, however, SYSTEM and DISK category won't.
-	l.Output(alog.Linfo, SYSTEM, "1 info + system")
-	l.Output(alog.Linfo, DISK, "1 info + disk")
+	l.Print(alog.Linfo, SYSTEM, "1 info + system")
+	l.Print(alog.Linfo, DISK, "1 info + disk")
 
 	// Below two will be only log items that will be printed
-	l.Output(alog.Linfo, REQUEST, "1 info + request")
-	l.Output(alog.Linfo, RESPONSE, "1 info + response")
+	l.Print(alog.Linfo, REQUEST, "1 info + request")
+	l.Print(alog.Linfo, RESPONSE, "1 info + response")
+
+	// Output:
+	// test [INF] 1 info + request
+	// test [INF] 1 info + response
+}
+func ExampleLogger_SetFilter() {
+	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+	SYSTEM := l.NewTag()
+	DISK := l.NewTag()
+	REQUEST := l.NewTag()
+	RESPONSE := l.NewTag()
+
+	// And the user only wants to see REQUEST and RESPONSE logs with INFO or above level.
+	l.SetFilter(REQUEST | RESPONSE)
+	l.SetLevel(alog.Linfo)
+
+	// Debug logs won't be printed
+	l.Print(alog.Ldebug, SYSTEM, "1 debug + system")
+	l.Print(alog.Ldebug, DISK, "1 debug + disk")
+	l.Print(alog.Ldebug, REQUEST, "1 debug + request")
+	l.Print(alog.Ldebug, RESPONSE, "1 debug + response")
+
+	// INFO will be printed, however, SYSTEM and DISK category won't.
+	l.Print(alog.Linfo, SYSTEM, "1 info + system")
+	l.Print(alog.Linfo, DISK, "1 info + disk")
+
+	// Below two will be only log items that will be printed
+	l.Print(alog.Linfo, REQUEST, "1 info + request")
+	l.Print(alog.Linfo, RESPONSE, "1 info + response")
 
 	// Output:
 	// test [INF] 1 info + request
@@ -274,8 +306,8 @@ func ExampleLogger_SetLevel() {
 	// Create a new logger with default level WARN
 
 	// v0.1.6 Code:
-	//l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-	//l.SetLevel(alog.Lwarn)
+	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
+	// l.SetLevel(alog.Lwarn)
 
 	// v0.2.0 Code:
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix).SetLevel(alog.Lwarn)
@@ -289,34 +321,38 @@ func ExampleLogger_SetLevel() {
 	// This WILL BE printed.
 	l.Info("test info 2")
 
-	// Output: test [INF] test info 2
+	// Output:
+	// test [INF] test info 2
 }
 
-func ExampleLogger_Print() {
-	// v0.1.6 Code:
-	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-
-	// v0.2.0 Code:
+func ExampleLogger_Output() {
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
 
 	// this will print: "test [INF] hello"
-	l.Output(alog.Linfo, 0, "hello1")
+	l.Output(alog.Linfo, 0, []byte("hello1"))
+
+	// Output:
+	// test [INF] hello1
+}
+
+func ExampleLogger_Print() {
+	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+
+	// this will print: "test [INF] hello"
+	l.Print(alog.Linfo, 0, "hello1")
 
 	// Output:
 	// test [INF] hello1
 }
 
 func ExampleLogger_Printf() {
-	// v0.1.6 Code:
-	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-
-	// v0.2.0 Code:
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
 
 	// There can be slightly different parsing when it's float32 vs float64 due to rounding.
 	// Also, float will be always at 2nd decimal point.
-	l.Outputf(alog.Linfo, 0, "hello %s, your ID is %d, you are %f", "JON", 124, 5.8000)
-	l.Outputf(alog.Linfo, 0, "hello %s, your ID is %d, you are %f", "GON", 123, float32(5.8000))
+	l.Printf(alog.Linfo, 0, "hello %s, your ID is %d, you are %f", "JON", 124, 5.8000)
+	l.Printf(alog.Linfo, 0, "hello %s, your ID is %d, you are %f", "GON", 123, float32(5.8000))
+
 	// Output:
 	// test [INF] hello JON, your ID is 124, you are 5.79
 	// test [INF] hello GON, your ID is 123, you are 5.80
@@ -338,29 +374,22 @@ func ExampleLogger_Debugf() {
 	// test [ERR] level=error
 }
 
-func ExampleNewCategory() {
-	cat := alog.NewTag()
-	BACK := cat.Add()
-	FRONT := cat.Add()
-	USER := cat.Add()
-
-	// v0.1.6 Code:
-	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
-
-	// v0.2.0 Code:
+func ExampleLogger_NewTag() {
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
 
-	// Below setting can be ducktaped with log creation.
-	l.SetLevel(alog.Ltrace)
-	l.SetTag(BACK | FRONT) // only show BACK and FRONT
-	l.SetLevel(alog.Linfo) // this will override config "alog.CLevelTrace"
+	// Creating new tags.
+	BACK := l.NewTag()
+	FRONT := l.NewTag()
+	USER := l.NewTag()
+
+	l.SetFilter(BACK | FRONT) // only show BACK and FRONT
 
 	f := func(c alog.Tag, s string) {
-		l.Outputf(alog.Ltrace, c, "%s.trace", s)
-		l.Outputf(alog.Ldebug, c, "%s.debug", s)
-		l.Outputf(alog.Linfo, c, "%s.info", s)
-		l.Outputf(alog.Lwarn, c, "%s.warn", s)
-		l.Outputf(alog.Lerror, c, "%s.error", s)
+		l.Printf(alog.Ltrace, c, "%s.trace", s)
+		l.Printf(alog.Ldebug, c, "%s.debug", s)
+		l.Printf(alog.Linfo, c, "%s.info", s)
+		l.Printf(alog.Lwarn, c, "%s.warn", s)
+		l.Printf(alog.Lerror, c, "%s.error", s)
 	}
 
 	f(BACK, "BACK")

@@ -191,25 +191,28 @@ func BenchmarkLogger_Print(b *testing.B) {
 		// S2: 269 ns/op	       0 B/op	       0 allocs/op
 		// S2: 300 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
+		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		cat := alog.NewTag()
-		BACK := cat.Add()
-		FRNT := cat.Add()
-		CAT1 := cat.Add()
-		CAT2 := cat.Add()
-		CAT3 := cat.Add()
-		l.SetTag(BACK)
+		l := alog.New(nil).Do(
+			func(l2 *alog.Logger) {
+				BACK = l2.NewTag()
+				FRNT = l2.NewTag()
+				CAT1 = l2.NewTag()
+				CAT2 = l2.NewTag()
+				CAT3 = l2.NewTag()
+			}).SetFlag(alog.Fdefault).SetPrefix("test ")
+
+		l.SetFilter(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Output(alog.Lwarn, BACK, testLogMsg)
-				l.Output(alog.Lwarn, FRNT, testLogMsg)
-				l.Output(alog.Lwarn, CAT1, testLogMsg)
-				l.Output(alog.Lwarn, CAT2, testLogMsg)
-				l.Output(alog.Lwarn, CAT3, testLogMsg)
+				l.Print(alog.Lwarn, BACK, testLogMsg)
+				l.Print(alog.Lwarn, FRNT, testLogMsg)
+				l.Print(alog.Lwarn, CAT1, testLogMsg)
+				l.Print(alog.Lwarn, CAT2, testLogMsg)
+				l.Print(alog.Lwarn, CAT3, testLogMsg)
 			}
 		})
 	})
@@ -219,25 +222,21 @@ func BenchmarkLogger_Print(b *testing.B) {
 		// S2: 482 ns/op	       0 B/op	       0 allocs/op
 		// S2: 511 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
+		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		cat := alog.NewTag()
-		BACK := cat.Add()
-		FRNT := cat.Add()
-		CAT1 := cat.Add()
-		CAT2 := cat.Add()
-		CAT3 := cat.Add()
-		l.SetTag(BACK | CAT1)
+		l := alog.New(nil).SetTags(&BACK, &FRNT, &CAT1, &CAT2, &CAT3).SetFlag(alog.Fdefault).SetPrefix("test ")
+
+		l.SetFilter(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Output(alog.Lwarn, BACK, testLogMsg)
-				l.Output(alog.Lwarn, FRNT, testLogMsg)
-				l.Output(alog.Lwarn, CAT1, testLogMsg)
-				l.Output(alog.Lwarn, CAT2, testLogMsg)
-				l.Output(alog.Lwarn, CAT3, testLogMsg)
+				l.Printf(alog.Lwarn, BACK, testLogMsg)
+				l.Printf(alog.Lwarn, FRNT, testLogMsg)
+				l.Printf(alog.Lwarn, CAT1, testLogMsg)
+				l.Printf(alog.Lwarn, CAT2, testLogMsg)
+				l.Printf(alog.Lwarn, CAT3, testLogMsg)
 			}
 		})
 	})
@@ -249,25 +248,28 @@ func BenchmarkLogger_Printf(b *testing.B) {
 		// S2: 414 ns/op	       0 B/op	       0 allocs/op
 		// S2: 380 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
+		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		cat := alog.NewTag()
-		BACK := cat.Add()
-		FRNT := cat.Add()
-		CAT1 := cat.Add()
-		CAT2 := cat.Add()
-		CAT3 := cat.Add()
-		l.SetTag(BACK)
+		l := alog.New(nil).Do(
+			func(l2 *alog.Logger) {
+				BACK = l2.NewTag()
+				FRNT = l2.NewTag()
+				CAT1 = l2.NewTag()
+				CAT2 = l2.NewTag()
+				CAT3 = l2.NewTag()
+			}).SetFlag(alog.Fdefault).SetPrefix("test ")
+
+		l.SetFilter(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Outputf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
 			}
 		})
 	})
@@ -276,25 +278,57 @@ func BenchmarkLogger_Printf(b *testing.B) {
 		// S1: 1393 ns/op	       0 B/op	       0 allocs/op
 		// S2:  770 ns/op	       0 B/op	       0 allocs/op
 
-		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
+		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		cat := alog.NewTag()
-		BACK := cat.Add()
-		FRNT := cat.Add()
-		CAT1 := cat.Add()
-		CAT2 := cat.Add()
-		CAT3 := cat.Add()
-		l.SetTag(BACK | CAT1)
+		l := alog.New(nil).Do(
+			func(l2 *alog.Logger) {
+				BACK = l2.NewTag()
+				FRNT = l2.NewTag()
+				CAT1 = l2.NewTag()
+				CAT2 = l2.NewTag()
+				CAT3 = l2.NewTag()
+			}).SetFlag(alog.Fdefault).SetPrefix("test ")
+
+		l.SetFilter(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				l.Outputf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-				l.Outputf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, BACK, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, FRNT, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT1, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT2, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+				l.Printf(alog.Lwarn, CAT3, testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
+			}
+		})
+	})
+
+	b.Run("print", func(b2 *testing.B) {
+		// S1: 1393 ns/op	       0 B/op	       0 allocs/op
+		// S2:  770 ns/op	       0 B/op	       0 allocs/op
+
+		l := alog.New(nil)
+
+		b2.ReportAllocs()
+		b2.ResetTimer()
+		b2.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				l.Print(alog.Linfo, 0, "abc")
+			}
+		})
+	})
+	b.Run("printf with no arg", func(b2 *testing.B) {
+		// S1: 1393 ns/op	       0 B/op	       0 allocs/op
+		// S2:  770 ns/op	       0 B/op	       0 allocs/op
+
+		l := alog.New(nil)
+
+		b2.ReportAllocs()
+		b2.ResetTimer()
+		b2.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				l.Printf(alog.Linfo, 0, "abc")
 			}
 		})
 	})
@@ -303,11 +337,12 @@ func BenchmarkLogger_Printf(b *testing.B) {
 // Added as of 0.1.1 update, 12/29/2020
 func BenchmarkLogger_NewPrint(b *testing.B) {
 	// S2:  293 ns/op	       0 B/op	       0 allocs/op
-	l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-	cat := alog.NewTag()
-	CAT1 := cat.Add()
-	CAT2 := cat.Add()
-	l.SetTag(CAT1)
+
+	var CAT1, CAT2 alog.Tag
+
+	l := alog.New(nil).SetTags(&CAT1, &CAT2).SetFlag(alog.Fdefault).SetPrefix("test ")
+
+	l.SetFilter(CAT1)
 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
 	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2w ")
 	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1t ")
@@ -330,14 +365,11 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 	// S2: 401 ns/op	       0 B/op	       0 allocs/op
 	// S2: 438 ns/op	       0 B/op	       0 allocs/op
 
-	l := alog.New(nil).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
+	var TEST1, TEST2, TEST3 alog.Tag
 
-	cat := alog.NewTag()
-	TEST1 := cat.Add()
-	TEST2 := cat.Add()
-	TEST3 := cat.Add()
+	l := alog.New(nil).SetTags(&TEST1, &TEST2, &TEST3).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 
-	l.SetTag(TEST2) // only show TEST2
+	l.SetFilter(TEST2) // only show TEST2
 
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
