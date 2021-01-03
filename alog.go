@@ -1,16 +1,6 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.6, 12/30/2020
 
-// 0.1.6c2: for methods that can be often called by other logger compatible interfaces, Debugf() may be used just as
-//    a Debug() without additional params of interface (a). So, new version will check the length of additional param
-//    and if it's zero (0), then run it as Debug() instead of Debugf().
-// 0.1.6c3: Added `*Logger.IfError(error)` and `*Logger.IfFatal(error)` which only log when error is not nil.
-// 0.1.6c4: Added `*Logger.Close()` method.
-// 0.1.7c1: IfFatal, Fatal, Fatalf will have additional write to stderr IF output wasn't sent to stderr/stdout.
-//    but need to check memory allocation.. prolly not as those will be the last run.. TODO: check memory alloc
-// 0.1.7c2:
-//   - Scratch 0.1.7c1
-//   - Add type flag setting? eg. alog.New(os.Stderr).SetPrefix("abc: ").SetFormat(alog.Fdefault) ??
+// version 3 candidate
 
 package alog
 
@@ -23,12 +13,12 @@ import (
 
 // newline constant provides byte of newline, so it can be usd right away.
 const (
-	newline             = byte('\n')
-	noCategory Category = 0
+	newline     = byte('\n')
+	noTag   Tag = 0
 )
 
 // unsuppType is a slice of byte and will be used when unknown formats string is being used in
-// any formatted prints such as `printf`, `infof`, `debugf`, etc. This is pre-converted to
+// any formatted prints such as `outputf`, `infof`, `debugf`, etc. This is pre-converted to
 // a byte slice and reused to save process time.
 var unsuppType = []byte("{??}")
 
@@ -94,9 +84,10 @@ const (
 //    Format: Printf(), Tracef(), Debugf(), Infof(), Warnf(), Errorf(), Fatalf()
 //    Other:  NewPrint(), NewWriter()
 type Logger struct {
-	flag  flags
-	level level
-	cat   Category
+	flag      flags
+	level     level
+	tagFilter Tag
+	tagIssued Tag // stores last tagFilter issued. Whenever NewTag is called, this value will be doubled.
 
 	out io.Writer
 	mu  sync.Mutex
@@ -210,9 +201,22 @@ func (l *Logger) SetLevel(lvl level) *Logger {
 	return l
 }
 
-// SetCategory will take a bit-flag Category and sets what categories will be printed.
-func (l *Logger) SetCategory(category Category) *Logger {
-	l.cat = category
+// SetTags will issue tags to Tag(s) pointers.
+// If a logger is created with dots such as `alog.New(out).SetPrefix("nptest ")...`
+// This can be used.
+// Usage:
+//    var TEST1, TEST2, TEST3 alog.Tag
+//    l := alog.New(out).SetTags(&TEST1, &TEST2, &TEST3).SetFilter(TEST1)
+func (l *Logger) SetTags(tags ...*Tag) *Logger {
+	for _, t := range tags {
+		*t = l.NewTag()
+	}
+	return l
+}
+
+// SetFilter will take a bit-flag Tag and sets what categories will be printed.
+func (l *Logger) SetFilter(tag Tag) *Logger {
+	l.tagFilter = tag
 	return l
 }
 
@@ -292,25 +296,25 @@ func (l *Logger) finalize() (n int, err error) {
 	return n, err
 }
 
-// Check method will check if level and category given is
+// Check method will check if level and tagFilter given is
 // good to be printed.
-// Eg. if setting is level INFO, category USER, then
+// Eg. if setting is level INFO, tagFilter USER, then
 //     any log level below INFO shouldn't be printed.
-//     Also, any category other than USER shouldn't be printed either.
-func (l *Logger) check(lvl level, cat Category) bool {
+//     Also, any tagFilter other than USER shouldn't be printed either.
+func (l *Logger) check(lvl level, tag Tag) bool {
 	switch {
 	case l.level > lvl: // if lvl is below lvl limit, the do not print
 		return false
-	case l.cat != noCategory && l.cat&cat == noCategory: // if category is set but category is not matching, then do not print
+	case l.tagFilter != noTag && l.tagFilter&tag == noTag: // if tagFilter is set but tagFilter is not matching, then do not print
 		return false
 	default:
 		return true
 	}
 }
 
-// printf creates formatted string
-// v0.2.0: as cat here isn't necessary, remove it
-func (l *Logger) printf(lvl level, format string, a ...interface{}) {
+// outputf creates formatted string
+// v0.2.0: as tagFilter here isn't necessary, remove it
+func (l *Logger) outputf(lvl level, format string, a ...interface{}) {
 	t := time.Now()
 	// Format the header and add it to buffer
 	l.header(&l.buf, t, lvl)
@@ -321,13 +325,29 @@ func (l *Logger) printf(lvl level, format string, a ...interface{}) {
 	_, _ = l.finalize()
 }
 
-// Print prints a single string log message.
-// Both level and Category has to match with what's in the config.
-// (However, if cat is 0, then it will be printed regardless of category).
+// Output prints a byte array log message.
+// Both level and Tag has to match with what's in the config.
+// (However, if tagFilter is 0, then it will be printed regardless of tagFilter).
 // For Print, even if fatal level is given, it will not exit.
-func (l *Logger) Print(lvl level, cat Category, s string) {
-	// Check if given lvl/category are printable
-	if l.check(lvl, cat) {
+func (l *Logger) Output(lvl level, tag Tag, b []byte) {
+	// Check if given lvl/tagFilter are printable
+	if l.check(lvl, tag) {
+		t := time.Now()
+		l.mu.Lock()
+		l.header(&l.buf, t, lvl)
+		l.buf = append(l.buf, b...)
+		_, _ = l.finalize()
+		l.mu.Unlock()
+	}
+}
+
+// Print prints a single string log message.
+// Both level and Tag has to match with what's in the config.
+// (However, if tagFilter is 0, then it will be printed regardless of tagFilter).
+// For Print, even if fatal level is given, it will not exit.
+func (l *Logger) Print(lvl level, tag Tag, s string) {
+	// Check if given lvl/tagFilter are printable
+	if l.check(lvl, tag) {
 		t := time.Now()
 		l.mu.Lock()
 		l.header(&l.buf, t, lvl)
@@ -337,89 +357,131 @@ func (l *Logger) Print(lvl level, cat Category, s string) {
 	}
 }
 
-// Printf prints formatted logs if level and category is met.
+// Printf prints formatted logs if level and tagFilter is met.
 // For Printf, even if fatal level is given, it will not exit.
-// If category is 0, it will print regardless of category being filtered/set.
-func (l *Logger) Printf(lvl level, cat Category, format string, a ...interface{}) {
-	// Both lvl and Category has to match
-	// If cat is 0, then all cat.
-	if l.check(lvl, cat) {
+// If tagFilter is 0, it will print regardless of tagFilter being filtered/set.
+func (l *Logger) Printf(lvl level, tag Tag, format string, a ...interface{}) {
+	// Both lvl and Tag has to match
+	// If tagFilter is 0, then all tagFilter.
+	if l.check(lvl, tag) {
 		l.mu.Lock()
-		l.printf(lvl, format, a...)
+		l.outputf(lvl, format, a...)
 		l.mu.Unlock()
 	}
 }
 
-// Trace will take a single string and print log without category
+// Trace will take a single string and print log without tagFilter
 func (l *Logger) Trace(s string) {
-	l.Print(Ltrace, noCategory, s)
+	l.Print(Ltrace, noTag, s)
 }
 
-// Tracef will formats and print log without category
+// Tracef will formats and print log without tagFilter
 func (l *Logger) Tracef(format string, a ...interface{}) {
 	if len(a) == 0 {
-		l.Print(Ltrace, noCategory, format)
+		l.Print(Ltrace, noTag, format)
 		return
 	}
-	if l.check(Ltrace, noCategory) {
+	if l.check(Ltrace, noTag) {
 		l.mu.Lock()
-		l.printf(Ltrace, format, a...)
+		l.outputf(Ltrace, format, a...)
 		l.mu.Unlock()
 	}
 }
 
-// Debug will take a single string and print log without category
+// Debug will take a single string and print log without tagFilter
 func (l *Logger) Debug(s string) {
-	l.Print(Ldebug, noCategory, s)
+	l.Print(Ldebug, noTag, s)
 }
 
-// Debugf will formats and print log without category
+// Debugf will formats and print log without tagFilter
 func (l *Logger) Debugf(format string, a ...interface{}) {
 	if len(a) == 0 {
-		l.Print(Ldebug, noCategory, format)
+		l.Print(Ldebug, noTag, format)
 		return
 	}
-	if l.check(Ldebug, noCategory) {
+	if l.check(Ldebug, noTag) {
 		l.mu.Lock()
-		l.printf(Ldebug, format, a...)
+		l.outputf(Ldebug, format, a...)
 		l.mu.Unlock()
 	}
 }
 
-// Info will take a single string and print log without category
+// Info will take a single string and print log without tagFilter
 func (l *Logger) Info(s string) {
-	l.Print(Linfo, noCategory, s)
+	l.Print(Linfo, noTag, s)
 }
 
-// Infof will formats and print log without category
+// Infof will formats and print log without tagFilter
 func (l *Logger) Infof(format string, a ...interface{}) {
 	if len(a) == 0 {
-		l.Print(Linfo, noCategory, format)
+		l.Print(Linfo, noTag, format)
 		return
 	}
-	if l.check(Linfo, noCategory) {
+	if l.check(Linfo, noTag) {
 		l.mu.Lock()
-		l.printf(Linfo, format, a...)
+		l.outputf(Linfo, format, a...)
 		l.mu.Unlock()
 	}
 }
 
-// Warn will take a single string and print log without category
+// Warn will take a single string and print log without tagFilter
 func (l *Logger) Warn(s string) {
-	l.Print(Lwarn, noCategory, s)
+	l.Print(Lwarn, noTag, s)
 }
 
-// Warnf will formats and print log without category
+// Warnf will formats and print log without tagFilter
 func (l *Logger) Warnf(format string, a ...interface{}) {
 	if len(a) == 0 {
-		l.Print(Lwarn, noCategory, format)
+		l.Print(Lwarn, noTag, format)
 		return
 	}
-	if l.check(Lwarn, noCategory) {
+	if l.check(Lwarn, noTag) {
 		l.mu.Lock()
-		l.printf(Lwarn, format, a...)
+		l.outputf(Lwarn, format, a...)
 		l.mu.Unlock()
 	}
+}
+
+// Error will take a single string and print log without tagFilter
+func (l *Logger) Error(s string) {
+	l.Print(Lerror, noTag, s)
+}
+
+// Errorf will formats and print log without tagFilter
+func (l *Logger) Errorf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lerror, noTag, format)
+		return
+	}
+	if l.check(Lerror, noTag) {
+		l.mu.Lock()
+		l.outputf(Lerror, format, a...)
+		l.mu.Unlock()
+	}
+}
+
+// Fatal will take a single string and print log without tagFilter
+// and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
+func (l *Logger) Fatal(s string) {
+	l.Print(Lfatal, noTag, s)
+	_ = l.Close()
+	os.Exit(1)
+}
+
+// Fatalf will formats and print log without tagFilter
+// and this will terminate process with exit code 1
+// updated with Close() as v0.1.6c4, 12/30/2020
+func (l *Logger) Fatalf(format string, a ...interface{}) {
+	if len(a) == 0 {
+		l.Print(Lfatal, noTag, format)
+	} else if l.check(Lfatal, noTag) {
+		l.mu.Lock()
+		l.outputf(Lfatal, format, a...)
+		l.mu.Unlock()
+	}
+	_ = l.Close()
+	os.Exit(1)
 }
 
 // IfError will check and log error if exist (not nil)
@@ -428,25 +490,7 @@ func (l *Logger) Warnf(format string, a ...interface{}) {
 // added as v0.1.6c3, 12/30/2020
 func (l *Logger) IfError(e error) {
 	if e != nil {
-		l.Print(Lerror, noCategory, e.Error())
-	}
-}
-
-// Error will take a single string and print log without category
-func (l *Logger) Error(s string) {
-	l.Print(Lerror, noCategory, s)
-}
-
-// Errorf will formats and print log without category
-func (l *Logger) Errorf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Lerror, noCategory, format)
-		return
-	}
-	if l.check(Lerror, noCategory) {
-		l.mu.Lock()
-		l.printf(Lerror, format, a...)
-		l.mu.Unlock()
+		l.Print(Lerror, noTag, e.Error())
 	}
 }
 
@@ -458,34 +502,10 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) IfFatal(e error) {
 	if e != nil {
-		l.Print(Lfatal, noCategory, e.Error())
+		l.Print(Lfatal, noTag, e.Error())
 		_ = l.Close()
 		os.Exit(1)
 	}
-}
-
-// Fatal will take a single string and print log without category
-// and this will terminate process with exit code 1
-// updated with Close() as v0.1.6c4, 12/30/2020
-func (l *Logger) Fatal(s string) {
-	l.Print(Lfatal, noCategory, s)
-	_ = l.Close()
-	os.Exit(1)
-}
-
-// Fatalf will formats and print log without category
-// and this will terminate process with exit code 1
-// updated with Close() as v0.1.6c4, 12/30/2020
-func (l *Logger) Fatalf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Lfatal, noCategory, format)
-	} else if l.check(Lfatal, noCategory) {
-		l.mu.Lock()
-		l.printf(Lfatal, format, a...)
-		l.mu.Unlock()
-	}
-	_ = l.Close()
-	os.Exit(1)
 }
 
 // Writer returns the output destination for the logger.
@@ -502,13 +522,13 @@ func (l *Logger) Close() error {
 	return nil
 }
 
-// NewPrint takes level and category and create a print function.
-// This is to make such as custom `*Logger.Debug()` that has category
+// NewPrint takes level and tagFilter and create a print function.
+// This is to make such as custom `*Logger.Debug()` that has tagFilter
 // predefined. Added for v0.1.1.
-// For printf, due to memory allocation occurred it is not included.
-func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
+// For outputf, due to memory allocation occurred it is not included.
+func (l *Logger) NewPrint(lvl level, tag Tag, prefix string) func(string) {
 	return func(s string) {
-		if l.check(lvl, cat) {
+		if l.check(lvl, tag) {
 			t := time.Now()
 			l.mu.Lock()
 			l.header(&l.buf, t, lvl)
@@ -519,53 +539,48 @@ func (l *Logger) NewPrint(lvl level, cat Category, prefix string) func(string) {
 	}
 }
 
-// NewWriter takes level and category and create an Alog writer (AlWriter)
+// NewWriter takes level and tagFilter and create an Alog writer (AlWriter)
 // that is compatible with io.Writer interface. This can be used as a
 // logger hook.
-func (l *Logger) NewWriter(lvl level, cat Category, prefix string) *AlWriter {
+func (l *Logger) NewWriter(lvl level, tag Tag, prefix string) *AlWriter {
 	return &AlWriter{
 		l:      l,
 		lvl:    lvl,
-		cat:    cat,
+		tag:    tag,
 		prefix: []byte(prefix),
 	}
 }
 
-// Category is a bit-flag used to show only necessary part of process to show
-// in the log. For instance, if there's an web service, there can be different
-// category such as UI, HTTP request, HTTP response, etc. By setting category
-// for each log using `Print` or `Printf`, a user can only print certain
-// category of log messages for better debugging.
-type Category uint64
-
-// NewCategory will generate new categories to be used for user.
+// NewTag will generate new tagFilter to be used for user.
 // This is nothing but creating a big-flag, but easier for the user
 // who aren't familiar with a bit-flag.
-func NewCategory() Category {
-	return 0
-}
-
-// Add new category
-func (c *Category) Add() Category {
-	if *c == 0 {
-		*c = 1
+func (l *Logger) NewTag() Tag {
+	if l.tagIssued == 0 {
+		l.tagIssued = 1
 		return 1
 	}
-	*c *= 2
-	return *c
+	l.tagIssued *= 2
+	return l.tagIssued
 }
 
-// AlWriter is a writer with predefined level and category.
+// Tag is a bit-flag used to show only necessary part of process to show
+// in the log. For instance, if there's an web service, there can be different
+// tagFilter such as UI, HTTP request, HTTP response, etc. By setting tagFilter
+// for each log using `Print` or `Printf`, a user can only print certain
+// tagFilter of log messages for better debugging.
+type Tag uint64
+
+// AlWriter is a writer with predefined level and tagFilter.
 type AlWriter struct {
 	l      *Logger
 	lvl    level
-	cat    Category
+	tag    Tag
 	prefix []byte
 }
 
 // Write is to be used as io.Writer interface
 func (w *AlWriter) Write(b []byte) (n int, err error) {
-	if w.l.check(w.lvl, w.cat) {
+	if w.l.check(w.lvl, w.tag) {
 		t := time.Now()
 		w.l.mu.Lock()
 		w.l.header(&w.l.buf, t, w.lvl)
@@ -584,6 +599,7 @@ type devNull int
 // discard is defined here to get rid of needs to import of ioutil package.
 var discard io.Writer = devNull(0)
 
+// Write discards everything
 func (devNull) Write([]byte) (int, error) {
 	return 0, nil
 }

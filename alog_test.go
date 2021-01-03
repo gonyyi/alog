@@ -1,5 +1,4 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// Version 0.1.3, 12/29/2020
 
 package alog_test
 
@@ -15,10 +14,6 @@ import (
 func TestLogger_IfError(t *testing.T) {
 	out := &bytes.Buffer{}
 
-	// v0.1.6 Code:
-	// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-	// v0.1.7 Code:
 	l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 	// create a new error object, at this point this should be nil, and calling err.Error() will cause a panic
@@ -53,7 +48,7 @@ func TestLogger_Do(t *testing.T) {
 	l.Print(alog.Linfo, 0, "testInfo")
 	l.Print(alog.Lwarn, 0, "testWarn")
 	l.Print(alog.Lerror, 0, "testError")
-	//l.Print(alog.Lfatal, 0, "testFatal")
+	// l.Print(alog.Lfatal, 0, "testFatal")
 
 	expected := "log \u001B[0;36m[DBG] \u001B[0mtestDebug\n" +
 		"log \u001B[0;34m[INF] \u001B[0mtestInfo\n" +
@@ -64,16 +59,56 @@ func TestLogger_Do(t *testing.T) {
 		t.Errorf("expected=<%s>, actual=<%s>", expected, out.String())
 	}
 }
+func TestLogger_SetTags(t *testing.T) {
+	// NoLevel will use INFO as its level.
+	t.Run("Print,NoLevel", func(t2 *testing.T) {
+		out := &bytes.Buffer{}
 
+		// Define what's gonna be used as tags
+		var T1, T2, T3, T4, T5 alog.Tag
+
+		// Create a logger
+		l := alog.New(out).
+			SetTags(&T1, &T2, &T3, &T4, &T5). // issue tag numbers to tag variables created
+			SetFlag(alog.Fprefix | alog.Flevel).
+			SetLevel(alog.Ldebug).
+			SetFilter(T1)
+
+		pf := func(tag alog.Tag, name string) {
+			// Print's param should be compatible to Printf
+			l.Print(alog.Ltrace, tag, name+" Trace")
+			l.Print(alog.Ldebug, tag, name+" Debug")
+			l.Print(alog.Linfo, tag, name+" Info")
+			l.Printf(alog.Lwarn, tag, name+" Warn")
+			l.Printf(alog.Lerror, tag, name+" Error")
+		}
+
+		pf(T1, "t1")
+		pf(T2, "t2")
+		pf(T3, "t3")
+		pf(T4, "t4")
+		pf(T5, "t5")
+		pf(T1|T5, "t1/t5")
+
+		expect := "[DBG] t1 Debug\n" +
+			"[INF] t1 Info\n" +
+			"[WRN] t1 Warn\n" +
+			"[ERR] t1 Error\n" +
+			"[DBG] t1/t5 Debug\n" +
+			"[INF] t1/t5 Info\n" +
+			"[WRN] t1/t5 Warn\n" +
+			"[ERR] t1/t5 Error\n"
+		actual := out.String()
+		if expect != actual {
+			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
+		}
+	})
+}
 func TestBasic(t *testing.T) {
 	// NoLevel will use INFO as its level.
 	t.Run("Print,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.Print(alog.Ltrace, 0, "testTrace")
@@ -90,10 +125,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Printf,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
@@ -110,10 +141,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Print,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Ltrace)
@@ -131,10 +158,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Printf,Trace", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Ltrace)
@@ -152,10 +175,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Print,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLevel(alog.Lfatal)
@@ -173,11 +192,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Printf,Fatal", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		// l.SetLevel(alog.Lfatal)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLevel(alog.Lfatal)
 
 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
@@ -194,11 +208,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Predefined,NoLevel", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		// l.SetLevel(alog.Linfo)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLevel(alog.Linfo)
 
 		l.Trace("testForTrace")
@@ -215,12 +224,6 @@ func TestBasic(t *testing.T) {
 	t.Run("Predefined,Formatted,level", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "log ", alog.Fprefix|alog.Flevel)
-		// l.SetLevel(alog.Linfo)
-
-		// v0.1.7 Code:
-		// level info is default level and can be ignored
 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.Tracef("testFor%s", "Trace")
@@ -241,25 +244,16 @@ func TestNewPrint(t *testing.T) {
 	t.Run("NewPrint", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 
-		// v0.1.6 Code:
-		// l := alog.New(out, "nptest ", alog.Fprefix|alog.Flevel)
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("nptest ").SetFlag(alog.Fprefix | alog.Flevel)
+		CAT1 := l.NewTag()
+		CAT2 := l.NewTag()
 
-		cat := alog.NewCategory()
-		CAT1 := cat.Add()
-		CAT2 := cat.Add()
+		l.SetFilter(CAT1) // Print only CAT1
 
-		l.SetCategory(CAT1) // Print only CAT1
 		WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
 		WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2W ")
 		TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1T ")
 		TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, "CAT2T ")
-		// WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, []byte("CAT1W "))
-		// WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, []byte("CAT2W "))
-		// TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, []byte("CAT1T "))
-		// TraceCAT2 := l.NewPrint(alog.Ltrace, CAT2, []byte("CAT2T "))
 
 		WarnCAT1("warn cat1 test")
 		WarnCAT2("warn cat2 test")
@@ -276,21 +270,43 @@ func TestNewPrint(t *testing.T) {
 
 // v0.1.2, 12/29/2020
 func TestLogger_NewWriter(t *testing.T) {
+	t.Run("NewWriter with NewTags", func(t2 *testing.T) {
+		out := &bytes.Buffer{}
+		var TEST1, TEST2, TEST3 alog.Tag
+		l := alog.New(out).SetTags(&TEST1, &TEST2, &TEST3).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
+
+		l.SetFilter(TEST2) // only show TEST2
+
+		wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
+		wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
+		wT2D := l.NewWriter(alog.Ldebug, TEST2, "T2D ")
+		wT2I := l.NewWriter(alog.Linfo, TEST2, "T2I ")
+		wT3D := l.NewWriter(alog.Ldebug, TEST3, "T3D ")
+		wT3I := l.NewWriter(alog.Linfo, TEST3, "T3I ")
+
+		_, _ = fmt.Fprintf(wT1D, "test: %s fprintf", "T1D") // Not printed
+		_, _ = fmt.Fprintf(wT1I, "test: %s fprintf", "T1I") // Not printed
+		_, _ = fmt.Fprintf(wT2D, "test: %s fprintf", "T2D") // Not printed
+		_, _ = fmt.Fprintf(wT2I, "test: %s fprintf", "T2I") // Printed
+		_, _ = fmt.Fprintf(wT3D, "test: %s fprintf", "T3D") // Not printed
+		_, _ = fmt.Fprintf(wT3I, "test: %s fprintf", "T3I") // Not printed
+
+		expect := "nwtest [INF] T2I test: T2I fprintf\n"
+		actual := out.String()
+
+		if expect != actual {
+			t2.Errorf("expected=<%s>, actual=<%s>", expect, actual)
+		}
+	})
 	t.Run("NewWriter", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
-
-		// v0.1.6 Code:
-		// l := alog.New(out, "nwtest ", alog.Fprefix|alog.Flevel) // Default level is INFO and higher
-
-		// v0.1.7 Code:
 		l := alog.New(out).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
 
-		cat := alog.NewCategory()
-		TEST1 := cat.Add()
-		TEST2 := cat.Add()
-		TEST3 := cat.Add()
+		TEST1 := l.NewTag()
+		TEST2 := l.NewTag()
+		TEST3 := l.NewTag()
 
-		l.SetCategory(TEST2) // only show TEST2
+		l.SetFilter(TEST2) // only show TEST2
 
 		wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 		wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")
