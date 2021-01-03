@@ -232,7 +232,7 @@ func main() {
 	// use myFunc defined above, 
 	// and also use color level by using predefined alog.DoColor function.
 	// `Do` takes any number of `Do` functions.
-	l := alog.New(os.Stderr).Do(myFunc, alog.DoColor)
+	l := alog.New(os.Stderr).Do(myFunc, alog.DoColor("", "", "", "", "", "") // Using default values with color
 
 	// Output below will print colored level as output is set to os.Stderr in this example.
 	l.Trace("test trace test")
@@ -253,6 +253,7 @@ func main() {
 
 - v0.2.1a - added .Do
 - v0.2.1b - added .Do example (DoColor)
+- v0.2.1c - .Do now takes arguments
 
 ### v0.2.0
 
