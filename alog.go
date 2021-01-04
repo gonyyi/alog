@@ -26,7 +26,9 @@ var unsuppType = []byte("{??}")
 type flags uint32
 
 const (
-	Fall  = flags(^uint32(0))
+	// Fall for all options on
+	Fall = flags(^uint32(0))
+	// Fnone for all options off
 	Fnone = flags(uint32(0))
 
 	// Ftime will show HH:MM:SS formats such as 05:02:03
