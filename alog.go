@@ -740,21 +740,21 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 // This function returns do-function for alog, and is an example for `*Logger.Do` application.
 // Usage: `alog.New(os.Stderr).Do(alog.DoColor())`
 func DoColor() func(*Logger) {
-	trc := "[TRC] "
-	dbg := "[DBG] "
-	inf := "[INF] "
-	wrn := "[WRN] "
-	err := "[ERR] "
-	ftl := "[FTL] "
+	trc := "[TRC]"
+	dbg := "[DBG]"
+	inf := "[INF]"
+	wrn := "[WRN]"
+	err := "[ERR]"
+	ftl := "[FTL]" // gonyi, 1/3/2020, trailing space made FTL and space all red background.
 
 	return func(l *Logger) {
 		l.SetLevelPrefix(
-			"\u001B[0;35m"+trc+"\u001B[0m",
-			"\u001B[0;36m"+dbg+"\u001B[0m",
-			"\u001B[0;34m"+inf+"\u001B[0m",
-			"\u001B[1;33m"+wrn+"\u001B[0m",
-			"\u001B[1;31m"+err+"\u001B[0m",
-			"\u001B[1;41;30m"+ftl+"\u001B[0m",
+			"\u001B[0;35m"+trc+"\u001B[0m ",
+			"\u001B[0;36m"+dbg+"\u001B[0m ",
+			"\u001B[0;34m"+inf+"\u001B[0m ",
+			"\u001B[1;33m"+wrn+"\u001B[0m ",
+			"\u001B[1;31m"+err+"\u001B[0m ",
+			"\u001B[1;41;30m"+ftl+"\u001B[0m ",
 		)
 		// IF output is set to os.Stderr OR os.Stdout, it can be done by checking output.
 		// if l.Writer() != nil && (l.Writer() == os.Stderr || l.Writer() == os.Stdout) {
