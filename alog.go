@@ -740,9 +740,9 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 			case 't':
 				if v, ok := a[aIdx].(bool); ok {
 					if v {
-						*dst = append(*dst, []byte("true")...)
+						*dst = append(*dst, "true"...)
 					} else {
-						*dst = append(*dst, []byte("false")...)
+						*dst = append(*dst, "false"...)
 					}
 				} else {
 					*dst = append(*dst, unsuppType...)
