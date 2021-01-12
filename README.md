@@ -3,10 +3,10 @@
 (c) 2020 Gon Y Yi. <https://gonyyi.com>  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.3.0 (1/3/2020)
+Version 0.3.2 (1/11/2020)
 
 [![GoDoc](https://godoc.org/github.com/gonyyi/alog?status.svg)](https://godoc.org/github.com/gonyyi/alog)
-[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.2.0)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.3.2)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 [![Coverage](http://gocover.io/_badge/github.com/gonyyi/alog)](http://gocover.io/github.com/gonyyi/alog)
 
@@ -61,8 +61,8 @@ import (
 )
 
 func main() {
-	// Without FilterLevel defined, the default value for level is Info.
-	l := alog.New(os.Stdout).SetFlag(alog.Fprefix|alog.Flevel).FilterLevel(alog.Ldebug)
+	// Without log level defined, the default log level is Info.
+	l := alog.New(os.Stdout).SetLogLevel(alog.Ldebug)
 
 	// Trace will NOT be printed
 	l.Trace("hello trace")
@@ -93,7 +93,7 @@ func main() {
 
 	// Assume I want to see BACK and FRONT with a level DEBUG or above.
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix | alog.Flevel).
-		FilterLevel(alog.Ldebug).SetTags(&BACK, &FRONT, &USER).FilterTag(BACK | FRONT)
+		SetLogLevel(alog.Ldebug).UseTags(&BACK, &FRONT, &USER).SetLogTag(BACK | FRONT)
 
 	f := func(c alog.Tag, s string) {
 		l.Printf(alog.Ltrace, c, "%s.trace", s)
@@ -157,11 +157,11 @@ func main() {
 	// Create an Alog with default option (MMDD, Time, Level)
 	l := alog.New(os.Stderr)
 
-	// Another way of adding tags instead of SetTags() are assign each tag with NewTag()
+	// Another way of adding tags instead of UseTags() are assign each tag with NewTag()
 	USER := l.NewTag()
 	DB := l.NewTag()
 
-	l.FilterTag(USER)
+	l.SetLogTag(USER)
 
 	UserInfo := l.NewPrint(alog.Linfo, USER, "USER: ")
 	DBInfo := l.NewPrint(alog.Linfo, DB, "DB: ")
@@ -190,7 +190,7 @@ import (
 )
 
 func main() {
-	l := alog.New(os.Stdout).SetPrefix("nptest ").SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
+	l := alog.New(os.Stdout).SetPrefix("nptest ").SetFlag(alog.Fprefix|alog.Flevel).SetLogLevel(alog.Ldebug)
 
 	TEST1 := l.NewTag()
 
@@ -220,7 +220,7 @@ func main() {
 	myFunc := func(al *alog.Logger) {
 		al.SetPrefix("alogtest ").
 			SetFlag(alog.Fprefix | alog.Flevel).
-			FilterLevel(alog.Ltrace)
+			SetLogLevel(alog.Ltrace)
 	}
 
 	// use myFunc defined above,
