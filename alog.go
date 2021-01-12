@@ -1,6 +1,6 @@
 // (c) 2020 Gon Y Yi. <https://gonyyi.com>
 
-// version 3 candidate
+// version 0.4 candidate
 
 package alog
 
@@ -11,10 +11,11 @@ import (
 	"time"
 )
 
-// newline constant provides byte of newline, so it can be usd right away.
 const (
-	newline     = byte('\n')
-	noTag   Tag = 0
+	// newline constant provides byte of newline, so it can be usd right away.
+	newline = byte('\n')
+	// noTag will reset tag if already set
+	noTag Tag = 0
 )
 
 // unsuppType is a slice of byte and will be used when unknown formats string is being used in
@@ -50,7 +51,7 @@ const (
 	// Fnewline will enable newlines within the log (v0.1.4)
 	Fnewline
 	// Fdefault will show month/day with time, and Level of logging.
-	Fdefault = FdateMMDD | Ftime | Flevel
+	Fdefault = FdateYYYYMMDD | Ftime | Flevel
 )
 
 // LevelPrefix is a bit-flag used for different Level of log activity:
@@ -87,14 +88,13 @@ const (
 //    Other:  NewPrint(), NewWriter()
 type Logger struct {
 	time time.Time
+	flag flags
 
-	filterFn    func(Level, Tag) bool
-	useFilterFn bool
-
-	flag      flags
-	level     Level
-	tagFilter Tag
-	tagIssued Tag // stores last tagFilter issued. Whenever NewTag is called, this value will be doubled.
+	// logFn is a customizable function space and supercedes builtin Level and Tag filters if set.
+	logFn        func(Level, Tag) bool
+	logLevel     Level
+	logTag       Tag
+	logTagIssued Tag // stores last Tag issued. Whenever NewTag is called, this value will be doubled.
 
 	out io.Writer
 	mu  sync.Mutex
@@ -111,7 +111,7 @@ type Logger struct {
 	// Prefix will be stored as a byte slice.
 	prefix []byte
 
-	// levelString is an array of byte slice that stores what prefix per each log level
+	// levelString is an array of byte slice that stores what prefix per each log logLevel
 	// will be used. Eg. "[DEBUG]", etc.
 	levelString [7][]byte
 }
@@ -122,24 +122,24 @@ type Logger struct {
 // don't set logger prefix, also uses basic default setting. Therefore it's bit cumbersome to require
 // two (prefix, flag), often, unused parameters. Duct-taping can be done following way:
 // 1. alog.New(nil).SetOutput(os.Stderr) // initially set discard for output but overridden to os.Stderr
-// 2. alog.New(os.Stderr).SetPrefix("TestLog: ").FilterLevel(alog.Linfo) // set prefix and Level
+// 2. alog.New(os.Stderr).SetPrefix("TestLog: ").SetLogLevel(alog.Linfo) // set prefix and Level
 // 3. alog.New(os.Stderr).SetPrefix("TestLog: ").SetFlag(alog.Fdefault|alog.FtimeUTC)
 func New(output io.Writer) *Logger {
 	// If output is given as `nil`, it will use io.discard as a default.
 	if output == nil {
 		output = discard
 	}
+
 	// Creating new logger object and returns pointer to logger.
 	// Default value will be set here. If a user uses *alog.SetFlag to provoke
 	// unless specifically set certain value, it will not be overwritten.
 	// eg. If a user called SetFlag with other config flag except the Level, then the log
 	//     Level will not be changed. Therefore default Level should be defined here.
 	l := &Logger{
-		out:         output,
-		useFilterFn: false,      // filterFn is optional
-		prefix:      []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
-		level:       Linfo,      // default logging Level to INFO
-		flag:        Fdefault,   // default flag is given
+		out:      output,
+		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
+		logLevel: Linfo,      // default logging Level to INFO
+		flag:     Fdefault,   // default flag is given
 	}
 
 	// Default prefixes for each Level. This can be changed by a user using *alog.SetLevelPrefix()
@@ -205,43 +205,38 @@ func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) *
 	return l
 }
 
-// FilterLevel will set the minimum logging Level. If this is set to INFO, anything below
+// SetLogLevel will set the minimum logging Level. If this is set to INFO, anything below
 // info, such as TRACE/DEBUG, will be not printed.
-func (l *Logger) FilterLevel(lvl Level) *Logger {
-	l.level = lvl
+func (l *Logger) SetLogLevel(minLogLevel Level) *Logger {
+	l.logLevel = minLogLevel
 	return l
 }
 
-// SetTags will issue tags to Tag(s) pointers.
+// SetLogTag will take a bit-flag Tag and sets what categories will be printed.
+func (l *Logger) SetLogTag(tags Tag) *Logger {
+	l.logTag = tags
+	return l
+}
+
+// SetLogFn will set a filter based on a func `func(Level, Tag)bool`.
+// Once this set, it will supercedes SetLogLevel and SetLogTag.
+// If `nil` is given as a param, it will be deactivated.
+func (l *Logger) SetLogFn(f func(Level, Tag) bool) *Logger {
+	l.logFn = f
+	return l
+}
+
+// UseTags will issue tags to Tag(s) pointers.
 // If a logger is created with dots such as `alog.New(out).SetPrefix("nptest ")...`
-// This can be used.
+// This can be used. This maybe useful when there are many tags to be initialized.
 // Usage:
 //    var TEST1, TEST2, TEST3 alog.Tag
-//    l := alog.New(out).SetTags(&TEST1, &TEST2, &TEST3).FilterTag(TEST1)
-func (l *Logger) SetTags(tags ...*Tag) *Logger {
+//    l := alog.New(out).UseTags(&TEST1, &TEST2, &TEST3).SetLogTag(TEST1)
+func (l *Logger) UseTags(tags ...*Tag) *Logger {
 	for _, t := range tags {
 		*t = l.NewTag()
 	}
 	return l
-}
-
-// FilterTag will take a bit-flag Tag and sets what categories will be printed.
-func (l *Logger) FilterTag(tag Tag) *Logger {
-	l.tagFilter = tag
-	return l
-}
-
-// FilterFn will set a filter based on a func `func(Level, Tag)bool`.
-// If `nil` is given as a param, it will be deactivated.
-func (l *Logger) FilterFn(f func(Level, Tag) bool) {
-	if f != nil {
-		l.useFilterFn = true
-		l.filterFn = f
-		return
-	}
-	l.useFilterFn = false
-	l.filterFn = nil
-	return
 }
 
 // header will add date/time/prefix/Level.
@@ -295,7 +290,7 @@ func (l *Logger) header(buf *[]byte, lvl Level) {
 // finalize will add newline to the end of log if missing,
 // also write it to writer, and clear the buffer.
 func (l *Logger) finalize() (n int, err error) {
-
+	// This can be moved to output().
 	if l.flag&Fnewline != 0 {
 		// If the log message doesn't end with newline, add a newline.
 		if curBufSize := len(l.buf); curBufSize > 1 && l.buf[curBufSize-1] != newline {
@@ -319,18 +314,18 @@ func (l *Logger) finalize() (n int, err error) {
 	return n, err
 }
 
-// Check method will check if Level and tagFilter given is
-// good to be printed.
-// Eg. if setting is Level INFO, tagFilter USER, then
+// check will check if Level and Tag given is good to be printed.
+// If
+// Eg. if setting is Level INFO, Tag USER, then
 //     any log Level below INFO shouldn't be printed.
-//     Also, any tagFilter other than USER shouldn't be printed either.
+//     Also, any Tag other than USER shouldn't be printed either.
 func (l *Logger) check(lvl Level, tag Tag) bool {
 	switch {
-	case l.useFilterFn: // filterFn has the highest order if set.
-		return l.filterFn(lvl, tag)
-	case l.level > lvl: // if lvl is below lvl limit, the do not print
+	case l.logFn != nil: // logFn has the highest order if set.
+		return l.logFn(lvl, tag)
+	case l.logLevel > lvl: // if lvl is below lvl limit, the do not print
 		return false
-	case l.tagFilter != noTag && l.tagFilter&tag == noTag: // if tagFilter is set but tagFilter is not matching, then do not print
+	case l.logTag != noTag && l.logTag&tag == noTag: // if logTag is set but Tag is not matching, then do not print
 		return false
 	default:
 		return true
@@ -338,7 +333,6 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 }
 
 // outputf creates formatted string
-// v0.2.0: as tagFilter here isn't necessary, remove it
 func (l *Logger) outputf(lvl Level, format string, a ...interface{}) {
 	// Format the header and add it to buffer
 	l.header(&l.buf, lvl)
@@ -351,10 +345,10 @@ func (l *Logger) outputf(lvl Level, format string, a ...interface{}) {
 
 // Output prints a byte array log message.
 // Both Level and Tag has to match with what's in the config.
-// (However, if tagFilter is 0, then it will be printed regardless of tagFilter).
+// (However, if Tag is 0, then it will be printed regardless of logTag).
 // For Print, even if fatal Level is given, it will not exit.
 func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
-	// Check if given lvl/tagFilter are printable
+	// Check if given lvl/logTag are printable
 	if l.check(lvl, tag) {
 		l.mu.Lock()
 		l.header(&l.buf, lvl)
@@ -366,10 +360,10 @@ func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
 
 // Print prints a single string log message.
 // Both Level and Tag has to match with what's in the config.
-// (However, if tagFilter is 0, then it will be printed regardless of tagFilter).
+// (However, if Tag is 0, then it will be printed regardless of logTag).
 // For Print, even if fatal Level is given, it will not exit.
 func (l *Logger) Print(lvl Level, tag Tag, s string) {
-	// Check if given lvl/tagFilter are printable
+	// Check if given lvl/logTag are printable
 	if l.check(lvl, tag) {
 		l.mu.Lock()
 		l.header(&l.buf, lvl)
@@ -379,12 +373,12 @@ func (l *Logger) Print(lvl Level, tag Tag, s string) {
 	}
 }
 
-// Printf prints formatted logs if Level and tagFilter is met.
+// Printf prints formatted logs if Level and Tag is met.
 // For Printf, even if fatal Level is given, it will not exit.
-// If tagFilter is 0, it will print regardless of tagFilter being filtered/set.
+// If Tag is 0, it will print regardless of Tag being filtered/set.
 func (l *Logger) Printf(lvl Level, tag Tag, format string, a ...interface{}) {
 	// Both lvl and Tag has to match
-	// If tagFilter is 0, then all tagFilter.
+	// If logTag is 0, then all logTag.
 	if l.check(lvl, tag) {
 		l.mu.Lock()
 		l.outputf(lvl, format, a...)
@@ -392,12 +386,12 @@ func (l *Logger) Printf(lvl Level, tag Tag, format string, a ...interface{}) {
 	}
 }
 
-// Trace will take a single string and print log without tagFilter
+// Trace will take a single string and print log without Tag
 func (l *Logger) Trace(s string) {
 	l.Print(Ltrace, noTag, s)
 }
 
-// Tracef will formats and print log without tagFilter
+// Tracef will formats and print log without Tag
 func (l *Logger) Tracef(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Ltrace, noTag, format)
@@ -410,12 +404,12 @@ func (l *Logger) Tracef(format string, a ...interface{}) {
 	}
 }
 
-// Debug will take a single string and print log without tagFilter
+// Debug will take a single string and print log without a Tag
 func (l *Logger) Debug(s string) {
 	l.Print(Ldebug, noTag, s)
 }
 
-// Debugf will formats and print log without tagFilter
+// Debugf will formats and print log without a Tag
 func (l *Logger) Debugf(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Ldebug, noTag, format)
@@ -428,12 +422,12 @@ func (l *Logger) Debugf(format string, a ...interface{}) {
 	}
 }
 
-// Info will take a single string and print log without tagFilter
+// Info will take a single string and print log without a Tag
 func (l *Logger) Info(s string) {
 	l.Print(Linfo, noTag, s)
 }
 
-// Infof will formats and print log without tagFilter
+// Infof will formats and print log without a Tag
 func (l *Logger) Infof(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Linfo, noTag, format)
@@ -446,12 +440,12 @@ func (l *Logger) Infof(format string, a ...interface{}) {
 	}
 }
 
-// Warn will take a single string and print log without tagFilter
+// Warn will take a single string and print log without a Tag
 func (l *Logger) Warn(s string) {
 	l.Print(Lwarn, noTag, s)
 }
 
-// Warnf will formats and print log without tagFilter
+// Warnf will formats and print log without a Tag
 func (l *Logger) Warnf(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Lwarn, noTag, format)
@@ -464,12 +458,12 @@ func (l *Logger) Warnf(format string, a ...interface{}) {
 	}
 }
 
-// Error will take a single string and print log without tagFilter
+// Error will take a single string and print log without a Tag
 func (l *Logger) Error(s string) {
 	l.Print(Lerror, noTag, s)
 }
 
-// Errorf will formats and print log without tagFilter
+// Errorf will formats and print log without a Tag
 func (l *Logger) Errorf(format string, a ...interface{}) {
 	if len(a) == 0 {
 		l.Print(Lerror, noTag, format)
@@ -482,7 +476,7 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 	}
 }
 
-// Fatal will take a single string and print log without tagFilter
+// Fatal will take a single string and print log without a Tag
 // and this will terminate process with exit code 1
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatal(s string) {
@@ -491,7 +485,7 @@ func (l *Logger) Fatal(s string) {
 	os.Exit(1)
 }
 
-// Fatalf will formats and print log without tagFilter
+// Fatalf will formats and print log without a Tag
 // and this will terminate process with exit code 1
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) Fatalf(format string, a ...interface{}) {
@@ -519,7 +513,7 @@ func (l *Logger) IfError(e error) {
 // IfFatal will check and log error if exist (not nil)
 // For instance, when running multiple lines of error check
 // This can save error checking.
-// Unlikee IfError, IfFatal will exit the program
+// Unlike IfError, IfFatal will exit the program
 // added as v0.1.6c3, 12/30/2020
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) IfFatal(e error) {
@@ -536,7 +530,6 @@ func (l *Logger) Writer() io.Writer {
 }
 
 // Close will call .Close() method if supported
-// Added for v0.1.6c4, 12/30/2020
 func (l *Logger) Close() error {
 	if c, ok := l.out.(io.Closer); ok && c != nil {
 		return c.Close()
@@ -544,10 +537,10 @@ func (l *Logger) Close() error {
 	return nil
 }
 
-// NewPrint takes Level and tagFilter and create a print function.
-// This is to make such as custom `*Logger.Debug()` that has tagFilter
-// predefined. Added for v0.1.1.
-// For outputf, due to memory allocation occurred it is not included.
+// NewPrint takes Level and Tag and create a print function.
+// This is to make such as custom `*Logger.Debug()` that has a Tag
+// predefined.
+// Note: for outputf, due to memory allocation occurred it is not included.
 func (l *Logger) NewPrint(lvl Level, tag Tag, prefix string) func(string) {
 	return func(s string) {
 		if l.check(lvl, tag) {
@@ -560,11 +553,11 @@ func (l *Logger) NewPrint(lvl Level, tag Tag, prefix string) func(string) {
 	}
 }
 
-// NewWriter takes Level and tagFilter and create an Alog writer (AlWriter)
+// NewWriter takes a Level and a Tag and create an Alog writer (SubWriter)
 // that is compatible with io.Writer interface. This can be used as a
 // logger hook.
-func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *AlWriter {
-	return &AlWriter{
+func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *SubWriter {
+	return &SubWriter{
 		l:      l,
 		lvl:    lvl,
 		tag:    tag,
@@ -572,27 +565,27 @@ func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *AlWriter {
 	}
 }
 
-// NewTag will generate new tagFilter to be used for user.
+// NewTag will generate new Tag to be used for user.
 // This is nothing but creating a big-flag, but easier for the user
 // who aren't familiar with a bit-flag.
 func (l *Logger) NewTag() Tag {
-	if l.tagIssued == 0 {
-		l.tagIssued = 1
+	if l.logTagIssued == 0 {
+		l.logTagIssued = 1
 		return 1
 	}
-	l.tagIssued *= 2
-	return l.tagIssued
+	l.logTagIssued *= 2
+	return l.logTagIssued
 }
 
 // Tag is a bit-flag used to show only necessary part of process to show
 // in the log. For instance, if there's an web service, there can be different
-// tagFilter such as UI, HTTP request, HTTP response, etc. By setting tagFilter
+// Tag such as UI, HTTP request, HTTP response, etc. By setting a Tag
 // for each log using `Print` or `Printf`, a user can only print certain
-// tagFilter of log messages for better debugging.
+// Tag of log messages for better debugging.
 type Tag uint64
 
-// AlWriter is a writer with predefined Level and tagFilter.
-type AlWriter struct {
+// SubWriter is a writer with predefined Level and Tag.
+type SubWriter struct {
 	l      *Logger
 	lvl    Level
 	tag    Tag
@@ -600,7 +593,7 @@ type AlWriter struct {
 }
 
 // Write is to be used as io.Writer interface
-func (w *AlWriter) Write(b []byte) (n int, err error) {
+func (w *SubWriter) Write(b []byte) (n int, err error) {
 	if w.l.check(w.lvl, w.tag) {
 		w.l.mu.Lock()
 		w.l.header(&w.l.buf, w.lvl)
@@ -685,9 +678,6 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 	var aIdx = 0
 	var aLen = len(a)
 
-	// Reset bufFormat
-	// *dst = []byte{}
-
 	for _, c := range s {
 		if flagKeyword == false {
 			if c == '%' {
@@ -763,7 +753,7 @@ func DoColor() func(*Logger) {
 	inf := "[INF]"
 	wrn := "[WRN]"
 	err := "[ERR]"
-	ftl := "[FTL]" // gonyi, 1/3/2020, trailing space made FTL and space all red background.
+	ftl := "[FTL]"
 
 	return func(l *Logger) {
 		l.SetLevelPrefix(

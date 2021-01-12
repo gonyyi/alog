@@ -6,8 +6,6 @@ package alog_test
 import (
 	"fmt"
 	"github.com/gonyyi/alog"
-	"io/ioutil"
-	"log"
 	"testing"
 )
 
@@ -46,38 +44,27 @@ var (
 	testLogMsgFmt3 = 3.14
 )
 
-func BenchmarkBuiltinLoggerBasic(b *testing.B) {
-	// S1: 570 ns/op	      80 B/op	       2 allocs/op
-	// S2: 399 ns/op	      80 B/op	       2 allocs/op
-	l := log.New(ioutil.Discard, "", log.LstdFlags)
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			l.Print(testLogMsg)
-		}
-	})
-}
-func BenchmarkBuiltinLoggerFmt(b *testing.B) {
-	// S1: 775 ns/op	      88 B/op	       3 allocs/op
-	// S2: 502 ns/op	      88 B/op	       3 allocs/op
-	l := log.New(ioutil.Discard, "", log.LstdFlags)
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			l.Printf(testLogMsgFmt, testLogMsgFmt1, testLogMsgFmt2, testLogMsgFmt3)
-		}
-	})
-}
-
 func BenchmarkLogger_Info(b *testing.B) {
+
+	b.Run("1 eval 1 print", func(b2 *testing.B) {
+		l := alog.New(nil).SetFlag(alog.Fnone)
+		b2.ReportAllocs()
+		b2.ResetTimer()
+
+		b2.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				// prints none
+				l.Error(testLogMsg)
+			}
+		})
+	})
+
 	b.Run("1 eval 0 print", func(b2 *testing.B) {
 		// S1: 4.09 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.12 ns/op	       0 B/op	       0 allocs/op
 		// S2: 0.406 ns/op	       0 B/op	       0 allocs/op
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-		l.FilterLevel(alog.Lfatal)
+		l.SetLogLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
 
@@ -94,7 +81,7 @@ func BenchmarkLogger_Info(b *testing.B) {
 		// S2: 5.30 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.85 ns/op	       0 B/op	       0 allocs/op
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-		l.FilterLevel(alog.Lfatal)
+		l.SetLogLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
@@ -134,7 +121,7 @@ func BenchmarkLogger_Infof(b *testing.B) {
 		// S2: 1.12 ns/op	       0 B/op	       0 allocs/op
 		// S2: 1.05 ns/op	       0 B/op	       0 allocs/op
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-		l.FilterLevel(alog.Lfatal)
+		l.SetLogLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
 
@@ -151,7 +138,7 @@ func BenchmarkLogger_Infof(b *testing.B) {
 		// S2: 5.30 ns/op	       0 B/op	       0 allocs/op
 		// S2: 4.96 ns/op	       0 B/op	       0 allocs/op
 		l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
-		l.FilterLevel(alog.Lfatal)
+		l.SetLogLevel(alog.Lfatal)
 		b2.ReportAllocs()
 		b2.ResetTimer()
 		b2.RunParallel(func(pb *testing.PB) {
@@ -202,7 +189,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 				CAT3 = l2.NewTag()
 			}).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		l.FilterTag(BACK)
+		l.SetLogTag(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -224,9 +211,9 @@ func BenchmarkLogger_Print(b *testing.B) {
 
 		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		l := alog.New(nil).SetTags(&BACK, &FRNT, &CAT1, &CAT2, &CAT3).SetFlag(alog.Fdefault).SetPrefix("test ")
+		l := alog.New(nil).UseTags(&BACK, &FRNT, &CAT1, &CAT2, &CAT3).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		l.FilterTag(BACK | CAT1)
+		l.SetLogTag(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -259,7 +246,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 				CAT3 = l2.NewTag()
 			}).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		l.FilterTag(BACK)
+		l.SetLogTag(BACK)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -289,7 +276,7 @@ func BenchmarkLogger_Printf(b *testing.B) {
 				CAT3 = l2.NewTag()
 			}).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-		l.FilterTag(BACK | CAT1)
+		l.SetLogTag(BACK | CAT1)
 
 		b2.ReportAllocs()
 		b2.ResetTimer()
@@ -340,9 +327,9 @@ func BenchmarkLogger_NewPrint(b *testing.B) {
 
 	var CAT1, CAT2 alog.Tag
 
-	l := alog.New(nil).SetTags(&CAT1, &CAT2).SetFlag(alog.Fdefault).SetPrefix("test ")
+	l := alog.New(nil).UseTags(&CAT1, &CAT2).SetFlag(alog.Fdefault).SetPrefix("test ")
 
-	l.FilterTag(CAT1)
+	l.SetLogTag(CAT1)
 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
 	WarnCAT2 := l.NewPrint(alog.Lwarn, CAT2, "CAT2w ")
 	TraceCAT1 := l.NewPrint(alog.Ltrace, CAT1, "CAT1t ")
@@ -367,9 +354,9 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 
 	var TEST1, TEST2, TEST3 alog.Tag
 
-	l := alog.New(nil).SetTags(&TEST1, &TEST2, &TEST3).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
+	l := alog.New(nil).UseTags(&TEST1, &TEST2, &TEST3).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 
-	l.FilterTag(TEST2) // only show TEST2
+	l.SetLogTag(TEST2) // only show TEST2
 
 	wT1D := l.NewWriter(alog.Ldebug, TEST1, "T1D ")
 	wT1I := l.NewWriter(alog.Linfo, TEST1, "T1I ")

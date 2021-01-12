@@ -61,8 +61,8 @@ import (
 )
 
 func main() {
-	// Without SetLevel defined, the default value for level is Info.
-	l := alog.New(os.Stdout).SetFlag(alog.Fprefix|alog.Flevel).SetLevel(alog.Ldebug)
+	// Without FilterLevel defined, the default value for level is Info.
+	l := alog.New(os.Stdout).SetFlag(alog.Fprefix|alog.Flevel).FilterLevel(alog.Ldebug)
 
 	// Trace will NOT be printed
 	l.Trace("hello trace")
@@ -93,7 +93,7 @@ func main() {
 
 	// Assume I want to see BACK and FRONT with a level DEBUG or above.
 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Fprefix | alog.Flevel).
-		SetLevel(alog.Ldebug).SetTags(&BACK, &FRONT, &USER).SetFilter(BACK | FRONT)
+		FilterLevel(alog.Ldebug).SetTags(&BACK, &FRONT, &USER).FilterTag(BACK | FRONT)
 
 	f := func(c alog.Tag, s string) {
 		l.Printf(alog.Ltrace, c, "%s.trace", s)
@@ -161,7 +161,7 @@ func main() {
 	USER := l.NewTag()
 	DB := l.NewTag()
 
-	l.SetFilter(USER)
+	l.FilterTag(USER)
 
 	UserInfo := l.NewPrint(alog.Linfo, USER, "USER: ")
 	DBInfo := l.NewPrint(alog.Linfo, DB, "DB: ")
@@ -220,7 +220,7 @@ func main() {
 	myFunc := func(al *alog.Logger) {
 		al.SetPrefix("alogtest ").
 			SetFlag(alog.Fprefix | alog.Flevel).
-			SetLevel(alog.Ltrace)
+			FilterLevel(alog.Ltrace)
 	}
 
 	// use myFunc defined above,
@@ -264,7 +264,7 @@ became `alog.New(io.Writer) *Logger`.
    prefix, also uses basic default setting. Therefore it's bit cumbersome to require
    two (prefix, flag), often, unused parameters.
 
-2. `SetOutput`, `SetPrefix`, `SetFlag`, `SetLevel`, `SetLevelPrefix`, `SetCategory` are now
+2. `SetOutput`, `SetPrefix`, `SetFlag`, `FilterLevel`, `SetLevelPrefix`, `SetCategory` are now
    returning `*Logger` pointer which means, when a logger is created, you can add a
    configuration only when it's necessary.
 
@@ -284,7 +284,7 @@ became `alog.New(io.Writer) *Logger`.
 
         ```go
         l := alog.New(os.Stderr).SetPrefix("TestLog: ").SetFlag(alog.Fdefault|alog.FtimeUTC)
-        l.SetLevel(alog.Ltrace)
+        l.FilterLevel(alog.Ltrace)
 
         ```
 
