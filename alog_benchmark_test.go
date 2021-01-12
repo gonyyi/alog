@@ -45,7 +45,30 @@ var (
 )
 
 func BenchmarkLogger_Info(b *testing.B) {
+	b.Run("with time", func(b2 *testing.B) {
+		l := alog.New(nil)
+		b2.ReportAllocs()
+		b2.ResetTimer()
 
+		b2.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				// prints none
+				l.Error(testLogMsg)
+			}
+		})
+	})
+	b.Run("with utc time", func(b2 *testing.B) {
+		l := alog.New(nil).SetFlag(alog.FtimeUTC)
+		b2.ReportAllocs()
+		b2.ResetTimer()
+
+		b2.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				// prints none
+				l.Error(testLogMsg)
+			}
+		})
+	})
 	b.Run("1 eval 1 print", func(b2 *testing.B) {
 		l := alog.New(nil).SetFlag(alog.Fnone)
 		b2.ReportAllocs()
