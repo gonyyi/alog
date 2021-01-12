@@ -185,9 +185,6 @@ func (l *Logger) SetPrefix(s string) *Logger {
 func (l *Logger) SetFlag(flag flags) *Logger {
 	l.mu.Lock()
 	l.flag = flag
-	if l.flag&FtimeUTC != 0 {
-		l.time = l.time.UTC()
-	}
 	l.mu.Unlock()
 	return l
 }
@@ -243,36 +240,32 @@ func (l *Logger) UseTags(tags ...*Tag) *Logger {
 func (l *Logger) header(buf *[]byte, lvl Level) {
 	if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD|Ftime|FtimeMs) != 0 {
 		l.time = time.Now()
-
+		if l.flag&FtimeUTC != 0 {
+			l.time = l.time.UTC()
+		}
 		if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD) != 0 {
 			year, month, day := l.time.Date()
 			// if both YYMMDD and YYYYMMDD is given, YYYYMMDD will be used
 			if l.flag&FdateYYYYMMDD != 0 {
-				itoa(buf, year, 4)
-				*buf = append(*buf, '/')
+				itoa(buf, year, 4, '/')
 			} else if l.flag&FdateYYMMDD != 0 {
-				itoa(buf, year%100, 2)
-				*buf = append(*buf, '/')
+				itoa(buf, year%100, 2, '/')
 			}
 			// MMDD will be always added ass it's a common denominator of
 			// FdateYYMMDD|FdateYYYYMMDD|FdateMMDD
-			itoa(buf, int(month), 2)
-			*buf = append(*buf, '/')
-			itoa(buf, day, 2)
-			*buf = append(*buf, ' ')
+			itoa(buf, int(month), 2, '/')
+			itoa(buf, day, 2, ' ')
 		}
 		if l.flag&(Ftime|FtimeMs) != 0 {
 			hour, min, sec := l.time.Clock()
-			itoa(buf, hour, 2)
-			*buf = append(*buf, ':')
-			itoa(buf, min, 2)
-			*buf = append(*buf, ':')
-			itoa(buf, sec, 2)
+			itoa(buf, hour, 2, ':')
+			itoa(buf, min, 2, ':')
 			if l.flag&FtimeMs != 0 {
-				*buf = append(*buf, '.')
-				itoa(buf, l.time.Nanosecond()/1e3, 6)
+				itoa(buf, sec, 2, '.')
+				itoa(buf, l.time.Nanosecond()/1e3, 6, ' ')
+			} else {
+				itoa(buf, sec, 2, ' ')
 			}
-			*buf = append(*buf, ' ')
 		}
 	}
 
@@ -620,14 +613,18 @@ func (devNull) Write([]byte) (int, error) {
 // itoa converts int to []byte
 // if minLength == 0, it will print without padding 0
 // due to limit on int type, 19 digit max; 18 digit is safe.
-func itoa(dst *[]byte, i int, minLength int) {
-	var b [20]byte
+func itoa(dst *[]byte, i int, minLength int, suffix byte) {
+	var b [22]byte
 	var positiveNum = true
 	if i < 0 {
 		positiveNum = false
 		i = -i // change the sign to positive
 	}
 	bIdx := len(b) - 1
+	if suffix != 0 {
+		b[bIdx] = suffix
+		bIdx--
+	}
 
 	for i >= 10 || minLength > 1 {
 		minLength--
@@ -651,7 +648,7 @@ func ftoa(dst *[]byte, f float64, decPlace int) {
 	if int(f) == 0 && f < 0 {
 		*dst = append(*dst, '-')
 	}
-	itoa(dst, int(f), 0) // add full number first
+	itoa(dst, int(f), 0, 0) // add full number first
 
 	if decPlace > 0 {
 		// if decPlace == 3, multiplier will be 1000
@@ -663,9 +660,9 @@ func ftoa(dst *[]byte, f float64, decPlace int) {
 		*dst = append(*dst, '.')
 		tmp := int((f - float64(int(f))) * float64(multiplier))
 		if f > 0 { // 2nd num shouldn't include decimala
-			itoa(dst, tmp, decPlace)
+			itoa(dst, tmp, decPlace, 0)
 		} else {
-			itoa(dst, -tmp, decPlace)
+			itoa(dst, -tmp, decPlace, 0)
 		}
 	}
 }
@@ -699,7 +696,7 @@ func formats(dst *[]byte, s string, a ...interface{}) {
 			switch c {
 			case 'd':
 				if v, ok := a[aIdx].(int); ok {
-					itoa(dst, v, 0)
+					itoa(dst, v, 0, 0)
 				} else {
 					*dst = append(*dst, unsuppType...)
 				}
