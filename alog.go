@@ -223,13 +223,13 @@ func (l *Logger) SetLogFn(f func(Level, Tag) bool) *Logger {
 	return l
 }
 
-// UseTags will issue tags to Tag(s) pointers.
+// UseTag will issue tags to Tag(s) pointers.
 // If a logger is created with dots such as `alog.New(out).SetPrefix("nptest ")...`
 // This can be used. This maybe useful when there are many tags to be initialized.
 // Usage:
 //    var TEST1, TEST2, TEST3 alog.Tag
-//    l := alog.New(out).UseTags(&TEST1, &TEST2, &TEST3).SetLogTag(TEST1)
-func (l *Logger) UseTags(tags ...*Tag) *Logger {
+//    l := alog.New(out).UseTag(&TEST1, &TEST2, &TEST3).SetLogTag(TEST1)
+func (l *Logger) UseTag(tags ...*Tag) *Logger {
 	for _, t := range tags {
 		*t = l.NewTag()
 	}

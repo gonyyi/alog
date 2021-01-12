@@ -68,7 +68,7 @@ func TestLogger_SetTags(t *testing.T) {
 
 		// Create a logger
 		l := alog.New(out).
-			UseTags(&T1, &T2, &T3, &T4, &T5). // issue tag numbers to tag variables created
+			UseTag(&T1, &T2, &T3, &T4, &T5). // issue tag numbers to tag variables created
 			SetFlag(alog.Fprefix | alog.Flevel).
 			SetLogLevel(alog.Ldebug).
 			SetLogTag(T1)
@@ -271,7 +271,7 @@ func TestLogger_NewWriter(t *testing.T) {
 	t.Run("NewWriter with NewTags", func(t2 *testing.T) {
 		out := &bytes.Buffer{}
 		var TEST1, TEST2, TEST3 alog.Tag
-		l := alog.New(out).UseTags(&TEST1, &TEST2, &TEST3).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
+		l := alog.New(out).UseTag(&TEST1, &TEST2, &TEST3).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
 
 		l.SetLogTag(TEST2) // only show TEST2
 

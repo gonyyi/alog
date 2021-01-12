@@ -234,7 +234,7 @@ func BenchmarkLogger_Print(b *testing.B) {
 
 		var BACK, FRNT, CAT1, CAT2, CAT3 alog.Tag
 
-		l := alog.New(nil).UseTags(&BACK, &FRNT, &CAT1, &CAT2, &CAT3).SetFlag(alog.Fdefault).SetPrefix("test ")
+		l := alog.New(nil).UseTag(&BACK, &FRNT, &CAT1, &CAT2, &CAT3).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 		l.SetLogTag(BACK | CAT1)
 
@@ -350,7 +350,7 @@ func BenchmarkLogger_NewPrint(b *testing.B) {
 
 	var CAT1, CAT2 alog.Tag
 
-	l := alog.New(nil).UseTags(&CAT1, &CAT2).SetFlag(alog.Fdefault).SetPrefix("test ")
+	l := alog.New(nil).UseTag(&CAT1, &CAT2).SetFlag(alog.Fdefault).SetPrefix("test ")
 
 	l.SetLogTag(CAT1)
 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
@@ -377,7 +377,7 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 
 	var TEST1, TEST2, TEST3 alog.Tag
 
-	l := alog.New(nil).UseTags(&TEST1, &TEST2, &TEST3).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
+	l := alog.New(nil).UseTag(&TEST1, &TEST2, &TEST3).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 
 	l.SetLogTag(TEST2) // only show TEST2
 

@@ -231,9 +231,9 @@ func ExampleLogger_SetLogTag() {
 func ExampleLogger_SetLogFn() {
 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
 
-	// Create tags and enable them by UseTags method.
+	// Create tags and enable them by UseTag method.
 	var SYSTEM, DISK, REQUEST, RESPONSE alog.Tag
-	l.UseTags(&SYSTEM, &DISK, &REQUEST, &RESPONSE)
+	l.UseTag(&SYSTEM, &DISK, &REQUEST, &RESPONSE)
 
 	// Instead of SetLogTag and/or SetLogLevel method,
 	// a function will be used for SetLogFn method as below.
@@ -265,14 +265,14 @@ func ExampleLogger_SetLogFn() {
 }
 
 func ExampleLogger_UseTags() {
-	// UseTags method can be used to instead of the NewTag method.
+	// UseTag method can be used to instead of the NewTag method.
 	// This will be useful when there are many tags need to be defined.
 
 	// Define tags
 	var T1, T2, T3, T4, T5 alog.Tag
 
-	// UseTags will assign bitflag for those tags, so it can be used.
-	l := alog.New(os.Stdout).UseTags(&T1, &T2, &T3, &T4, &T5).SetFlag(alog.Flevel)
+	// UseTag will assign bitflag for those tags, so it can be used.
+	l := alog.New(os.Stdout).UseTag(&T1, &T2, &T3, &T4, &T5).SetFlag(alog.Flevel)
 
 	// Assume only T1 and T3 are to be printed.
 	l.SetLogTag(T1 | T3)
