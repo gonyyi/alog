@@ -3,7 +3,7 @@
 (c) 2020 Gon Y Yi. <https://gonyyi.com>  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.3.2 (1/11/2020)
+Version 0.3 (1/11/2020)
 
 [![GoDoc](https://godoc.org/github.com/gonyyi/alog?status.svg)](https://godoc.org/github.com/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.3.2)
