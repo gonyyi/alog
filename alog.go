@@ -6,7 +6,6 @@ package alog
 
 import (
 	"io"
-	"os"
 	"sync"
 	"time"
 )
@@ -36,28 +35,30 @@ const (
 	// Fnone for all options off
 	Fnone = flags(uint32(0))
 
+	// Fprefix will show prefix when printing log message
+	Fprefix flags = 1 << iota
+	// Fyear will show 4 digit year such as 2006
+	Fyear
+	// Fdate will show 01/02 date formats.
+	Fdate
 	// Ftime will show HH:MM:SS formats such as 05:02:03
-	Ftime flags = 1 << iota
+	Ftime
 	// FtimeMs will show millisecond in its time such as 10:12:13.1234
 	FtimeMs
+	// FtimeUnix will show unix time
+	FtimeUnix
+	// FtimeUnixNano will show unix time
+	FtimeUnixNano
 	// FtimeUTC will show UTC time formats
 	FtimeUTC
-	// FdateMMDD will show 01/02 date formats.
-	FdateMMDD
-	// FdateYYMMDD will show 06/01/02 date formats.
-	FdateYYMMDD
-	// FdateYYYYMMDD will show 2006/01/02 date formats.
-	FdateYYYYMMDD
-	// Fprefix will show prefix when printing log message
-	Fprefix
 	// Flevel show Level in the log messsage.
 	Flevel
-	// Fnewline will enable newlines within the log (v0.1.4)
-	Fnewline
+	// Ftag will show tags
+	Ftag
 	// Fjson will print to a JSON
 	Fjson
 	// Fdefault will show month/day with time, and Level of logging.
-	Fdefault = FdateYYYYMMDD | Ftime | Flevel
+	Fdefault = Fyear | Fdate | Ftime | Flevel | Ftag
 )
 
 // LevelPrefix is a bit-flag used for different Level of log activity:
@@ -84,7 +85,7 @@ func (l *Level) String() string {
 	case Lfatal:
 		return "fatal"
 	default:
-		return "unknown"
+		return ""
 	}
 }
 
@@ -152,7 +153,7 @@ type Logger struct {
 // two (prefix, flag), often, unused parameters. Duct-taping can be done following way:
 // 1. alog.New(nil).SetOutput(os.Stderr) // initially set discard for output but overridden to os.Stderr
 // 2. alog.New(os.Stderr).SetPrefix("TestLog: ").SetLogLevel(alog.Linfo) // set prefix and Level
-// 3. alog.New(os.Stderr).SetPrefix("TestLog: ").SetFlag(alog.Fdefault|alog.FtimeUTC)
+// 3. alog.New(os.Stderr).SetPrefix("TestLog: ").SetFormat(alog.Fdefault|alog.FtimeUTC)
 func New(output io.Writer) *Logger {
 	// If output is given as `nil`, it will use io.discard as a default.
 	if output == nil {
@@ -160,9 +161,9 @@ func New(output io.Writer) *Logger {
 	}
 
 	// Creating new logger object and returns pointer to logger.
-	// Default value will be set here. If a user uses *alog.SetFlag to provoke
+	// Default value will be set here. If a user uses *alog.SetFormat to provoke
 	// unless specifically set certain value, it will not be overwritten.
-	// eg. If a user called SetFlag with other config flag except the Level, then the log
+	// eg. If a user called SetFormat with other config flag except the Level, then the log
 	//     Level will not be changed. Therefore default Level should be defined here.
 	l := &Logger{
 		out:      output,
@@ -172,8 +173,23 @@ func New(output io.Writer) *Logger {
 		buf:      make([]byte, 1024),
 	}
 
-	// Default prefixes for each Level. This can be changed by a user using *alog.SetLevelPrefix()
-	l.SetLevelPrefix("[TRC] ", "[DBG] ", "[INF] ", "[WRN] ", "[ERR] ", "[FTL] ")
+	// Default prefixes for each Level. This can be changed by a user using *alog.setLevelPrefix()
+	l.levelString[0] = []byte("")
+	l.levelString[1] = []byte("[TRC] ")
+	l.levelString[2] = []byte("[DBG] ")
+	l.levelString[3] = []byte("[INF] ")
+	l.levelString[4] = []byte("[WRN] ")
+	l.levelString[5] = []byte("[ERR] ")
+	l.levelString[6] = []byte("[FTL] ")
+
+	// For JSON output, this is hardcoded
+	l.levelStringForJson[0] = []byte("")
+	l.levelStringForJson[1] = []byte("trace")
+	l.levelStringForJson[2] = []byte("debug")
+	l.levelStringForJson[3] = []byte("info")
+	l.levelStringForJson[4] = []byte("warn")
+	l.levelStringForJson[5] = []byte("error")
+	l.levelStringForJson[6] = []byte("fatal")
 	return l
 }
 
@@ -186,6 +202,36 @@ func (l *Logger) Do(fn ...func(*Logger)) *Logger {
 		f(l)
 	}
 	return l
+}
+
+// Close will call .Close() method if supported
+func (l *Logger) Close() error {
+	if c, ok := l.out.(io.Closer); ok && c != nil {
+		return c.Close()
+	}
+	return nil
+}
+
+// MustGetTag will ignore "ok" from GetTag.
+// If not found, it will return 0 (none) for the tag.
+func (l *Logger) MustGetTag(name string) Tag {
+	tag, _ := l.GetTag(name)
+	return tag
+}
+
+// GetTag takes a tag name and returns a tag if found.
+func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
+	for i := 0; i < l.logTagIssued; i++ {
+		if l.logTagString[i] == name {
+			return 1 << i, true
+		}
+	}
+	return 0, false
+}
+
+// GetWriter returns the output destination for the logger.
+func (l *Logger) GetWriter() io.Writer {
+	return l.out
 }
 
 // SetOutput can redefined the output after logger has been created.
@@ -209,218 +255,107 @@ func (l *Logger) SetPrefix(s string) *Logger {
 	return l
 }
 
-// SetFlag will reconfigure the logger after it has been created.
+// SetFormat will reconfigure the logger after it has been created.
 // This will first copy flag into *alog.flag, and sets few that
 // need additional parsing.
-func (l *Logger) SetFlag(flag flags) *Logger {
+func (l *Logger) SetFormat(flag flags) *Logger {
 	l.mu.Lock()
 	l.flag = flag
 	l.mu.Unlock()
 	return l
 }
 
-// SetLevelPrefix will set different prefixes for each levelled log messages.
-// eg. "[DEBUG]".
-func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) *Logger {
-	l.levelString[0] = []byte("")
-	l.levelString[1] = []byte(trace)
-	l.levelString[2] = []byte(debug)
-	l.levelString[3] = []byte(info)
-	l.levelString[4] = []byte(warn)
-	l.levelString[5] = []byte(error)
-	l.levelString[6] = []byte(fatal)
-
-	// For JSON output, this is hardcoded
-	l.levelStringForJson[0] = []byte("")
-	l.levelStringForJson[1] = []byte("trace")
-	l.levelStringForJson[2] = []byte("debug")
-	l.levelStringForJson[3] = []byte("info")
-	l.levelStringForJson[4] = []byte("warn")
-	l.levelStringForJson[5] = []byte("error")
-	l.levelStringForJson[6] = []byte("fatal")
-	return l
-}
-
-// SetLogLevel will set the minimum logging Level. If this is set to INFO, anything below
-// info, such as TRACE/DEBUG, will be not printed.
-func (l *Logger) SetLogLevel(minLogLevel Level) *Logger {
-	l.logLevel = minLogLevel
-	return l
-}
-
-// SetLogTag will take a bit-flag Tag and sets what categories will be printed.
-func (l *Logger) SetLogTag(tags Tag) *Logger {
-	l.logTag = tags
-	return l
-}
-
-// SetLogFn will set a filter based on a func `func(Level, Tag)bool`.
-// Once this set, it will supercedes SetLogLevel and SetLogTag.
-// If `nil` is given as a param, it will be deactivated.
-func (l *Logger) SetLogFn(f func(Level, Tag) bool) *Logger {
-	l.logFn = f
-	return l
-}
-
-// check will check if Level and Tag given is good to be printed.
-// If
-// Eg. if setting is Level INFO, Tag USER, then
-//     any log Level below INFO shouldn't be printed.
-//     Also, any Tag other than USER shouldn't be printed either.
-func (l *Logger) check(lvl Level, tag Tag) bool {
-	switch {
-	case l.logFn != nil: // logFn has the highest order if set.
-		return l.logFn(lvl, tag)
-	case l.logLevel > lvl: // if lvl is below lvl limit, the do not print
-		return false
-	case l.logTag != noTag && l.logTag&tag == noTag: // if logTag is set but Tag is not matching, then do not print
-		return false
-	default:
-		return true
-	}
-}
-
-// Write method is used to meet io.Writer interface.
-// This will default to "debug" level without any tag assigned.
-func (l *Logger) Write(b []byte) (n int, err error) {
-	return l.Log(Ldebug, 0, string(b))
-}
-
-// Output prints a byte array log message.
-// Both Level and Tag has to match with what's in the config.
-// (However, if Tag is 0, then it will be printed regardless of logTag).
-// For Print, even if fatal Level is given, it will not exit.
-func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
-	// Check if given lvl/logTag are printable
-	if l.check(lvl, tag) {
-		l.mu.Lock()
-		l.header(&l.buf, lvl, tag)
-		if l.flag&Fjson != 0 {
-			lastUpdate := 0
-			escapeKey := false
-			for i := 0; i < len(b); i++ {
-				switch b[i] {
-				case '\\':
-					if escapeKey == true {
-						l.buf = append(l.buf, `\`...)
-					} else {
-						escapeKey = true
-					}
-				case '\n':
-					l.buf = append(l.buf, b[lastUpdate:i]...)
-					l.buf = append(l.buf, `\n`...)
-					lastUpdate = i + 1
-					escapeKey = false
-				case '"':
-					if escapeKey == false {
-						l.buf = append(l.buf, b[lastUpdate:i]...)
-						l.buf = append(l.buf, `\"`...)
-						lastUpdate = i + 1
-					}
-				default:
-					escapeKey = false
-				}
-			}
-			l.buf = append(l.buf, b[lastUpdate:]...)
-		} else {
-			l.buf = append(l.buf, b...)
+func (l *Logger) SetNewTags(names ...string) *Logger {
+	for _, name := range names {
+		if _, ok := l.GetTag(name); !ok {
+			l.logTagString[l.logTagIssued] = name
+			l.logTagIssued += 1
 		}
-		l.finalize()
-		l.mu.Unlock()
 	}
+	return l
 }
 
-// IfError will check and log error if exist (not nil)
+func (l *Logger) SetFilter(fn FilterFn, lv Level, tags Tag) *Logger {
+	if fn != nil {
+		l.logFn = fn
+	} else {
+		l.logLevel = lv
+		l.logTag = tags
+	}
+	return l
+}
+
+//
+// // Output prints a byte array log message.
+// // Both Level and Tag has to match with what's in the config.
+// // (However, if Tag is 0, then it will be printed regardless of logTag).
+// // For Print, even if fatal Level is given, it will not exit.
+// func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
+// 	// Check if given lvl/logTag are printable
+// 	if l.check(lvl, tag) {
+// 		l.mu.Lock()
+// 		l.header(&l.buf, lvl, tag)
+// 		if l.flag&Fjson != 0 {
+// 			lastUpdate := 0
+// 			escapeKey := false
+// 			for i := 0; i < len(b); i++ {
+// 				switch b[i] {
+// 				case '\\':
+// 					if escapeKey == true {
+// 						l.buf = append(l.buf, `\`...)
+// 					} else {
+// 						escapeKey = true
+// 					}
+// 				case '\n':
+// 					l.buf = append(l.buf, b[lastUpdate:i]...)
+// 					l.buf = append(l.buf, `\n`...)
+// 					lastUpdate = i + 1
+// 					escapeKey = false
+// 				case '"':
+// 					if escapeKey == false {
+// 						l.buf = append(l.buf, b[lastUpdate:i]...)
+// 						l.buf = append(l.buf, `\"`...)
+// 						lastUpdate = i + 1
+// 					}
+// 				default:
+// 					escapeKey = false
+// 				}
+// 			}
+// 			l.buf = append(l.buf, b[lastUpdate:]...)
+// 		} else {
+// 			l.buf = append(l.buf, b...)
+// 		}
+// 		l.finalize()
+// 		l.mu.Unlock()
+// 	}
+// }
+
+// LogIferr will check and log error if exist (not nil)
 // For instance, when running multiple lines of error check
 // This can save error checking.
 // added as v0.1.6c3, 12/30/2020
-func (l *Logger) IfError(e error) {
+func (l *Logger) LogIferr(e error, lvl Level, tag Tag, msg string) {
 	if e != nil {
-		l.Log(Lerror, 0, "", "err", e.Error())
+		l.Log(lvl, tag, msg, "err", e.Error())
 	}
 }
 
-// IfFatal will check and log error if exist (not nil)
-// For instance, when running multiple lines of error check
-// This can save error checking.
-// Unlike IfError, IfFatal will exit the program
-// added as v0.1.6c3, 12/30/2020
-// updated with Close() as v0.1.6c4, 12/30/2020
-func (l *Logger) IfFatal(e error) {
+// Iferr will run function "do" if error is not nil.
+func (l *Logger) Iferr(e error, do func()) {
 	if e != nil {
-		l.Log(Lfatal, 0, "", "err", e.Error())
-		_ = l.Close()
-		os.Exit(1)
-	}
-}
-
-// Writer returns the output destination for the logger.
-func (l *Logger) Writer() io.Writer {
-	return l.out
-}
-
-// Close will call .Close() method if supported
-func (l *Logger) Close() error {
-	if c, ok := l.out.(io.Closer); ok && c != nil {
-		return c.Close()
-	}
-	return nil
-}
-
-// NewPrint takes Level and Tag and create a print function.
-// This is to make such as custom `*Logger.Debug()` that has a Tag
-// predefined.
-// Note: for outputf, due to memory allocation occurred it is not included.
-func (l *Logger) NewPrint(lvl Level, tag Tag, prefix string) func(string) {
-	return func(s string) {
-		if l.check(lvl, tag) {
-			l.mu.Lock()
-			l.header(&l.buf, lvl, tag)
-			l.buf = append(l.buf, append([]byte(prefix), s...)...)
-			l.finalize()
-			l.mu.Unlock()
-		}
+		do()
 	}
 }
 
 // NewWriter takes a Level and a Tag and create an Alog writer (SubWriter)
 // that is compatible with io.Writer interface. This can be used as a
 // logger hook.
-func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *SubWriter {
+func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 	return &SubWriter{
-		l:      l,
-		lvl:    lvl,
-		tag:    tag,
-		prefix: []byte(prefix),
+		l:   l,
+		lvl: lvl,
+		tag: tag,
 	}
-}
-
-// NewTag will generate new Tag to be used for user.
-// This is nothing but creating a big-flag, but easier for the user
-// who aren't familiar with a bit-flag. This will return Tag (uint64)
-func (l *Logger) NewTag(name string) (tag Tag) {
-	if l.logTagIssued >= 64 {
-		l.Warn(0, "NewTag issue", "err", "maximum number of new tags issued")
-		return 1 << l.logTagIssued
-	}
-	// If tag name is already exist, return that one.
-	tag, ok := l.GetTag(name)
-	if ok {
-		return tag
-	}
-	l.logTagString[l.logTagIssued] = name
-	l.logTagIssued += 1
-	return 1 << (l.logTagIssued - 1)
-}
-
-// GetTag takes a tag name and returns a tag if found.
-func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
-	for idx, v := range l.logTagString {
-		if v == name {
-			return 1 << idx, true
-		}
-	}
-	return 0, false
 }
 
 // Tag is a bit-flag used to show only necessary part of process to show
@@ -432,19 +367,17 @@ type Tag uint64
 
 // SubWriter is a writer with predefined Level and Tag.
 type SubWriter struct {
-	l      *Logger
-	lvl    Level
-	tag    Tag
-	prefix []byte
+	l   *Logger
+	lvl Level
+	tag Tag
 }
 
 // Write is to be used as io.Writer interface
 func (w *SubWriter) Write(b []byte) (n int, err error) {
 	if w.l.check(w.lvl, w.tag) {
 		w.l.mu.Lock()
-		w.l.header(&w.l.buf, w.lvl, 0)
-		w.l.buf = append(w.l.buf, w.prefix...)
-		w.l.buf = append(w.l.buf, b...)
+		w.l.header(&w.l.buf, w.lvl, w.tag)
+		w.l.buf = append(w.l.buf, b...) // todo: check if this works with JSON
 		n, err := w.l.finalize()
 		w.l.mu.Unlock()
 		return n, err
@@ -463,9 +396,13 @@ func (devNull) Write([]byte) (int, error) {
 	return 0, nil
 }
 
+// FilterFn is a function type to be used with SetFilter.
+type FilterFn func(Level, Tag) bool
+
 // itoa converts int to []byte
 // if minLength == 0, it will print without padding 0
 // due to limit on int type, 19 digit max; 18 digit is safe.
+// Keeping this because of minLength and suffix...
 func itoa(dst *[]byte, i int, minLength int, suffix byte) {
 	var b [22]byte
 	var positiveNum = true
@@ -494,138 +431,3 @@ func itoa(dst *[]byte, i int, minLength int, suffix byte) {
 	}
 	*dst = append(*dst, b[bIdx:]...)
 }
-
-//
-// // ftoa takes float64 and converts and add to dst byte slice pointer.
-// // this is used to reduce memory allocation.
-// func ftoa(dst *[]byte, f float64, decPlace int) {
-// 	if int(f) == 0 && f < 0 {
-// 		*dst = append(*dst, '-')
-// 	}
-// 	itoa(dst, int(f), 0, 0) // add full number first
-//
-// 	if decPlace > 0 {
-// 		// if decPlace == 3, multiplier will be 1000
-// 		// get nth power
-// 		var multiplier = 1
-// 		for i := decPlace; i > 0; i-- {
-// 			multiplier = multiplier * 10
-// 		}
-// 		*dst = append(*dst, '.')
-// 		tmp := int((f - float64(int(f))) * float64(multiplier))
-// 		if f > 0 { // 2nd num shouldn't include decimala
-// 			itoa(dst, tmp, decPlace, 0)
-// 		} else {
-// 			itoa(dst, -tmp, decPlace, 0)
-// 		}
-// 	}
-// }
-//
-// // formats method is a replacement for fmt.Sprintf(). This is to save memory allocation.
-// // This utilizes bufFormat and each run, it will reset it and reuse it.
-// func formats(dst *[]byte, s string, a ...interface{}) {
-// 	flagKeyword := false
-//
-// 	var aIdx = 0
-// 	var aLen = len(a)
-//
-// 	for _, c := range s {
-// 		if flagKeyword == false {
-// 			if c == '%' {
-// 				flagKeyword = true
-// 			} else {
-// 				*dst = append(*dst, byte(c))
-// 			}
-// 		} else {
-// 			// flagKeyword == true
-// 			if c == '%' {
-// 				*dst = append(*dst, '%')
-// 				flagKeyword = false
-// 				continue
-// 			}
-// 			if aIdx >= aLen {
-// 				flagKeyword = false
-// 				continue
-// 			}
-// 			switch c {
-// 			case 'd':
-// 				if v, ok := a[aIdx].(int); ok {
-// 					itoa(dst, v, 0, 0)
-// 				} else {
-// 					*dst = append(*dst, unsuppType...)
-// 				}
-// 				aIdx++
-// 			case 's':
-// 				if v, ok := a[aIdx].(string); ok {
-// 					*dst = append(*dst, v...)
-// 				} else {
-// 					*dst = append(*dst, unsuppType...)
-// 				}
-// 				aIdx++
-// 			case 'f':
-// 				switch a[aIdx].(type) {
-// 				case float64:
-// 					if v, ok := a[aIdx].(float64); ok {
-// 						ftoa(dst, v, 2)
-// 					} else {
-// 						*dst = append(*dst, unsuppType...)
-// 					}
-// 				case float32:
-// 					if v, ok := a[aIdx].(float32); ok {
-// 						ftoa(dst, float64(v), 2)
-// 					} else {
-// 						*dst = append(*dst, unsuppType...)
-// 					}
-// 				}
-// 				aIdx++
-// 			case 't':
-// 				if v, ok := a[aIdx].(bool); ok {
-// 					if v {
-// 						*dst = append(*dst, "true"...)
-// 					} else {
-// 						*dst = append(*dst, "false"...)
-// 					}
-// 				} else {
-// 					*dst = append(*dst, unsuppType...)
-// 				}
-// 				aIdx++
-// 			}
-// 			flagKeyword = false
-// 		}
-// 	}
-// }
-//
-// // DoColor is an example of Do function creation.
-// // This function returns do-function for alog, and is an example for `*Logger.Do` application.
-// // Usage: `alog.New(os.Stderr).Do(alog.DoColor())`
-// func DoColor() func(*Logger) {
-// 	trc := "[TRC]"
-// 	dbg := "[DBG]"
-// 	inf := "[INF]"
-// 	wrn := "[WRN]"
-// 	err := "[ERR]"
-// 	ftl := "[FTL]"
-//
-// 	return func(l *Logger) {
-// 		l.SetLevelPrefix(
-// 			"\u001B[0;35m"+trc+"\u001B[0m ",
-// 			"\u001B[0;36m"+dbg+"\u001B[0m ",
-// 			"\u001B[0;34m"+inf+"\u001B[0m ",
-// 			"\u001B[1;33m"+wrn+"\u001B[0m ",
-// 			"\u001B[1;31m"+err+"\u001B[0m ",
-// 			"\u001B[1;41;30m"+ftl+"\u001B[0m ",
-// 		)
-// 		// IF output is set to os.Stderr OR os.Stdout, it can be done by checking output.
-// 		// if l.Writer() != nil && (l.Writer() == os.Stderr || l.Writer() == os.Stdout) {
-// 		// 	l.SetLevelPrefix(
-// 		// 		"[\u001B[0;35mTRC\u001B[0m] ",
-// 		//      ...
-// 		// 	)
-// 		// } else {
-// 		// 	l.SetLevelPrefix(
-// 		// 		Trace,
-// 		//      ...
-// 		// 	)
-// 		// }
-// 	}
-// }

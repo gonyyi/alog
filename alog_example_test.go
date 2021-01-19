@@ -14,7 +14,7 @@ package alog_test
 // func ExampleNew() {
 // 	// Default alog will record date (YYYYMMDD) and time.
 // 	// So disable date and time, and only show level for output comparison
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// Trace/Debug will NOT be printed because default level is Info.
 // 	l.Trace("hello trace")
@@ -38,13 +38,13 @@ package alog_test
 // 	// only shows prefix and level.
 // 	myconf1 := func(l *alog.Logger) {
 // 		l.SetPrefix("log ")
-// 		l.SetLogLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
+// 		l.SetLogLevel(alog.Ldebug).SetFormat(alog.Fprefix | alog.Flevel)
 // 	}
 //
 // 	// myconf2 will set logging level prefixes. Instead of default 3 char long,
 // 	// this will use full character
 // 	myconf2 := func(l *alog.Logger) {
-// 		l.SetLevelPrefix(
+// 		l.setLevelPrefix(
 // 			"[TRACE] ",
 // 			"[DEBUG] ",
 // 			"[INFO]  ",
@@ -78,7 +78,7 @@ package alog_test
 // 	// l.SetLogLevel(alog.Ltrace)
 //
 // 	// v0.2.0 Code:
-// 	l := alog.New(nil).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix).SetLogLevel(alog.Ltrace)
+// 	l := alog.New(nil).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix).SetLogLevel(alog.Ltrace)
 //
 // 	l.Info("Hello 1")
 //
@@ -102,7 +102,7 @@ package alog_test
 // 	// l := alog.New(os.Stdout, "test1 ", alog.Flevel|alog.Fprefix)
 //
 // 	// v0.2.0 Code:
-// 	l := alog.New(os.Stdout).SetPrefix("test1 ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test1 ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	l.Info("Hello 1")
 // 	l.SetPrefix("test2 ") // change prefix to "test2 " (with trailing space)
@@ -119,7 +119,7 @@ package alog_test
 //
 // 	// v0.2.0 Code:
 // 	// A flag `alog.Fnone` will reset flags.
-// 	l := alog.New(os.Stdout).SetPrefix("test1 ").SetFlag(alog.Fnone)
+// 	l := alog.New(os.Stdout).SetPrefix("test1 ").SetFormat(alog.Fnone)
 //
 // 	// As no flag is given, below will print the strings given as parameters.
 // 	// info test 1
@@ -129,7 +129,7 @@ package alog_test
 //
 // 	// Setting flag to show Level and prefix
 // 	// Next log will have the prefix and log Level populated
-// 	l.SetFlag(alog.Flevel | alog.Fprefix)
+// 	l.SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	l.Info("info test 3")
 // 	l.Info("info test 4")
@@ -149,13 +149,13 @@ package alog_test
 // 	// 	  Warn:  "[WRN] "
 // 	// 	  Error: "[ERR] "
 // 	// 	  Fatal: "[FTL] "
-// 	// but, this can be overwritten using SetLevelPrefix()
+// 	// but, this can be overwritten using setLevelPrefix()
 //
 // 	// v0.1.6 Code:
 // 	// l := alog.New(os.Stdout, "test ", alog.Flevel|alog.Fprefix)
 //
 // 	// v0.2.0 Code:
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	l.Trace("1 trace")
 // 	l.Debug("1 debug")
@@ -167,7 +167,7 @@ package alog_test
 // 	l.Print(alog.Lfatal, 0, "1 fatal")
 //
 // 	// Not switch Level prefix:
-// 	l.SetLevelPrefix("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] ", "[FATAL] ")
+// 	l.setLevelPrefix("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] ", "[FATAL] ")
 // 	l.Trace("2 trace")
 // 	l.Debug("2 debug")
 // 	l.Info("2 info")
@@ -189,7 +189,7 @@ package alog_test
 // func ExampleLogger_SetLogLevel() {
 // 	// Create a new logger with default Level WARN
 //
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix).SetLogLevel(alog.Lwarn)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix).SetLogLevel(alog.Lwarn)
 //
 // 	// This will NOT be printed because of log Level is WARN
 // 	l.Info("test info 1")
@@ -205,7 +205,7 @@ package alog_test
 // }
 // func ExampleLogger_SetLogTag() {
 // 	// Crate a logger
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// Create 4 tags: SYSTEM, DISK, REQUEST, RESPONSE
 // 	SYSTEM := l.NewTag("system")
@@ -230,7 +230,7 @@ package alog_test
 // }
 //
 // func ExampleLogger_SetLogFn() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// Create tags and enable them by UseTag method.
 // 	SYSTEM, DISK, REQUEST, RESPONSE := l.NewTag("system"),l.NewTag("disk"),l.NewTag("request"),l.NewTag("response")
@@ -265,7 +265,7 @@ package alog_test
 // }
 //
 // func ExampleLogger_Output() {
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	// this will print: "test [INF] hello"
 // 	l.Output(alog.Linfo, 0, []byte("hello1"))
@@ -275,7 +275,7 @@ package alog_test
 // }
 //
 // func ExampleLogger_Print() {
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	// this will print: "test [INF] hello"
 // 	l.Print(alog.Linfo, 0, "hello1")
@@ -285,7 +285,7 @@ package alog_test
 // }
 //
 // func ExampleLogger_Printf() {
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	// There can be slightly different parsing when it's float32 vs float64 due to rounding.
 // 	// Also, float will be always at 2nd decimal point.
@@ -299,7 +299,7 @@ package alog_test
 // func ExampleLogger_Trace() {
 // 	// Debug will only print IF log level is Debug or Trace.
 // 	// However default is set to INFO.
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// This won't be printed.
 // 	l.Trace("this will not be printed")
@@ -312,7 +312,7 @@ package alog_test
 // 	// [TRC] this will be printed
 // }
 // func ExampleLogger_Tracef() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 // 	l.SetLogLevel(alog.Ltrace)
 // 	l.Tracef("%s=%s", "Level", "trace")
 //
@@ -322,7 +322,7 @@ package alog_test
 // func ExampleLogger_Debug() {
 // 	// Debug will only print IF log level is Debug or Trace.
 // 	// However default is set to INFO.
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// This won't be printed.
 // 	l.Debug("this will not be printed")
@@ -335,7 +335,7 @@ package alog_test
 // 	// [DBG] this will be printed
 // }
 // func ExampleLogger_Debugf() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 // 	l.SetLogLevel(alog.Ldebug)
 // 	l.Debugf("%s=%s", "Level", "debug")
 //
@@ -345,7 +345,7 @@ package alog_test
 // func ExampleLogger_Info() {
 // 	// Debug will only print IF log level is Debug or Trace.
 // 	// However default is set to INFO.
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// This will be printed.
 // 	l.Info("this will be printed")
@@ -354,7 +354,7 @@ package alog_test
 // 	// [INF] this will be printed
 // }
 // func ExampleLogger_Infof() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 // 	l.Infof("%s=%s", "Level", "info")
 //
 // 	// Output:
@@ -364,7 +364,7 @@ package alog_test
 // func ExampleLogger_Warn() {
 // 	// Debug will only print IF log level is Debug or Trace.
 // 	// However default is set to INFO.
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 //
 // 	// This won't be printed.
 // 	l.Warn("this will be printed")
@@ -373,7 +373,7 @@ package alog_test
 // 	// [WRN] this will be printed
 // }
 // func ExampleLogger_Warnf() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 // 	l.Warnf("%s=%s", "Level", "warn")
 //
 // 	// Output:
@@ -383,14 +383,14 @@ package alog_test
 // func ExampleLogger_Error() {
 // 	// Debug will only print IF log level is Debug or Trace.
 // 	// However default is set to INFO.
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 // 	l.Error("this will be printed")
 //
 // 	// Output:
 // 	// [ERR] this will be printed
 // }
 // func ExampleLogger_Errorf() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 // 	l.Errorf("%s=%s", "Level", "error")
 //
 // 	// Output:
@@ -398,25 +398,25 @@ package alog_test
 // }
 //
 // func ExampleLogger_IfError() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	var myErr error
 //
 // 	// When myErr was created, it should be nil at this point.
 // 	// Therefore, nothing will be logged.
-// 	l.IfError(myErr)
+// 	l.LogIferr(myErr)
 //
 // 	// Now setting myErr with an error,
 // 	// This will be logged.
 // 	myErr = errors.New("my test error")
-// 	l.IfError(myErr)
+// 	l.LogIferr(myErr)
 //
 // 	// Output:
 // 	// [ERR] my test error
 // }
 //
 // func ExampleLogger_IfFatal() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	var myErr error
 //
@@ -430,21 +430,21 @@ package alog_test
 // }
 //
 // func ExampleLogger_Writer() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
-// 	out := l.Writer() // this will be os.Stdout
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
+// 	out := l.GetWriter() // this will be os.Stdout
 //
 // 	l.Info("info log")
-// 	out.Write([]byte("writing test using io.Writer"))
+// 	out.Write([]byte("writing test using io.GetWriter"))
 //
 // 	// Output:
 // 	// [INF] info log
-// 	// writing test using io.Writer
+// 	// writing test using io.GetWriter
 // }
 // func ExampleLogger_Close() {
-// 	l := alog.New(os.Stdout).SetFlag(alog.Flevel)
+// 	l := alog.New(os.Stdout).SetFormat(alog.Flevel)
 // 	l.Info("info log")
 //
-// 	// if io.Writer used to create the log was a file,
+// 	// if io.GetWriter used to create the log was a file,
 // 	// this will close the file
 // 	l.Close()
 //
@@ -462,7 +462,7 @@ package alog_test
 // 		func(l2 *alog.Logger) {
 // 			CAT1 = l2.NewTag("cat1")
 // 			CAT2 = l2.NewTag("cat2")
-// 		}).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLogTag(CAT1)
+// 		}).SetFormat(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLogTag(CAT1)
 //
 // 	l.SetLogTag(CAT1) // Print only CAT1
 // 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1W ")
@@ -488,7 +488,7 @@ package alog_test
 // 			TEST1 = l2.NewTag("test1")
 // 			TEST2 = l2.NewTag("test2")
 // 			TEST3 = l2.NewTag("test3")
-// 		}).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLogLevel(alog.Ldebug)
+// 		}).SetFormat(alog.Fprefix | alog.Flevel).SetPrefix("nptest ").SetLogLevel(alog.Ldebug)
 //
 // 	// only show TEST2 here.
 // 	// Therefore only DEBUG/INFO with TEST2 will be printed
@@ -514,7 +514,7 @@ package alog_test
 // }
 //
 // func ExampleLogger_NewTag() {
-// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFlag(alog.Flevel | alog.Fprefix)
+// 	l := alog.New(os.Stdout).SetPrefix("test ").SetFormat(alog.Flevel | alog.Fprefix)
 //
 // 	// Creating new tags.
 // 	BACK := l.NewTag("back")

@@ -20,7 +20,7 @@ package alog_test
 //
 // func BenchmarkLogger_Info(b *testing.B) {
 // 	b.Run("fmt=json, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fjson)
+// 		l := alog.New(nil).SetFormat(alog.Fjson)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -30,7 +30,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=json+utc, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fjson | alog.FtimeUTC)
+// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.FtimeUTC)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -40,7 +40,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=json+time, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fjson | alog.Ftime)
+// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -50,7 +50,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=json+time, errorf=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fjson | alog.Ftime)
+// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -60,7 +60,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=json+time, errorf=int", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fjson | alog.Ftime)
+// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -72,7 +72,7 @@ package alog_test
 // }
 // func BenchmarkLogger_Error(b *testing.B) {
 // 	b.Run("skip by level, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fnone).SetLogLevel(alog.Lfatal)
+// 		l := alog.New(nil).SetFormat(alog.Fnone).SetLogLevel(alog.Lfatal)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -82,7 +82,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("skip by tag, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fnone)
+// 		l := alog.New(nil).SetFormat(alog.Fnone)
 // 		test1 := l.NewTag("test")
 // 		test2 := l.NewTag("test")
 // 		l.SetLogTag(test1)
@@ -96,7 +96,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=none, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fnone)
+// 		l := alog.New(nil).SetFormat(alog.Fnone)
 // 		b2.ReportAllocs()
 // 		b2.RunParallel(func(pb *testing.PB) {
 // 			for pb.Next() {
@@ -117,7 +117,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=default+utc, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.FtimeUTC)
+// 		l := alog.New(nil).SetFormat(alog.FtimeUTC)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -131,7 +131,7 @@ package alog_test
 //
 // func BenchmarkLogger_Errorf(b *testing.B) {
 // 	b.Run("fmt=none, errorf=fmt", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fnone)
+// 		l := alog.New(nil).SetFormat(alog.Fnone)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -154,7 +154,7 @@ package alog_test
 // 	})
 //
 // 	b.Run("fmt=default+utc, errorf=fmt", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.FtimeUTC)
+// 		l := alog.New(nil).SetFormat(alog.FtimeUTC)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -166,7 +166,7 @@ package alog_test
 // 	})
 //
 // 	b.Run("fmt=none, errorf=int", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.Fnone)
+// 		l := alog.New(nil).SetFormat(alog.Fnone)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -188,7 +188,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=default+utc, errorf=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.FtimeUTC)
+// 		l := alog.New(nil).SetFormat(alog.FtimeUTC)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -199,7 +199,7 @@ package alog_test
 // 		})
 // 	})
 // 	b.Run("fmt=default+utc, errorf=bool", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFlag(alog.FtimeUTC)
+// 		l := alog.New(nil).SetFormat(alog.FtimeUTC)
 // 		b2.ReportAllocs()
 //
 // 		b2.RunParallel(func(pb *testing.PB) {
@@ -249,7 +249,7 @@ package alog_test
 // func BenchmarkLogger_NewPrint(b *testing.B) {
 // 	// S2:  293 ns/op	       0 B/op	       0 allocs/op
 //
-// 	l := alog.New(nil).SetFlag(alog.Fdefault).SetPrefix("test ")
+// 	l := alog.New(nil).SetFormat(alog.Fdefault).SetPrefix("test ")
 // 	CAT1, CAT2 := l.NewTag("cat1"), l.NewTag("cat2")
 // 	l.SetLogTag(CAT1)
 // 	WarnCAT1 := l.NewPrint(alog.Lwarn, CAT1, "CAT1w ")
@@ -274,7 +274,7 @@ package alog_test
 // 	// S2: 401 ns/op	       0 B/op	       0 allocs/op
 // 	// S2: 438 ns/op	       0 B/op	       0 allocs/op
 //
-// 	l := alog.New(nil).SetFlag(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
+// 	l := alog.New(nil).SetFormat(alog.Fprefix | alog.Flevel).SetPrefix("nptest ")
 // 	TEST1, TEST2, TEST3 := l.NewTag("test1"), l.NewTag("test2"), l.NewTag("test3")
 //
 // 	l.SetLogTag(TEST2) // only show TEST2

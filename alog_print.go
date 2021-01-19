@@ -2,25 +2,6 @@ package alog
 
 import "strconv"
 
-func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ltrace, tag, msg, a...)
-}
-func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ldebug, tag, msg, a...)
-}
-func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
-	l.Log(Linfo, tag, msg, a...)
-}
-func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lwarn, tag, msg, a...)
-}
-func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lerror, tag, msg, a...)
-}
-func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lfatal, tag, msg, a...)
-}
-
 func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
 	if !l.check(lvl, tag) {
 		return
@@ -125,4 +106,23 @@ func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, e
 	}
 
 	return l.finalize()
+}
+
+func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
+	l.Log(Ltrace, tag, msg, a...)
+}
+func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
+	l.Log(Ldebug, tag, msg, a...)
+}
+func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
+	l.Log(Linfo, tag, msg, a...)
+}
+func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lwarn, tag, msg, a...)
+}
+func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lerror, tag, msg, a...)
+}
+func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lfatal, tag, msg, a...)
 }

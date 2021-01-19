@@ -14,17 +14,17 @@ package alog_test
 // func TestLogger_IfError(t *testing.T) {
 // 	out := &bytes.Buffer{}
 //
-// 	l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 	l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 	// create a new error object, at this point this should be nil, and calling err.Error() will cause a panic
 // 	var err error
-// 	l.IfError(err)
+// 	l.LogIferr(err)
 // 	err = errors.New("test error") // now error exists
-// 	l.IfError(err)
+// 	l.LogIferr(err)
 // 	err = nil // empty err again with nil
-// 	l.IfError(err)
+// 	l.LogIferr(err)
 // 	err = errors.New("again another one") // now error exists again
-// 	l.IfError(err)
+// 	l.LogIferr(err)
 //
 // 	expected := "log [ERR] test error\nlog [ERR] again another one\n"
 //
@@ -38,7 +38,7 @@ package alog_test
 //
 // 	fnconf1 := func(l *alog.Logger) {
 // 		l.SetPrefix("log ")
-// 		l.SetLogLevel(alog.Ldebug).SetFlag(alog.Fprefix | alog.Flevel)
+// 		l.SetLogLevel(alog.Ldebug).SetFormat(alog.Fprefix | alog.Flevel)
 // 	}
 //
 // 	l := alog.New(out).Do(fnconf1, alog.DoColor())
@@ -69,7 +69,7 @@ package alog_test
 //
 // 		// Create a logger
 // 		l := alog.New(out).
-// 			SetFlag(alog.Fprefix | alog.Flevel).
+// 			SetFormat(alog.Fprefix | alog.Flevel).
 // 			SetLogLevel(alog.Ldebug)
 // 		T1, T2, T3, T4, T5 := l.NewTag("t1"),l.NewTag("t2"),l.NewTag("t3"),l.NewTag("t4"),l.NewTag("t5")
 // 		l.SetLogTag(T1)
@@ -109,7 +109,7 @@ package alog_test
 // 	t.Run("Print,NoLevel", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.Print(alog.Ltrace, 0, "testTrace")
 // 		l.Print(alog.Ldebug, 0, "testDebug")
@@ -125,7 +125,7 @@ package alog_test
 // 	t.Run("Printf,NoLevel", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
 // 		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
@@ -141,7 +141,7 @@ package alog_test
 // 	t.Run("Print,Trace", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.SetLogLevel(alog.Ltrace)
 // 		l.Print(alog.Ltrace, 0, "testTrace")
@@ -158,7 +158,7 @@ package alog_test
 // 	t.Run("Printf,Trace", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.SetLogLevel(alog.Ltrace)
 // 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
@@ -175,7 +175,7 @@ package alog_test
 // 	t.Run("Print,Fatal", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.SetLogLevel(alog.Lfatal)
 // 		l.Print(alog.Ltrace, 0, "testTrace")
@@ -192,7 +192,7 @@ package alog_test
 // 	t.Run("Printf,Fatal", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLogLevel(alog.Lfatal)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel).SetLogLevel(alog.Lfatal)
 //
 // 		l.Printf(alog.Ltrace, 0, "test%s", "Trace")
 // 		l.Printf(alog.Ldebug, 0, "test%s", "Debug")
@@ -208,7 +208,7 @@ package alog_test
 // 	t.Run("Predefined,NoLevel", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel).SetLogLevel(alog.Linfo)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel).SetLogLevel(alog.Linfo)
 //
 // 		l.Trace("testForTrace")
 // 		l.Debug("testForDebug")
@@ -224,7 +224,7 @@ package alog_test
 // 	t.Run("Predefined,Formatted,Level", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("log ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("log ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		l.Tracef("testFor%s", "Trace")
 // 		l.Debugf("testFor%s", "Debug")
@@ -243,7 +243,7 @@ package alog_test
 // 	t.Run("NewPrint", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
 //
-// 		l := alog.New(out).SetPrefix("nptest ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("nptest ").SetFormat(alog.Fprefix | alog.Flevel)
 // 		CAT1 := l.NewTag("cat1")
 // 		CAT2 := l.NewTag("cat2")
 //
@@ -270,7 +270,7 @@ package alog_test
 // func TestLogger_NewWriter(t *testing.T) {
 // 	t.Run("NewWriter with NewTags", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
-// 		l := alog.New(out).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("nwtest ").SetFormat(alog.Fprefix | alog.Flevel)
 // 		TEST1, TEST2, TEST3 := l.NewTag("test1"), l.NewTag("test2"),l.NewTag("test3")
 //
 // 		l.SetLogTag(TEST2) // only show TEST2
@@ -298,7 +298,7 @@ package alog_test
 // 	})
 // 	t.Run("NewWriter", func(t2 *testing.T) {
 // 		out := &bytes.Buffer{}
-// 		l := alog.New(out).SetPrefix("nwtest ").SetFlag(alog.Fprefix | alog.Flevel)
+// 		l := alog.New(out).SetPrefix("nwtest ").SetFormat(alog.Fprefix | alog.Flevel)
 //
 // 		TEST1 := l.NewTag("test1")
 // 		TEST2 := l.NewTag("test2")

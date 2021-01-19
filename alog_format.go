@@ -5,13 +5,40 @@ import (
 	"time"
 )
 
+// check will check if Level and Tag given is good to be printed.
+// If
+// Eg. if setting is Level INFO, Tag USER, then
+//     any log Level below INFO shouldn't be printed.
+//     Also, any Tag other than USER shouldn't be printed either.
+func (l *Logger) check(lvl Level, tag Tag) bool {
+	switch {
+	case l.logFn != nil: // logFn has the highest order if set.
+		return l.logFn(lvl, tag)
+	case l.logLevel > lvl: // if lvl is below lvl limit, the do not print
+		return false
+	case l.logTag != noTag && l.logTag&tag == noTag: // if logTag is set but Tag is not matching, then do not print
+		return false
+	default:
+		return true
+	}
+}
+
 // header will add date/time/prefix/Level.
 func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 	if l.flag&Fjson != 0 {
 		isFirstPrinted := false
 		// l.sbufc = 0
 		// JSON format: `{ d: 20201012, t:151223, ms:12345, type: "info", tag: [], msg: "my message", err: "additional error", add: "additional data" }`
-		if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD|Ftime|FtimeMs|FtimeUTC) != 0 {
+		if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
+			isFirstPrinted = true
+			l.time = time.Now()
+			l.buf = append(l.buf, `{"ts":`...)
+			if l.flag&FtimeUnix != 0 {
+				l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
+			} else {
+				l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
+			}
+		} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
 			isFirstPrinted = true
 			l.time = time.Now()
 			if l.flag&FtimeUTC != 0 {
@@ -77,21 +104,27 @@ func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 		return
 	}
 
-	if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD|Ftime|FtimeMs|FtimeUTC) != 0 {
+	if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
+		l.time = time.Now()
+		if l.flag&FtimeUnix != 0 {
+			l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
+		} else {
+			l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
+		}
+		l.buf = append(l.buf, ' ')
+	} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
 		l.time = time.Now()
 		if l.flag&FtimeUTC != 0 {
 			l.time = l.time.UTC()
 		}
-		if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD) != 0 {
+		if l.flag&(Fyear|Fdate) != 0 {
 			year, month, day := l.time.Date()
 			// if both YYMMDD and YYYYMMDD is given, YYYYMMDD will be used
-			if l.flag&FdateYYYYMMDD != 0 {
+			if l.flag&Fyear != 0 {
 				itoa(buf, year, 4, '/')
-			} else if l.flag&FdateYYMMDD != 0 {
-				itoa(buf, year%100, 2, '/')
 			}
 			// MMDD will be always added ass it's a common denominator of
-			// FdateYYMMDD|FdateYYYYMMDD|FdateMMDD
+			// FdateYYMMDD|Fyear|Fdate
 			itoa(buf, int(month), 2, '/')
 			itoa(buf, day, 2, ' ')
 		}
