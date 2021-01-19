@@ -13,7 +13,9 @@ import (
 
 const (
 	// newline constant provides byte of newline, so it can be usd right away.
-	newline = byte('\n')
+	newline     = byte('\n')
+	quotation   = byte('"')
+	unsuppTypes = "{??}"
 	// noTag will reset tag if already set
 	noTag Tag = 0
 )
@@ -22,6 +24,8 @@ const (
 // any formatted prints such as `outputf`, `infof`, `debugf`, etc. This is pre-converted to
 // a byte slice and reused to save process time.
 var unsuppType = []byte("{??}")
+var newlineRepl = []byte(`\n`)
+var quotationRepl = []byte(`\"`)
 
 // flags a bit-flag flag options that is used for variety of configuration.
 type flags uint32
@@ -50,6 +54,8 @@ const (
 	Flevel
 	// Fnewline will enable newlines within the log (v0.1.4)
 	Fnewline
+	// Fjson will print to a JSON
+	Fjson
 	// Fdefault will show month/day with time, and Level of logging.
 	Fdefault = FdateYYYYMMDD | Ftime | Flevel
 )
@@ -62,6 +68,25 @@ const (
 // - Lerror: error
 // - Lfatal: fatal, the process will can be terminated
 type Level uint8
+
+func (l *Level) String() string {
+	switch *l {
+	case Ltrace:
+		return "trace"
+	case Ldebug:
+		return "debug"
+	case Linfo:
+		return "info"
+	case Lwarn:
+		return "warn"
+	case Lerror:
+		return "error"
+	case Lfatal:
+		return "fatal"
+	default:
+		return "unknown"
+	}
+}
 
 const (
 	// Ltrace shows trace Level, thee most detailed debugging Level.
@@ -94,7 +119,8 @@ type Logger struct {
 	logFn        func(Level, Tag) bool
 	logLevel     Level
 	logTag       Tag
-	logTagIssued Tag // stores last Tag issued. Whenever NewTag is called, this value will be doubled.
+	logTagIssued int
+	logTagString [64]string
 
 	out io.Writer
 	mu  sync.Mutex
@@ -102,7 +128,9 @@ type Logger struct {
 	// There are two buffers used. Both `buf` and `bufFormat` are being used regardless
 	// of bufUseBuffer setting, however, if bufUseBuffer is false, this buffer will be
 	// flushed for each log.
-	buf []byte // main buffer; reset per each log entry
+	buf    []byte // buf is a main buffer; reset per each log entry
+	bufFmt []byte // bufFmt is a buffer for formatting
+	// sbufc int
 
 	// bufFormat is a buffer strictly used only for formatting - such as printing
 	// date, time, prefix etc; and will be copied to `buf` (main buffer)
@@ -113,7 +141,8 @@ type Logger struct {
 
 	// levelString is an array of byte slice that stores what prefix per each log logLevel
 	// will be used. Eg. "[DEBUG]", etc.
-	levelString [7][]byte
+	levelString        [7][]byte
+	levelStringForJson [7][]byte
 }
 
 // New function creates new logger. This takes an output writer for its argument (v0.2.0 change)
@@ -140,6 +169,7 @@ func New(output io.Writer) *Logger {
 		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		logLevel: Linfo,      // default logging Level to INFO
 		flag:     Fdefault,   // default flag is given
+		buf:      make([]byte, 1024),
 	}
 
 	// Default prefixes for each Level. This can be changed by a user using *alog.SetLevelPrefix()
@@ -199,6 +229,15 @@ func (l *Logger) SetLevelPrefix(trace, debug, info, warn, error, fatal string) *
 	l.levelString[4] = []byte(warn)
 	l.levelString[5] = []byte(error)
 	l.levelString[6] = []byte(fatal)
+
+	// For JSON output, this is hardcoded
+	l.levelStringForJson[0] = []byte("")
+	l.levelStringForJson[1] = []byte("trace")
+	l.levelStringForJson[2] = []byte("debug")
+	l.levelStringForJson[3] = []byte("info")
+	l.levelStringForJson[4] = []byte("warn")
+	l.levelStringForJson[5] = []byte("error")
+	l.levelStringForJson[6] = []byte("fatal")
 	return l
 }
 
@@ -223,90 +262,6 @@ func (l *Logger) SetLogFn(f func(Level, Tag) bool) *Logger {
 	return l
 }
 
-// UseTag will issue tags to Tag(s) pointers.
-// If a logger is created with dots such as `alog.New(out).SetPrefix("nptest ")...`
-// This can be used. This maybe useful when there are many tags to be initialized.
-// Usage:
-//    var TEST1, TEST2, TEST3 alog.Tag
-//    l := alog.New(out).UseTag(&TEST1, &TEST2, &TEST3).SetLogTag(TEST1)
-func (l *Logger) UseTag(tags ...*Tag) *Logger {
-	for _, t := range tags {
-		*t = l.NewTag()
-	}
-	return l
-}
-
-// header will add date/time/prefix/Level.
-func (l *Logger) header(buf *[]byte, lvl Level) {
-	if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD|Ftime|FtimeMs) != 0 {
-		l.time = time.Now()
-		if l.flag&FtimeUTC != 0 {
-			l.time = l.time.UTC()
-		}
-		if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD) != 0 {
-			year, month, day := l.time.Date()
-			// if both YYMMDD and YYYYMMDD is given, YYYYMMDD will be used
-			if l.flag&FdateYYYYMMDD != 0 {
-				itoa(buf, year, 4, '/')
-			} else if l.flag&FdateYYMMDD != 0 {
-				itoa(buf, year%100, 2, '/')
-			}
-			// MMDD will be always added ass it's a common denominator of
-			// FdateYYMMDD|FdateYYYYMMDD|FdateMMDD
-			itoa(buf, int(month), 2, '/')
-			itoa(buf, day, 2, ' ')
-		}
-		if l.flag&(Ftime|FtimeMs) != 0 {
-			hour, min, sec := l.time.Clock()
-			itoa(buf, hour, 2, ':')
-			itoa(buf, min, 2, ':')
-			if l.flag&FtimeMs != 0 {
-				itoa(buf, sec, 2, '.')
-				itoa(buf, l.time.Nanosecond()/1e3, 6, ' ')
-			} else {
-				itoa(buf, sec, 2, ' ')
-			}
-		}
-	}
-
-	// Add prefix
-	if l.flag&Fprefix != 0 {
-		*buf = append(*buf, l.prefix...)
-	}
-
-	// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
-	if l.flag&Flevel != 0 && lvl < 7 {
-		*buf = append(*buf, l.levelString[lvl]...)
-	}
-}
-
-// finalize will add newline to the end of log if missing,
-// also write it to writer, and clear the buffer.
-func (l *Logger) finalize() (n int, err error) {
-	// This can be moved to output().
-	if l.flag&Fnewline != 0 {
-		// If the log message doesn't end with newline, add a newline.
-		if curBufSize := len(l.buf); curBufSize > 1 && l.buf[curBufSize-1] != newline {
-			l.buf = append(l.buf, newline)
-		}
-	} else {
-		// Remove all newlines
-		for i, v := range l.buf {
-			if v == newline {
-				l.buf[i] = byte(' ')
-			}
-		}
-		// Append a newline at the end
-		l.buf = append(l.buf, newline)
-	}
-
-	// If bufUseBuffer is false or current size is bigger than the buffer size,
-	// print the buffer and reset it.
-	n, err = l.out.Write(l.buf)
-	l.buf = l.buf[:0]
-	return n, err
-}
-
 // check will check if Level and Tag given is good to be printed.
 // If
 // Eg. if setting is Level INFO, Tag USER, then
@@ -325,17 +280,6 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 	}
 }
 
-// outputf creates formatted string
-func (l *Logger) outputf(lvl Level, format string, a ...interface{}) {
-	// Format the header and add it to buffer
-	l.header(&l.buf, lvl)
-	// Parse formatted string and add it to buffer
-	formats(&l.buf, format, a...)
-	// Check newline at the end, if missing add it.
-	// Then, print log, reset the buffer.
-	_, _ = l.finalize()
-}
-
 // Output prints a byte array log message.
 // Both Level and Tag has to match with what's in the config.
 // (However, if Tag is 0, then it will be printed regardless of logTag).
@@ -344,9 +288,38 @@ func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
 	// Check if given lvl/logTag are printable
 	if l.check(lvl, tag) {
 		l.mu.Lock()
-		l.header(&l.buf, lvl)
-		l.buf = append(l.buf, b...)
-		_, _ = l.finalize()
+		l.header(&l.buf, lvl, tag)
+		if l.flag&Fjson != 0 {
+			lastUpdate := 0
+			escapeKey := false
+			for i := 0; i < len(b); i++ {
+				switch b[i] {
+				case '\\':
+					if escapeKey == true {
+						l.buf = append(l.buf, `\`...)
+					} else {
+						escapeKey = true
+					}
+				case '\n':
+					l.buf = append(l.buf, b[lastUpdate:i]...)
+					l.buf = append(l.buf, `\n`...)
+					lastUpdate = i + 1
+					escapeKey = false
+				case '"':
+					if escapeKey == false {
+						l.buf = append(l.buf, b[lastUpdate:i]...)
+						l.buf = append(l.buf, `\"`...)
+						lastUpdate = i + 1
+					}
+				default:
+					escapeKey = false
+				}
+			}
+			l.buf = append(l.buf, b[lastUpdate:]...)
+		} else {
+			l.buf = append(l.buf, b...)
+		}
+		l.finalize()
 		l.mu.Unlock()
 	}
 }
@@ -355,142 +328,30 @@ func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
 // Both Level and Tag has to match with what's in the config.
 // (However, if Tag is 0, then it will be printed regardless of logTag).
 // For Print, even if fatal Level is given, it will not exit.
-func (l *Logger) Print(lvl Level, tag Tag, s string) {
-	// Check if given lvl/logTag are printable
-	if l.check(lvl, tag) {
-		l.mu.Lock()
-		l.header(&l.buf, lvl)
-		l.buf = append(l.buf, s...)
-		_, _ = l.finalize()
-		l.mu.Unlock()
+func (l *Logger) Print(lvl Level, tag Tag, a interface{}) {
+	switch a.(type) {
+	case string:
+		l.Output(lvl, tag, []byte(a.(string)))
+	case int:
+		l.Output(lvl, tag, itoa2(a.(int), 0))
+	case int8:
+		l.Output(lvl, tag, itoa2(int(a.(int8)), 0))
+	case int16:
+		l.Output(lvl, tag, itoa2(int(a.(int16)), 0))
+	case int32:
+		l.Output(lvl, tag, itoa2(int(a.(int32)), 0))
+	case int64:
+		l.Output(lvl, tag, itoa2(int(a.(int64)), 0))
+	case float32:
+		l.Output(lvl, tag, ftoa2(float64(a.(float32)), 2))
+	case float64:
+		l.Output(lvl, tag, ftoa2(a.(float64), 2))
+	case []byte:
+		l.Output(lvl, tag, a.([]byte))
+	default:
+		println("default")
+		// l.Output(lvl, tag, []byte(a.(string)))
 	}
-}
-
-// Printf prints formatted logs if Level and Tag is met.
-// For Printf, even if fatal Level is given, it will not exit.
-// If Tag is 0, it will print regardless of Tag being filtered/set.
-func (l *Logger) Printf(lvl Level, tag Tag, format string, a ...interface{}) {
-	// Both lvl and Tag has to match
-	// If logTag is 0, then all logTag.
-	if l.check(lvl, tag) {
-		l.mu.Lock()
-		l.outputf(lvl, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Trace will take a single string and print log without Tag
-func (l *Logger) Trace(s string) {
-	l.Print(Ltrace, noTag, s)
-}
-
-// Tracef will formats and print log without Tag
-func (l *Logger) Tracef(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Ltrace, noTag, format)
-		return
-	}
-	if l.check(Ltrace, noTag) {
-		l.mu.Lock()
-		l.outputf(Ltrace, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Debug will take a single string and print log without a Tag
-func (l *Logger) Debug(s string) {
-	l.Print(Ldebug, noTag, s)
-}
-
-// Debugf will formats and print log without a Tag
-func (l *Logger) Debugf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Ldebug, noTag, format)
-		return
-	}
-	if l.check(Ldebug, noTag) {
-		l.mu.Lock()
-		l.outputf(Ldebug, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Info will take a single string and print log without a Tag
-func (l *Logger) Info(s string) {
-	l.Print(Linfo, noTag, s)
-}
-
-// Infof will formats and print log without a Tag
-func (l *Logger) Infof(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Linfo, noTag, format)
-		return
-	}
-	if l.check(Linfo, noTag) {
-		l.mu.Lock()
-		l.outputf(Linfo, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Warn will take a single string and print log without a Tag
-func (l *Logger) Warn(s string) {
-	l.Print(Lwarn, noTag, s)
-}
-
-// Warnf will formats and print log without a Tag
-func (l *Logger) Warnf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Lwarn, noTag, format)
-		return
-	}
-	if l.check(Lwarn, noTag) {
-		l.mu.Lock()
-		l.outputf(Lwarn, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Error will take a single string and print log without a Tag
-func (l *Logger) Error(s string) {
-	l.Print(Lerror, noTag, s)
-}
-
-// Errorf will formats and print log without a Tag
-func (l *Logger) Errorf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Lerror, noTag, format)
-		return
-	}
-	if l.check(Lerror, noTag) {
-		l.mu.Lock()
-		l.outputf(Lerror, format, a...)
-		l.mu.Unlock()
-	}
-}
-
-// Fatal will take a single string and print log without a Tag
-// and this will terminate process with exit code 1
-// updated with Close() as v0.1.6c4, 12/30/2020
-func (l *Logger) Fatal(s string) {
-	l.Print(Lfatal, noTag, s)
-	_ = l.Close()
-	os.Exit(1)
-}
-
-// Fatalf will formats and print log without a Tag
-// and this will terminate process with exit code 1
-// updated with Close() as v0.1.6c4, 12/30/2020
-func (l *Logger) Fatalf(format string, a ...interface{}) {
-	if len(a) == 0 {
-		l.Print(Lfatal, noTag, format)
-	} else if l.check(Lfatal, noTag) {
-		l.mu.Lock()
-		l.outputf(Lfatal, format, a...)
-		l.mu.Unlock()
-	}
-	_ = l.Close()
-	os.Exit(1)
 }
 
 // IfError will check and log error if exist (not nil)
@@ -538,9 +399,9 @@ func (l *Logger) NewPrint(lvl Level, tag Tag, prefix string) func(string) {
 	return func(s string) {
 		if l.check(lvl, tag) {
 			l.mu.Lock()
-			l.header(&l.buf, lvl)
+			l.header(&l.buf, lvl, tag)
 			l.buf = append(l.buf, append([]byte(prefix), s...)...)
-			_, _ = l.finalize()
+			l.finalize()
 			l.mu.Unlock()
 		}
 	}
@@ -560,14 +421,15 @@ func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *SubWriter {
 
 // NewTag will generate new Tag to be used for user.
 // This is nothing but creating a big-flag, but easier for the user
-// who aren't familiar with a bit-flag.
-func (l *Logger) NewTag() Tag {
-	if l.logTagIssued == 0 {
-		l.logTagIssued = 1
-		return 1
+// who aren't familiar with a bit-flag. This will return Tag (uint64)
+func (l *Logger) NewTag(name string) (tag Tag) {
+	if l.logTagIssued >= 64 {
+		l.Print(Lerror, 0, "maximum number of new tags issued")
+		return 1 << l.logTagIssued
 	}
-	l.logTagIssued *= 2
-	return l.logTagIssued
+	l.logTagString[l.logTagIssued] = name
+	l.logTagIssued += 1
+	return 1 << (l.logTagIssued - 1)
 }
 
 // Tag is a bit-flag used to show only necessary part of process to show
@@ -589,7 +451,7 @@ type SubWriter struct {
 func (w *SubWriter) Write(b []byte) (n int, err error) {
 	if w.l.check(w.lvl, w.tag) {
 		w.l.mu.Lock()
-		w.l.header(&w.l.buf, w.lvl)
+		w.l.header(&w.l.buf, w.lvl, 0)
 		w.l.buf = append(w.l.buf, w.prefix...)
 		w.l.buf = append(w.l.buf, b...)
 		n, err := w.l.finalize()
