@@ -8,9 +8,11 @@ import (
 // header will add date/time/prefix/Level.
 func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 	if l.flag&Fjson != 0 {
+		isFirstPrinted := false
 		// l.sbufc = 0
 		// JSON format: `{ d: 20201012, t:151223, ms:12345, type: "info", tag: [], msg: "my message", err: "additional error", add: "additional data" }`
 		if l.flag&(FdateYYMMDD|FdateYYYYMMDD|FdateMMDD|Ftime|FtimeMs|FtimeUTC) != 0 {
+			isFirstPrinted = true
 			l.time = time.Now()
 			if l.flag&FtimeUTC != 0 {
 				l.time = l.time.UTC()
@@ -44,7 +46,12 @@ func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 
 		// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
 		if lvl < 7 {
-			l.buf = append(l.buf, `,"lv":"`...)
+			if !isFirstPrinted {
+				l.buf = append(l.buf, `"lv":"`...)
+			} else {
+				l.buf = append(l.buf, `,"lv":"`...)
+			}
+
 			l.buf = append(l.buf, l.levelStringForJson[lvl]...)
 			l.buf = append(l.buf, '"')
 		}
