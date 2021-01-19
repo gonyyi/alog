@@ -280,6 +280,12 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 	}
 }
 
+// Write method is used to meet io.Writer interface.
+// This will default to "debug" level without any tag assigned.
+func (l *Logger) Write(b []byte) (n int, err error) {
+	return l.Log(Ldebug, 0, string(b))
+}
+
 // Output prints a byte array log message.
 // Both Level and Tag has to match with what's in the config.
 // (However, if Tag is 0, then it will be printed regardless of logTag).
@@ -324,43 +330,13 @@ func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
 	}
 }
 
-// Print prints a single string log message.
-// Both Level and Tag has to match with what's in the config.
-// (However, if Tag is 0, then it will be printed regardless of logTag).
-// For Print, even if fatal Level is given, it will not exit.
-func (l *Logger) Print(lvl Level, tag Tag, a interface{}) {
-	switch a.(type) {
-	case string:
-		l.Output(lvl, tag, []byte(a.(string)))
-	case int:
-		l.Output(lvl, tag, itoa2(a.(int), 0))
-	case int8:
-		l.Output(lvl, tag, itoa2(int(a.(int8)), 0))
-	case int16:
-		l.Output(lvl, tag, itoa2(int(a.(int16)), 0))
-	case int32:
-		l.Output(lvl, tag, itoa2(int(a.(int32)), 0))
-	case int64:
-		l.Output(lvl, tag, itoa2(int(a.(int64)), 0))
-	case float32:
-		l.Output(lvl, tag, ftoa2(float64(a.(float32)), 2))
-	case float64:
-		l.Output(lvl, tag, ftoa2(a.(float64), 2))
-	case []byte:
-		l.Output(lvl, tag, a.([]byte))
-	default:
-		println("default")
-		// l.Output(lvl, tag, []byte(a.(string)))
-	}
-}
-
 // IfError will check and log error if exist (not nil)
 // For instance, when running multiple lines of error check
 // This can save error checking.
 // added as v0.1.6c3, 12/30/2020
 func (l *Logger) IfError(e error) {
 	if e != nil {
-		l.Print(Lerror, noTag, e.Error())
+		l.Log(Lerror, 0, "", "err", e.Error())
 	}
 }
 
@@ -372,7 +348,7 @@ func (l *Logger) IfError(e error) {
 // updated with Close() as v0.1.6c4, 12/30/2020
 func (l *Logger) IfFatal(e error) {
 	if e != nil {
-		l.Print(Lfatal, noTag, e.Error())
+		l.Log(Lfatal, 0, "", "err", e.Error())
 		_ = l.Close()
 		os.Exit(1)
 	}
@@ -424,12 +400,27 @@ func (l *Logger) NewWriter(lvl Level, tag Tag, prefix string) *SubWriter {
 // who aren't familiar with a bit-flag. This will return Tag (uint64)
 func (l *Logger) NewTag(name string) (tag Tag) {
 	if l.logTagIssued >= 64 {
-		l.Print(Lerror, 0, "maximum number of new tags issued")
+		l.Warn(0, "NewTag issue", "err", "maximum number of new tags issued")
 		return 1 << l.logTagIssued
+	}
+	// If tag name is already exist, return that one.
+	tag, ok := l.GetTag(name)
+	if ok {
+		return tag
 	}
 	l.logTagString[l.logTagIssued] = name
 	l.logTagIssued += 1
 	return 1 << (l.logTagIssued - 1)
+}
+
+// GetTag takes a tag name and returns a tag if found.
+func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
+	for idx, v := range l.logTagString {
+		if v == name {
+			return 1 << idx, true
+		}
+	}
+	return 0, false
 }
 
 // Tag is a bit-flag used to show only necessary part of process to show
@@ -504,136 +495,137 @@ func itoa(dst *[]byte, i int, minLength int, suffix byte) {
 	*dst = append(*dst, b[bIdx:]...)
 }
 
-// ftoa takes float64 and converts and add to dst byte slice pointer.
-// this is used to reduce memory allocation.
-func ftoa(dst *[]byte, f float64, decPlace int) {
-	if int(f) == 0 && f < 0 {
-		*dst = append(*dst, '-')
-	}
-	itoa(dst, int(f), 0, 0) // add full number first
-
-	if decPlace > 0 {
-		// if decPlace == 3, multiplier will be 1000
-		// get nth power
-		var multiplier = 1
-		for i := decPlace; i > 0; i-- {
-			multiplier = multiplier * 10
-		}
-		*dst = append(*dst, '.')
-		tmp := int((f - float64(int(f))) * float64(multiplier))
-		if f > 0 { // 2nd num shouldn't include decimala
-			itoa(dst, tmp, decPlace, 0)
-		} else {
-			itoa(dst, -tmp, decPlace, 0)
-		}
-	}
-}
-
-// formats method is a replacement for fmt.Sprintf(). This is to save memory allocation.
-// This utilizes bufFormat and each run, it will reset it and reuse it.
-func formats(dst *[]byte, s string, a ...interface{}) {
-	flagKeyword := false
-
-	var aIdx = 0
-	var aLen = len(a)
-
-	for _, c := range s {
-		if flagKeyword == false {
-			if c == '%' {
-				flagKeyword = true
-			} else {
-				*dst = append(*dst, byte(c))
-			}
-		} else {
-			// flagKeyword == true
-			if c == '%' {
-				*dst = append(*dst, '%')
-				flagKeyword = false
-				continue
-			}
-			if aIdx >= aLen {
-				flagKeyword = false
-				continue
-			}
-			switch c {
-			case 'd':
-				if v, ok := a[aIdx].(int); ok {
-					itoa(dst, v, 0, 0)
-				} else {
-					*dst = append(*dst, unsuppType...)
-				}
-				aIdx++
-			case 's':
-				if v, ok := a[aIdx].(string); ok {
-					*dst = append(*dst, v...)
-				} else {
-					*dst = append(*dst, unsuppType...)
-				}
-				aIdx++
-			case 'f':
-				switch a[aIdx].(type) {
-				case float64:
-					if v, ok := a[aIdx].(float64); ok {
-						ftoa(dst, v, 2)
-					} else {
-						*dst = append(*dst, unsuppType...)
-					}
-				case float32:
-					if v, ok := a[aIdx].(float32); ok {
-						ftoa(dst, float64(v), 2)
-					} else {
-						*dst = append(*dst, unsuppType...)
-					}
-				}
-				aIdx++
-			case 't':
-				if v, ok := a[aIdx].(bool); ok {
-					if v {
-						*dst = append(*dst, "true"...)
-					} else {
-						*dst = append(*dst, "false"...)
-					}
-				} else {
-					*dst = append(*dst, unsuppType...)
-				}
-				aIdx++
-			}
-			flagKeyword = false
-		}
-	}
-}
-
-// DoColor is an example of Do function creation.
-// This function returns do-function for alog, and is an example for `*Logger.Do` application.
-// Usage: `alog.New(os.Stderr).Do(alog.DoColor())`
-func DoColor() func(*Logger) {
-	trc := "[TRC]"
-	dbg := "[DBG]"
-	inf := "[INF]"
-	wrn := "[WRN]"
-	err := "[ERR]"
-	ftl := "[FTL]"
-
-	return func(l *Logger) {
-		l.SetLevelPrefix(
-			"\u001B[0;35m"+trc+"\u001B[0m ",
-			"\u001B[0;36m"+dbg+"\u001B[0m ",
-			"\u001B[0;34m"+inf+"\u001B[0m ",
-			"\u001B[1;33m"+wrn+"\u001B[0m ",
-			"\u001B[1;31m"+err+"\u001B[0m ",
-			"\u001B[1;41;30m"+ftl+"\u001B[0m ",
-		)
-		// IF output is set to os.Stderr OR os.Stdout, it can be done by checking output.
-		// if l.Writer() != nil && (l.Writer() == os.Stderr || l.Writer() == os.Stdout) {
-		// 	l.SetLevelPrefix(
-		// 		"[\u001B[0;35mTRC\u001B[0m] ",
-		//      ...
-		// 	)
-		// } else {
-		// 	l.SetLevelPrefix(
-		// 		Trace,
-		//      ...
-		// 	)
-		// }
-	}
-}
+//
+// // ftoa takes float64 and converts and add to dst byte slice pointer.
+// // this is used to reduce memory allocation.
+// func ftoa(dst *[]byte, f float64, decPlace int) {
+// 	if int(f) == 0 && f < 0 {
+// 		*dst = append(*dst, '-')
+// 	}
+// 	itoa(dst, int(f), 0, 0) // add full number first
+//
+// 	if decPlace > 0 {
+// 		// if decPlace == 3, multiplier will be 1000
+// 		// get nth power
+// 		var multiplier = 1
+// 		for i := decPlace; i > 0; i-- {
+// 			multiplier = multiplier * 10
+// 		}
+// 		*dst = append(*dst, '.')
+// 		tmp := int((f - float64(int(f))) * float64(multiplier))
+// 		if f > 0 { // 2nd num shouldn't include decimala
+// 			itoa(dst, tmp, decPlace, 0)
+// 		} else {
+// 			itoa(dst, -tmp, decPlace, 0)
+// 		}
+// 	}
+// }
+//
+// // formats method is a replacement for fmt.Sprintf(). This is to save memory allocation.
+// // This utilizes bufFormat and each run, it will reset it and reuse it.
+// func formats(dst *[]byte, s string, a ...interface{}) {
+// 	flagKeyword := false
+//
+// 	var aIdx = 0
+// 	var aLen = len(a)
+//
+// 	for _, c := range s {
+// 		if flagKeyword == false {
+// 			if c == '%' {
+// 				flagKeyword = true
+// 			} else {
+// 				*dst = append(*dst, byte(c))
+// 			}
+// 		} else {
+// 			// flagKeyword == true
+// 			if c == '%' {
+// 				*dst = append(*dst, '%')
+// 				flagKeyword = false
+// 				continue
+// 			}
+// 			if aIdx >= aLen {
+// 				flagKeyword = false
+// 				continue
+// 			}
+// 			switch c {
+// 			case 'd':
+// 				if v, ok := a[aIdx].(int); ok {
+// 					itoa(dst, v, 0, 0)
+// 				} else {
+// 					*dst = append(*dst, unsuppType...)
+// 				}
+// 				aIdx++
+// 			case 's':
+// 				if v, ok := a[aIdx].(string); ok {
+// 					*dst = append(*dst, v...)
+// 				} else {
+// 					*dst = append(*dst, unsuppType...)
+// 				}
+// 				aIdx++
+// 			case 'f':
+// 				switch a[aIdx].(type) {
+// 				case float64:
+// 					if v, ok := a[aIdx].(float64); ok {
+// 						ftoa(dst, v, 2)
+// 					} else {
+// 						*dst = append(*dst, unsuppType...)
+// 					}
+// 				case float32:
+// 					if v, ok := a[aIdx].(float32); ok {
+// 						ftoa(dst, float64(v), 2)
+// 					} else {
+// 						*dst = append(*dst, unsuppType...)
+// 					}
+// 				}
+// 				aIdx++
+// 			case 't':
+// 				if v, ok := a[aIdx].(bool); ok {
+// 					if v {
+// 						*dst = append(*dst, "true"...)
+// 					} else {
+// 						*dst = append(*dst, "false"...)
+// 					}
+// 				} else {
+// 					*dst = append(*dst, unsuppType...)
+// 				}
+// 				aIdx++
+// 			}
+// 			flagKeyword = false
+// 		}
+// 	}
+// }
+//
+// // DoColor is an example of Do function creation.
+// // This function returns do-function for alog, and is an example for `*Logger.Do` application.
+// // Usage: `alog.New(os.Stderr).Do(alog.DoColor())`
+// func DoColor() func(*Logger) {
+// 	trc := "[TRC]"
+// 	dbg := "[DBG]"
+// 	inf := "[INF]"
+// 	wrn := "[WRN]"
+// 	err := "[ERR]"
+// 	ftl := "[FTL]"
+//
+// 	return func(l *Logger) {
+// 		l.SetLevelPrefix(
+// 			"\u001B[0;35m"+trc+"\u001B[0m ",
+// 			"\u001B[0;36m"+dbg+"\u001B[0m ",
+// 			"\u001B[0;34m"+inf+"\u001B[0m ",
+// 			"\u001B[1;33m"+wrn+"\u001B[0m ",
+// 			"\u001B[1;31m"+err+"\u001B[0m ",
+// 			"\u001B[1;41;30m"+ftl+"\u001B[0m ",
+// 		)
+// 		// IF output is set to os.Stderr OR os.Stdout, it can be done by checking output.
+// 		// if l.Writer() != nil && (l.Writer() == os.Stderr || l.Writer() == os.Stdout) {
+// 		// 	l.SetLevelPrefix(
+// 		// 		"[\u001B[0;35mTRC\u001B[0m] ",
+// 		//      ...
+// 		// 	)
+// 		// } else {
+// 		// 	l.SetLevelPrefix(
+// 		// 		Trace,
+// 		//      ...
+// 		// 	)
+// 		// }
+// 	}
+// }

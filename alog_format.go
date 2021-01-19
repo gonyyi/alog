@@ -1,6 +1,9 @@
 package alog
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 // header will add date/time/prefix/Level.
 func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
@@ -14,48 +17,56 @@ func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 			}
 			// YYYYMMDD
 			year, month, day := l.time.Date()
-			*buf = append(*buf, `{"d":`...)
-			itoa(buf, year*10000+int(month)*100+day, 0, ',')
+			// *buf = append(*buf, `{"d":`...)
+			// itoa(buf, year*10000+int(month)*100+day, 0, ',')
+			l.buf = append(l.buf, `{"d":`...)
+			l.buf = strconv.AppendInt(l.buf, int64(year*10000+int(month)*100+day), 10)
+
 			// HHMMSS
 			hour, min, sec := l.time.Clock()
-			*buf = append(*buf, `"t":`...)
-			itoa(buf, hour*10000+min*100+sec, 0, ',')
+			// *buf = append(*buf, `"t":`...)
+			// itoa(buf, hour*10000+min*100+sec, 0, ',')
+			l.buf = append(l.buf, `,"t":`...)
+			l.buf = strconv.AppendInt(l.buf, int64(hour*10000+min*100+sec), 10)
+
 			// MS
 			if l.flag&FtimeMs != 0 {
-				*buf = append(*buf, `"ns":`...)
-				itoa(buf, l.time.Nanosecond()/1e3, 6, ',')
+				// *buf = append(*buf, `"ns":`...)
+				// itoa(buf, l.time.Nanosecond()/1e3, 6, ',')
+				l.buf = append(l.buf, `,"ns":`...)
+				l.buf = strconv.AppendInt(l.buf, int64(l.time.Nanosecond()/1e3), 10)
 			}
 		} else {
 			// This can be hardcoded as it will be the first line
-			*buf = append(*buf, '{')
+			// *buf = append(*buf, '{')
+			l.buf = append(l.buf, '{')
 		}
 
 		// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
 		if lvl < 7 {
-			*buf = append(*buf, `"lv":"`...)
-			*buf = append(*buf, l.levelStringForJson[lvl]...)
-			*buf = append(*buf, `",`...)
+			l.buf = append(l.buf, `,"lv":"`...)
+			l.buf = append(l.buf, l.levelStringForJson[lvl]...)
+			l.buf = append(l.buf, '"')
 		}
 
 		if tag != 0 {
-			*buf = append(*buf, `"tag":[`...)
+			l.buf = append(l.buf, `,"tag":[`...)
 			firstItem := true
 			for i := 0; i < l.logTagIssued; i++ {
 				if tag&(1<<i) != 0 {
 					if firstItem {
 						firstItem = false
-						*buf = append(*buf, '"')
+						l.buf = append(l.buf, '"')
 					} else {
-						*buf = append(*buf, `,"`...)
+						l.buf = append(l.buf, `,"`...)
 					}
-					*buf = append(*buf, l.logTagString[i]...)
-					*buf = append(*buf, `"`...)
+					l.buf = append(l.buf, l.logTagString[i]...)
+					l.buf = append(l.buf, `"`...)
 
 				}
 			}
-			*buf = append(*buf, "],"...)
+			l.buf = append(l.buf, ']')
 		}
-		*buf = append(*buf, `"msg":"`...)
 		return
 	}
 
