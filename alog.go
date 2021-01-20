@@ -30,11 +30,6 @@ var quotationRepl = []byte(`\"`)
 type flags uint32
 
 const (
-	// Fall for all options on
-	Fall = flags(^uint32(0))
-	// Fnone for all options off
-	Fnone = flags(uint32(0))
-
 	// Fprefix will show prefix when printing log message
 	Fprefix flags = 1 << iota
 	// Fyear will show 4 digit year such as 2006
@@ -59,6 +54,11 @@ const (
 	Fjson
 	// Fdefault will show month/day with time, and Level of logging.
 	Fdefault = Fyear | Fdate | Ftime | Flevel | Ftag
+
+	// Fall for all options on
+	Fall = flags(^uint32(0))
+	// Fnone for all options off
+	Fnone = flags(uint32(0))
 )
 
 // LevelPrefix is a bit-flag used for different Level of log activity:
@@ -275,60 +275,23 @@ func (l *Logger) SetNewTags(names ...string) *Logger {
 	return l
 }
 
-func (l *Logger) SetFilter(fn FilterFn, lv Level, tags Tag) *Logger {
-	if fn != nil {
-		l.logFn = fn
-	} else {
-		l.logLevel = lv
-		l.logTag = tags
-	}
+// SetFilter will define what level or tags to show.
+// Integer 0 can be used, and when it's used, it will not filter anything.
+func (l *Logger) SetFilter(lv Level, tags Tag) *Logger {
+	l.logFn = nil
+	l.logLevel = lv
+	l.logTag = tags
+
 	return l
 }
 
-//
-// // Output prints a byte array log message.
-// // Both Level and Tag has to match with what's in the config.
-// // (However, if Tag is 0, then it will be printed regardless of logTag).
-// // For Print, even if fatal Level is given, it will not exit.
-// func (l *Logger) Output(lvl Level, tag Tag, b []byte) {
-// 	// Check if given lvl/logTag are printable
-// 	if l.check(lvl, tag) {
-// 		l.mu.Lock()
-// 		l.header(&l.buf, lvl, tag)
-// 		if l.flag&Fjson != 0 {
-// 			lastUpdate := 0
-// 			escapeKey := false
-// 			for i := 0; i < len(b); i++ {
-// 				switch b[i] {
-// 				case '\\':
-// 					if escapeKey == true {
-// 						l.buf = append(l.buf, `\`...)
-// 					} else {
-// 						escapeKey = true
-// 					}
-// 				case '\n':
-// 					l.buf = append(l.buf, b[lastUpdate:i]...)
-// 					l.buf = append(l.buf, `\n`...)
-// 					lastUpdate = i + 1
-// 					escapeKey = false
-// 				case '"':
-// 					if escapeKey == false {
-// 						l.buf = append(l.buf, b[lastUpdate:i]...)
-// 						l.buf = append(l.buf, `\"`...)
-// 						lastUpdate = i + 1
-// 					}
-// 				default:
-// 					escapeKey = false
-// 				}
-// 			}
-// 			l.buf = append(l.buf, b[lastUpdate:]...)
-// 		} else {
-// 			l.buf = append(l.buf, b...)
-// 		}
-// 		l.finalize()
-// 		l.mu.Unlock()
-// 	}
-// }
+// SetFilterFn can control more precisely by taking a FilterFn.
+func (l *Logger) SetFilterFn(fn FilterFn) *Logger {
+	if fn != nil {
+		l.logFn = fn
+	}
+	return l
+}
 
 // LogIferr will check and log error if exist (not nil)
 // For instance, when running multiple lines of error check
@@ -356,78 +319,4 @@ func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 		lvl: lvl,
 		tag: tag,
 	}
-}
-
-// Tag is a bit-flag used to show only necessary part of process to show
-// in the log. For instance, if there's an web service, there can be different
-// Tag such as UI, HTTP request, HTTP response, etc. By setting a Tag
-// for each log using `Print` or `Printf`, a user can only print certain
-// Tag of log messages for better debugging.
-type Tag uint64
-
-// SubWriter is a writer with predefined Level and Tag.
-type SubWriter struct {
-	l   *Logger
-	lvl Level
-	tag Tag
-}
-
-// Write is to be used as io.Writer interface
-func (w *SubWriter) Write(b []byte) (n int, err error) {
-	if w.l.check(w.lvl, w.tag) {
-		w.l.mu.Lock()
-		w.l.header(&w.l.buf, w.lvl, w.tag)
-		w.l.buf = append(w.l.buf, b...) // todo: check if this works with JSON
-		n, err := w.l.finalize()
-		w.l.mu.Unlock()
-		return n, err
-	}
-	return 0, nil
-}
-
-// devNull is a type for discard
-type devNull int
-
-// discard is defined here to get rid of needs to import of ioutil package.
-var discard io.Writer = devNull(0)
-
-// Write discards everything
-func (devNull) Write([]byte) (int, error) {
-	return 0, nil
-}
-
-// FilterFn is a function type to be used with SetFilter.
-type FilterFn func(Level, Tag) bool
-
-// itoa converts int to []byte
-// if minLength == 0, it will print without padding 0
-// due to limit on int type, 19 digit max; 18 digit is safe.
-// Keeping this because of minLength and suffix...
-func itoa(dst *[]byte, i int, minLength int, suffix byte) {
-	var b [22]byte
-	var positiveNum = true
-	if i < 0 {
-		positiveNum = false
-		i = -i // change the sign to positive
-	}
-	bIdx := len(b) - 1
-	if suffix != 0 {
-		b[bIdx] = suffix
-		bIdx--
-	}
-
-	for i >= 10 || minLength > 1 {
-		minLength--
-		q := i / 10
-		b[bIdx] = byte('0' + i - q*10)
-		bIdx--
-		i = q
-	}
-
-	b[bIdx] = byte('0' + i)
-	if positiveNum == false {
-		bIdx--
-		b[bIdx] = '-'
-	}
-	*dst = append(*dst, b[bIdx:]...)
 }

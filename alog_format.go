@@ -23,85 +23,91 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 	}
 }
 
-// header will add date/time/prefix/Level.
-func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
-	if l.flag&Fjson != 0 {
-		isFirstPrinted := false
-		// l.sbufc = 0
-		// JSON format: `{ d: 20201012, t:151223, ms:12345, type: "info", tag: [], msg: "my message", err: "additional error", add: "additional data" }`
-		if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
-			isFirstPrinted = true
-			l.time = time.Now()
-			l.buf = append(l.buf, `{"ts":`...)
-			if l.flag&FtimeUnix != 0 {
-				l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
-			} else {
-				l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
-			}
-		} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
-			isFirstPrinted = true
-			l.time = time.Now()
-			if l.flag&FtimeUTC != 0 {
-				l.time = l.time.UTC()
-			}
-			// YYYYMMDD
-			year, month, day := l.time.Date()
-			// *buf = append(*buf, `{"d":`...)
-			// itoa(buf, year*10000+int(month)*100+day, 0, ',')
-			l.buf = append(l.buf, `{"d":`...)
-			l.buf = strconv.AppendInt(l.buf, int64(year*10000+int(month)*100+day), 10)
-
-			// HHMMSS
-			hour, min, sec := l.time.Clock()
-			// *buf = append(*buf, `"t":`...)
-			// itoa(buf, hour*10000+min*100+sec, 0, ',')
-			l.buf = append(l.buf, `,"t":`...)
-			l.buf = strconv.AppendInt(l.buf, int64(hour*10000+min*100+sec), 10)
-
-			// MS
-			if l.flag&FtimeMs != 0 {
-				// *buf = append(*buf, `"ns":`...)
-				// itoa(buf, l.time.Nanosecond()/1e3, 6, ',')
-				l.buf = append(l.buf, `,"ns":`...)
-				l.buf = strconv.AppendInt(l.buf, int64(l.time.Nanosecond()/1e3), 10)
-			}
+func (l *Logger) header_json(lvl Level, tag Tag) {
+	isFirstPrinted := false
+	// ----------------------
+	// Handling the opening
+	// ----------------------
+	if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
+		isFirstPrinted = true
+		l.time = time.Now()
+		l.buf = append(l.buf, `{"ts":`...)
+		if l.flag&FtimeUnix != 0 {
+			l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
 		} else {
-			// This can be hardcoded as it will be the first line
-			// *buf = append(*buf, '{')
-			l.buf = append(l.buf, '{')
+			l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
 		}
-
-		// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
-		if lvl < 7 {
-			if !isFirstPrinted {
-				l.buf = append(l.buf, `"lv":"`...)
-			} else {
-				l.buf = append(l.buf, `,"lv":"`...)
-			}
-
-			l.buf = append(l.buf, l.levelStringForJson[lvl]...)
-			l.buf = append(l.buf, '"')
+	} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
+		isFirstPrinted = true
+		l.time = time.Now()
+		if l.flag&FtimeUTC != 0 {
+			l.time = l.time.UTC()
 		}
+		// YYYYMMDD
+		year, month, day := l.time.Date()
+		// *buf = append(*buf, `{"d":`...)
+		// itoa(buf, year*10000+int(month)*100+day, 0, ',')
+		l.buf = append(l.buf, `{"d":`...)
+		l.buf = strconv.AppendInt(l.buf, int64(year*10000+int(month)*100+day), 10)
 
-		if tag != 0 {
-			l.buf = append(l.buf, `,"tag":[`...)
-			firstItem := true
-			for i := 0; i < l.logTagIssued; i++ {
-				if tag&(1<<i) != 0 {
-					if firstItem {
-						firstItem = false
-						l.buf = append(l.buf, '"')
-					} else {
-						l.buf = append(l.buf, `,"`...)
-					}
-					l.buf = append(l.buf, l.logTagString[i]...)
-					l.buf = append(l.buf, `"`...)
+		// HHMMSS
+		hour, min, sec := l.time.Clock()
+		// *buf = append(*buf, `"t":`...)
+		// itoa(buf, hour*10000+min*100+sec, 0, ',')
+		l.buf = append(l.buf, `,"t":`...)
+		l.buf = strconv.AppendInt(l.buf, int64(hour*10000+min*100+sec), 10)
 
+		// MS
+		if l.flag&FtimeMs != 0 {
+			// *buf = append(*buf, `"ns":`...)
+			// itoa(buf, l.time.Nanosecond()/1e3, 6, ',')
+			l.buf = append(l.buf, `,"ns":`...)
+			l.buf = strconv.AppendInt(l.buf, int64(l.time.Nanosecond()/1e3), 10)
+		}
+	} else {
+		// This can be hardcoded as it will be the first line
+		// *buf = append(*buf, '{')
+		l.buf = append(l.buf, '{')
+	}
+
+	// ----------------------
+	// After opening
+	// ----------------------
+	// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
+	if lvl < 7 {
+		if !isFirstPrinted {
+			l.buf = append(l.buf, `"lv":"`...)
+		} else {
+			l.buf = append(l.buf, `,"lv":"`...)
+		}
+		l.buf = append(l.buf, l.levelStringForJson[lvl]...)
+		l.buf = append(l.buf, '"')
+	}
+
+	if tag != 0 {
+		l.buf = append(l.buf, `,"tag":[`...)
+		firstItem := true
+		for i := 0; i < l.logTagIssued; i++ {
+			if tag&(1<<i) != 0 {
+				if firstItem {
+					firstItem = false
+					l.buf = append(l.buf, '"')
+				} else {
+					l.buf = append(l.buf, `,"`...)
 				}
+				l.buf = append(l.buf, l.logTagString[i]...)
+				l.buf = append(l.buf, `"`...)
 			}
-			l.buf = append(l.buf, ']')
 		}
-		return
+		l.buf = append(l.buf, ']')
+	}
+	return
+}
+
+func (l *Logger) header_text(lvl Level, tag Tag) {
+	// Add prefix
+	if l.flag&Fprefix != 0 {
+		l.buf = append(l.buf, l.prefix...)
 	}
 
 	if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
@@ -121,51 +127,201 @@ func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
 			year, month, day := l.time.Date()
 			// if both YYMMDD and YYYYMMDD is given, YYYYMMDD will be used
 			if l.flag&Fyear != 0 {
-				itoa(buf, year, 4, '/')
+				l.buf = itoa(l.buf, year, 4, '/')
 			}
 			// MMDD will be always added ass it's a common denominator of
 			// FdateYYMMDD|Fyear|Fdate
-			itoa(buf, int(month), 2, '/')
-			itoa(buf, day, 2, ' ')
+			l.buf = itoa(l.buf, int(month), 2, '/')
+			l.buf = itoa(l.buf, day, 2, ' ')
 		}
 		if l.flag&(Ftime|FtimeMs|FtimeUTC) != 0 {
 			hour, min, sec := l.time.Clock()
-			itoa(buf, hour, 2, ':')
-			itoa(buf, min, 2, ':')
+			l.buf = itoa(l.buf, hour, 2, ':')
+			l.buf = itoa(l.buf, min, 2, ':')
 			if l.flag&FtimeMs != 0 {
-				itoa(buf, sec, 2, '.')
-				itoa(buf, l.time.Nanosecond()/1e3, 6, ' ')
+				l.buf = itoa(l.buf, sec, 2, '.')
+				l.buf = itoa(l.buf, l.time.Nanosecond()/1e3, 6, ' ')
 			} else {
-				itoa(buf, sec, 2, ' ')
+				l.buf = itoa(l.buf, sec, 2, ' ')
 			}
 		}
-	}
-	// Add prefix
-	if l.flag&Fprefix != 0 {
-		*buf = append(*buf, l.prefix...)
 	}
 
 	// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
 	if l.flag&Flevel != 0 && lvl < 7 {
-		*buf = append(*buf, l.levelString[lvl]...)
+		l.buf = append(l.buf, l.levelString[lvl]...)
 	}
 
 	if tag != 0 {
-		// *buf = append(*buf, `"tag":[`...)
+		l.buf = append(l.buf, `tag=`...)
 		firstItem := true
 		for i := 0; i < l.logTagIssued; i++ {
 			if tag&(1<<i) != 0 {
 				if firstItem {
 					firstItem = false
 				} else {
-					*buf = append(*buf, `/`...)
+					l.buf = append(l.buf, `/`...)
 				}
-				*buf = append(*buf, l.logTagString[i]...)
+				l.buf = append(l.buf, l.logTagString[i]...)
 			}
 		}
-		*buf = append(*buf, "; "...)
+		l.buf = append(l.buf, ", "...)
 	}
 }
+
+// // header will add date/time/prefix/Level.
+// // Printing priority:
+// // 	Fjson > FtimeUnix | FtimeUnixNano
+// func (l *Logger) header(buf *[]byte, lvl Level, tag Tag) {
+// 	// ======================
+// 	// IF JSON
+// 	// ======================
+// 	if l.flag&Fjson != 0 {
+// 		isFirstPrinted := false
+// 		// ----------------------
+// 		// Handling the opening
+// 		// ----------------------
+// 		if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
+// 			isFirstPrinted = true
+// 			l.time = time.Now()
+// 			l.buf = append(l.buf, `{"ts":`...)
+// 			if l.flag&FtimeUnix != 0 {
+// 				l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
+// 			} else {
+// 				l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
+// 			}
+// 		} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
+// 			isFirstPrinted = true
+// 			l.time = time.Now()
+// 			if l.flag&FtimeUTC != 0 {
+// 				l.time = l.time.UTC()
+// 			}
+// 			// YYYYMMDD
+// 			year, month, day := l.time.Date()
+// 			// *buf = append(*buf, `{"d":`...)
+// 			// itoa(buf, year*10000+int(month)*100+day, 0, ',')
+// 			l.buf = append(l.buf, `{"d":`...)
+// 			l.buf = strconv.AppendInt(l.buf, int64(year*10000+int(month)*100+day), 10)
+//
+// 			// HHMMSS
+// 			hour, min, sec := l.time.Clock()
+// 			// *buf = append(*buf, `"t":`...)
+// 			// itoa(buf, hour*10000+min*100+sec, 0, ',')
+// 			l.buf = append(l.buf, `,"t":`...)
+// 			l.buf = strconv.AppendInt(l.buf, int64(hour*10000+min*100+sec), 10)
+//
+// 			// MS
+// 			if l.flag&FtimeMs != 0 {
+// 				// *buf = append(*buf, `"ns":`...)
+// 				// itoa(buf, l.time.Nanosecond()/1e3, 6, ',')
+// 				l.buf = append(l.buf, `,"ns":`...)
+// 				l.buf = strconv.AppendInt(l.buf, int64(l.time.Nanosecond()/1e3), 10)
+// 			}
+// 		} else {
+// 			// This can be hardcoded as it will be the first line
+// 			// *buf = append(*buf, '{')
+// 			l.buf = append(l.buf, '{')
+// 		}
+//
+// 		// ----------------------
+// 		// After opening
+// 		// ----------------------
+// 		// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
+// 		if lvl < 7 {
+// 			if !isFirstPrinted {
+// 				l.buf = append(l.buf, `"lv":"`...)
+// 			} else {
+// 				l.buf = append(l.buf, `,"lv":"`...)
+// 			}
+// 			l.buf = append(l.buf, l.levelStringForJson[lvl]...)
+// 			l.buf = append(l.buf, '"')
+// 		}
+//
+// 		if tag != 0 {
+// 			l.buf = append(l.buf, `,"tag":[`...)
+// 			firstItem := true
+// 			for i := 0; i < l.logTagIssued; i++ {
+// 				if tag&(1<<i) != 0 {
+// 					if firstItem {
+// 						firstItem = false
+// 						l.buf = append(l.buf, '"')
+// 					} else {
+// 						l.buf = append(l.buf, `,"`...)
+// 					}
+// 					l.buf = append(l.buf, l.logTagString[i]...)
+// 					l.buf = append(l.buf, `"`...)
+// 				}
+// 			}
+// 			l.buf = append(l.buf, ']')
+// 		}
+// 		return
+// 	}
+//
+// 	// ======================
+// 	// NOT JSON
+// 	// ======================
+// 	if l.flag&(FtimeUnix|FtimeUnixNano) != 0 {
+// 		l.time = time.Now()
+// 		if l.flag&FtimeUnix != 0 {
+// 			l.buf = strconv.AppendInt(l.buf, l.time.Unix(), 10)
+// 		} else {
+// 			l.buf = strconv.AppendInt(l.buf, l.time.UnixNano(), 10)
+// 		}
+// 		l.buf = append(l.buf, ' ')
+// 	} else if l.flag&(Fyear|Fdate|Ftime|FtimeMs|FtimeUTC) != 0 {
+// 		l.time = time.Now()
+// 		if l.flag&FtimeUTC != 0 {
+// 			l.time = l.time.UTC()
+// 		}
+// 		if l.flag&(Fyear|Fdate) != 0 {
+// 			year, month, day := l.time.Date()
+// 			// if both YYMMDD and YYYYMMDD is given, YYYYMMDD will be used
+// 			if l.flag&Fyear != 0 {
+// 				itoa(buf, year, 4, '/')
+// 			}
+// 			// MMDD will be always added ass it's a common denominator of
+// 			// FdateYYMMDD|Fyear|Fdate
+// 			itoa(buf, int(month), 2, '/')
+// 			itoa(buf, day, 2, ' ')
+// 		}
+// 		if l.flag&(Ftime|FtimeMs|FtimeUTC) != 0 {
+// 			hour, min, sec := l.time.Clock()
+// 			itoa(buf, hour, 2, ':')
+// 			itoa(buf, min, 2, ':')
+// 			if l.flag&FtimeMs != 0 {
+// 				itoa(buf, sec, 2, '.')
+// 				itoa(buf, l.time.Nanosecond()/1e3, 6, ' ')
+// 			} else {
+// 				itoa(buf, sec, 2, ' ')
+// 			}
+// 		}
+// 	}
+// 	// Add prefix
+// 	if l.flag&Fprefix != 0 {
+// 		*buf = append(*buf, l.prefix...)
+// 	}
+//
+// 	// Add log lvl if lvl is to shown and valid range (0-6) where 0 will not show lvl prefix.
+// 	if l.flag&Flevel != 0 && lvl < 7 {
+// 		*buf = append(*buf, l.levelString[lvl]...)
+// 	}
+//
+// 	if tag != 0 {
+// 		// *buf = append(*buf, `"tag":[`...)
+// 		firstItem := true
+// 		for i := 0; i < l.logTagIssued; i++ {
+// 			if tag&(1<<i) != 0 {
+// 				if firstItem {
+// 					firstItem = false
+// 				} else {
+// 					*buf = append(*buf, `/`...)
+// 				}
+// 				*buf = append(*buf, l.logTagString[i]...)
+// 			}
+// 		}
+// 		*buf = append(*buf, "; "...)
+// 	}
+// }
 
 // finalize will add newline to the end of log if missing,
 // also write it to writer, and clear the buffer.

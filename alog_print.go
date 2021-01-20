@@ -2,6 +2,13 @@ package alog
 
 import "strconv"
 
+func (l *Logger) header(lvl Level, tag Tag) {
+	if l.flag&Fjson != 0 {
+		l.header_json(lvl, tag)
+	} else {
+		l.header_text(lvl, tag)
+	}
+}
 func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
 	if !l.check(lvl, tag) {
 		return
@@ -10,7 +17,8 @@ func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, e
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.header(&l.buf, lvl, tag)
+	l.header(lvl, tag)
+
 	// l.buf = append(l.buf, msg...)
 	if l.flag&Fjson != 0 {
 		if msg != "" {

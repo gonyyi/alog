@@ -1,6 +1,6 @@
-// // (c) 2020 Gon Y Yi. <https://gonyyi.com>
-// // Version 0.1.3, 12/29/2020
-//
+// (c) 2020 Gon Y Yi. <https://gonyyi.com>
+// Version 0.1.3, 12/29/2020
+
 package alog_test
 
 //
