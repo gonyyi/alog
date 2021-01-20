@@ -61,34 +61,6 @@ const (
 	Fnone = flags(uint32(0))
 )
 
-// LevelPrefix is a bit-flag used for different Level of log activity:
-// - Ltrace: detailed debugging Level
-// - Ldebug: general debugging Level
-// - Linfo: information Level
-// - Lwarn: warning
-// - Lerror: error
-// - Lfatal: fatal, the process will can be terminated
-type Level uint8
-
-func (l *Level) String() string {
-	switch *l {
-	case Ltrace:
-		return "trace"
-	case Ldebug:
-		return "debug"
-	case Linfo:
-		return "info"
-	case Lwarn:
-		return "warn"
-	case Lerror:
-		return "error"
-	case Lfatal:
-		return "fatal"
-	default:
-		return ""
-	}
-}
-
 const (
 	// Ltrace shows trace Level, thee most detailed debugging Level.
 	// This will show everything.
@@ -129,8 +101,8 @@ type Logger struct {
 	// There are two buffers used. Both `buf` and `bufFormat` are being used regardless
 	// of bufUseBuffer setting, however, if bufUseBuffer is false, this buffer will be
 	// flushed for each log.
-	buf    []byte // buf is a main buffer; reset per each log entry
-	bufFmt []byte // bufFmt is a buffer for formatting
+	buf []byte // buf is a main buffer; reset per each log entry
+	//bufFmt []byte // bufFmt is a buffer for formatting
 	// sbufc int
 
 	// bufFormat is a buffer strictly used only for formatting - such as printing
@@ -142,8 +114,8 @@ type Logger struct {
 
 	// levelString is an array of byte slice that stores what prefix per each log logLevel
 	// will be used. Eg. "[DEBUG]", etc.
-	levelString        [7][]byte
-	levelStringForJson [7][]byte
+	//levelString        [7][]byte
+	//levelStringForJson [7][]byte
 }
 
 // New function creates new logger. This takes an output writer for its argument (v0.2.0 change)
@@ -173,23 +145,6 @@ func New(output io.Writer) *Logger {
 		buf:      make([]byte, 1024),
 	}
 
-	// Default prefixes for each Level. This can be changed by a user using *alog.setLevelPrefix()
-	l.levelString[0] = []byte("")
-	l.levelString[1] = []byte("[TRC] ")
-	l.levelString[2] = []byte("[DBG] ")
-	l.levelString[3] = []byte("[INF] ")
-	l.levelString[4] = []byte("[WRN] ")
-	l.levelString[5] = []byte("[ERR] ")
-	l.levelString[6] = []byte("[FTL] ")
-
-	// For JSON output, this is hardcoded
-	l.levelStringForJson[0] = []byte("")
-	l.levelStringForJson[1] = []byte("trace")
-	l.levelStringForJson[2] = []byte("debug")
-	l.levelStringForJson[3] = []byte("info")
-	l.levelStringForJson[4] = []byte("warn")
-	l.levelStringForJson[5] = []byte("error")
-	l.levelStringForJson[6] = []byte("fatal")
 	return l
 }
 

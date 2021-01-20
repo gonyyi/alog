@@ -3,6 +3,11 @@
 
 package alog_test
 
+import (
+	"github.com/gonyyi/alog"
+	"testing"
+)
+
 var (
 	tStr   = "hello this is gon"
 	tInt   = 123
@@ -10,6 +15,74 @@ var (
 	tFloat = 1.234
 	tBool  = true
 )
+
+func BenchmarkLogger_Info(b *testing.B) {
+	al := alog.New(nil)
+	{
+		b.Run("fmt=json,arg=", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag | alog.Fjson)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test")
+			}
+		})
+
+		b.Run("fmt=json,arg=int", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag | alog.Fjson)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a1", 123)
+			}
+		})
+
+		b.Run("fmt=json,arg=str", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag | alog.Fjson)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a1", "str1")
+			}
+		})
+		b.Run("fmt=json,arg=str+int", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag | alog.Fjson)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a1", "str1", "b1", 123)
+			}
+		})
+	}
+
+	{
+		b.Run("fmt=text,arg=", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test")
+			}
+		})
+
+		b.Run("fmt=text,arg=int", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a2", 123)
+			}
+		})
+		b.Run("fmt=text,arg=str", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a1", "str1")
+			}
+		})
+		b.Run("fmt=text,arg=str+int", func(b2 *testing.B) {
+			b2.ReportAllocs()
+			al.SetFormat(alog.Flevel | alog.Ftag)
+			for i := 0; i < b2.N; i++ {
+				al.Info(0, "test", "a1", "str1", "a2", 123)
+			}
+		})
+	}
+}
 
 // func BenchmarkLogger_Info(b *testing.B) {
 // 	b.Run("fmt=json, error=str", func(b2 *testing.B) {

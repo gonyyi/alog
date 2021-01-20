@@ -9,6 +9,137 @@ func (l *Logger) header(lvl Level, tag Tag) {
 		l.header_text(lvl, tag)
 	}
 }
+
+func (l *Logger) log_json(lvl Level, tag Tag, msg string, a ...interface{}) {
+	if len(msg) != 0 {
+		if msg != "" {
+			l.buf = append(l.buf, `,"msg":`...)
+			l.buf = strconv.AppendQuote(l.buf, msg)
+		}
+	}
+
+	if len(a) == 0 {
+		return
+	}
+
+	l.buf = append(l.buf, ","...)
+
+	//l.bufFmt = l.bufFmt[:0]
+	isOdd := true // even items to be type cased
+
+	lenA := len(a) - 1
+
+	for i, v := range a {
+		if isOdd {
+			if _, ok := v.(string); ok {
+				//l.bufFmt = append(l.bufFmt, '"')
+				//l.bufFmt = append(l.bufFmt, v.(string)...)
+				//l.bufFmt = append(l.bufFmt, '"')
+				l.buf = append(l.buf, '"')
+				l.buf = append(l.buf, v.(string)...)
+				l.buf = append(l.buf, '"')
+			} else {
+				return
+			}
+		} else {
+			//l.bufFmt = append(l.bufFmt, ":"...)
+			l.buf = append(l.buf, ":"...)
+			switch v.(type) {
+			// Frequently used first
+			// Todo: add error type
+			case string:
+				l.buf = strconv.AppendQuote(l.buf, v.(string))
+			case int:
+				l.buf = strconv.AppendInt(l.buf, int64(v.(int)), 10)
+			case int64:
+				l.buf = strconv.AppendInt(l.buf, v.(int64), 10)
+			case bool:
+				l.buf = strconv.AppendBool(l.buf, v.(bool))
+			case uint:
+				l.buf = strconv.AppendInt(l.buf, int64(v.(uint)), 10)
+			case uint64:
+				l.buf = strconv.AppendUint(l.buf, v.(uint64), 10)
+			case float32:
+				l.buf = strconv.AppendFloat(l.buf, float64(v.(float32)), 'f', -1, 32)
+			case float64:
+				l.buf = strconv.AppendFloat(l.buf, v.(float64), 'f', -1, 64)
+			default:
+				l.buf = strconv.AppendQuote(l.buf, unsuppTypes)
+			}
+			if lenA > i {
+				l.buf = append(l.buf, ',')
+			}
+		}
+		isOdd = !isOdd // toggle
+	}
+	// This is where incorrect pairs were received such as:
+	// 		"age", 17, "name", "gon", "job"
+	//		(where a value for job is missing)
+	if lenA%2 == 0 { // lenA is index, so should be odd number if right pair
+		l.buf = append(l.buf, ":null"...)
+	}
+}
+
+func (l *Logger) log_text(lvl Level, tag Tag, msg string, a ...interface{}) {
+	if len(msg) != 0 {
+		{
+			l.buf = append(l.buf, `msg=`...)
+			l.buf = strconv.AppendQuote(l.buf, msg)
+		}
+	}
+
+	if len(a) == 0 {
+		return
+	}
+
+	l.buf = append(l.buf, ", "...)
+
+	isOdd := true
+	firstRec := true
+	for _, v := range a {
+		if isOdd {
+			if _, ok := v.(string); ok {
+				if firstRec {
+					firstRec = false
+				} else {
+					l.buf = append(l.buf, ", "...)
+				}
+
+				l.buf = append(l.buf, v.(string)...)
+			} else {
+				return
+			}
+		} else {
+			{
+				l.buf = append(l.buf, "="...)
+			}
+			switch v.(type) {
+			// Frequently used first
+			// Todo: add error type
+			case string:
+				l.buf = strconv.AppendQuote(l.buf, v.(string))
+			case int:
+				l.buf = strconv.AppendInt(l.buf, int64(v.(int)), 10)
+			case int64:
+				l.buf = strconv.AppendInt(l.buf, v.(int64), 10)
+			case bool:
+				l.buf = strconv.AppendBool(l.buf, v.(bool))
+			case uint:
+				l.buf = strconv.AppendInt(l.buf, int64(v.(uint)), 10)
+			case uint64:
+				l.buf = strconv.AppendUint(l.buf, v.(uint64), 10)
+			case float32:
+				l.buf = strconv.AppendFloat(l.buf, float64(v.(float32)), 'f', -1, 32)
+			case float64:
+				l.buf = strconv.AppendFloat(l.buf, v.(float64), 'f', -1, 64)
+			default:
+				l.buf = append(l.buf, unsuppType...)
+			}
+		}
+		isOdd = !isOdd // toggle
+	}
+}
+
 func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
 	if !l.check(lvl, tag) {
 		return
@@ -18,101 +149,11 @@ func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, e
 	defer l.mu.Unlock()
 
 	l.header(lvl, tag)
-
-	// l.buf = append(l.buf, msg...)
 	if l.flag&Fjson != 0 {
-		if msg != "" {
-			l.buf = append(l.buf, `,"msg":"`...)
-			l.buf = append(l.buf, msg...)
-			l.buf = append(l.buf, '"')
-		}
+		l.log_json(lvl, tag, msg, a...)
 	} else {
-		l.buf = append(l.buf, msg...)
+		l.log_text(lvl, tag, msg, a...)
 	}
-
-	if len(a) == 0 {
-		return l.finalize()
-	}
-
-	if l.flag&Fjson != 0 {
-		l.buf = append(l.buf, ","...)
-	} else {
-		l.buf = append(l.buf, ", "...)
-	}
-
-	l.bufFmt = l.bufFmt[:0]
-	isOdd := true
-	for _, v := range a {
-		if isOdd {
-			if _, ok := v.(string); ok {
-				if l.flag&Fjson != 0 {
-					l.bufFmt = append(l.bufFmt, '"')
-					l.bufFmt = append(l.bufFmt, v.(string)...)
-					l.bufFmt = append(l.bufFmt, '"')
-				} else {
-					l.bufFmt = append(l.bufFmt, v.(string)...)
-				}
-			} else {
-				return
-			}
-		} else {
-			if l.flag&Fjson != 0 {
-				l.bufFmt = append(l.bufFmt, ":"...)
-			} else {
-				l.bufFmt = append(l.bufFmt, "="...)
-			}
-			switch v.(type) {
-			// Frequently used first
-			// Todo: add error type
-			case string:
-				l.bufFmt = strconv.AppendQuote(l.bufFmt, v.(string))
-			case int:
-				l.bufFmt = strconv.AppendInt(l.bufFmt, int64(v.(int)), 10)
-			case int64:
-				l.bufFmt = strconv.AppendInt(l.bufFmt, v.(int64), 10)
-			case bool:
-				l.bufFmt = strconv.AppendBool(l.bufFmt, v.(bool))
-			case uint:
-				l.bufFmt = strconv.AppendInt(l.bufFmt, int64(v.(uint)), 10)
-			case uint64:
-				l.bufFmt = strconv.AppendUint(l.bufFmt, v.(uint64), 10)
-			case float32:
-				l.bufFmt = strconv.AppendFloat(l.bufFmt, float64(v.(float32)), 'f', -1, 32)
-			case float64:
-				l.bufFmt = strconv.AppendFloat(l.bufFmt, v.(float64), 'f', -1, 64)
-
-			default:
-				if l.flag&Fjson != 0 {
-					l.bufFmt = strconv.AppendQuote(l.bufFmt, unsuppTypes)
-				} else {
-					l.bufFmt = append(l.bufFmt, unsuppType...)
-				}
-				// l.bufFmt = append(l.bufFmt, '"')
-				// l.bufFmt = append(l.bufFmt, v.(string)...)
-				// l.bufFmt = append(l.bufFmt, '"')
-			}
-			if l.flag&Fjson != 0 {
-				l.bufFmt = append(l.bufFmt, ","...)
-			} else {
-				l.bufFmt = append(l.bufFmt, ", "...)
-			}
-		}
-		isOdd = !isOdd // toggle
-	}
-	if l.flag&Fjson != 0 {
-		if len(l.bufFmt) != 0 && l.bufFmt[len(l.bufFmt)-1] == ',' {
-			l.buf = append(l.buf, l.bufFmt[:len(l.bufFmt)-1]...)
-		} else {
-			l.buf = append(l.buf, l.bufFmt...)
-		}
-	} else {
-		if len(l.bufFmt) > 1 && l.bufFmt[len(l.bufFmt)-2] == ',' {
-			l.buf = append(l.buf, l.bufFmt[:len(l.bufFmt)-2]...)
-		} else {
-			l.buf = append(l.buf, l.bufFmt...)
-		}
-	}
-
 	return l.finalize()
 }
 
