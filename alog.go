@@ -231,9 +231,7 @@ func (l *Logger) SetFilter(lv Level, tags Tag) *Logger {
 
 // SetFilterFn can control more precisely by taking a FilterFn.
 func (l *Logger) SetFilterFn(fn FilterFn) *Logger {
-	if fn != nil {
-		l.logFn = fn
-	}
+	l.logFn = fn
 	return l
 }
 
