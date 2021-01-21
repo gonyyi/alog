@@ -5,6 +5,7 @@ package alog_test
 
 import (
 	"github.com/gonyyi/alog"
+	"strconv"
 	"testing"
 )
 
@@ -15,6 +16,46 @@ var (
 	tFloat = 1.234
 	tBool  = true
 )
+
+func BenchmarkTest(b *testing.B) {
+	var buf []byte
+	s := "test\n\"escapes\""
+
+	b.Run("byte by byte", func(b2 *testing.B) {
+		for i := 0; i < b2.N; i++ {
+			buf = buf[:0]
+			for j := 0; j < len(s); j++ {
+				switch s[j] {
+				case '\\':
+					buf = append(buf, '\\')
+				case '"':
+					buf = append(buf, '\\', '"')
+				case '\n':
+					buf = append(buf, '\\', 'n')
+				case '\t':
+					buf = append(buf, '\\', 't')
+				case '\r':
+					buf = append(buf, '\\', 'r')
+				case '\b':
+					buf = append(buf, '\\', 'b')
+				case '\f':
+					buf = append(buf, '\\', 'f')
+				default:
+					buf = append(buf, s[j])
+				}
+			}
+		}
+	})
+	println("byte2byte", string(buf))
+
+	b.Run("strconv", func(b2 *testing.B) {
+		for i := 0; i < b2.N; i++ {
+			buf = buf[:0]
+			buf = strconv.AppendQuote(buf, s)
+		}
+	})
+	println("strconv", string(buf))
+}
 
 func BenchmarkLogger_Info(b *testing.B) {
 	al := alog.New(nil)
@@ -83,56 +124,3 @@ func BenchmarkLogger_Info(b *testing.B) {
 		})
 	}
 }
-
-// func BenchmarkLogger_Info(b *testing.B) {
-// 	b.Run("fmt=json, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFormat(alog.Fjson)
-// 		b2.ReportAllocs()
-// 		b2.RunParallel(func(pb *testing.PB) {
-// 			for pb.Next() {
-// 				// prints none
-// 				l.Error(testLogMsg)
-// 			}
-// 		})
-// 	})
-// 	b.Run("fmt=json+utc, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.FtimeUTC)
-// 		b2.ReportAllocs()
-// 		b2.RunParallel(func(pb *testing.PB) {
-// 			for pb.Next() {
-// 				// prints none
-// 				l.Error(testLogMsg)
-// 			}
-// 		})
-// 	})
-// 	b.Run("fmt=json+time, error=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
-// 		b2.ReportAllocs()
-// 		b2.RunParallel(func(pb *testing.PB) {
-// 			for pb.Next() {
-// 				// prints none
-// 				l.Error(testLogMsg)
-// 			}
-// 		})
-// 	})
-// 	b.Run("fmt=json+time, errorf=str", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
-// 		b2.ReportAllocs()
-// 		b2.RunParallel(func(pb *testing.PB) {
-// 			for pb.Next() {
-// 				// prints none
-// 				l.Errorf("test: %s", "abc")
-// 			}
-// 		})
-// 	})
-// 	b.Run("fmt=json+time, errorf=int", func(b2 *testing.B) {
-// 		l := alog.New(nil).SetFormat(alog.Fjson | alog.Ftime)
-// 		b2.ReportAllocs()
-// 		b2.RunParallel(func(pb *testing.PB) {
-// 			for pb.Next() {
-// 				// prints none
-// 				l.Errorf("test: %d", 1234)
-// 			}
-// 		})
-// 	})
-// }

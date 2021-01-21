@@ -36,17 +36,17 @@ func (l *Level) String() string {
 func (l *Level) name_terminal() string {
 	switch *l {
 	case Ltrace:
-		return "TRC "
+		return "TRC"
 	case Ldebug:
-		return "DBG "
+		return "DBG"
 	case Linfo:
-		return "INF "
+		return "INF"
 	case Lwarn:
-		return "WRN "
+		return "WRN"
 	case Lerror:
-		return "ERR "
+		return "ERR"
 	case Lfatal:
-		return "FTL "
+		return "FTL"
 	default:
 		return ""
 	}

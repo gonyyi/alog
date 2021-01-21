@@ -32,13 +32,13 @@ type flags uint32
 const (
 	// Fprefix will show prefix when printing log message
 	Fprefix flags = 1 << iota
-	// Fyear will show 4 digit year such as 2006
-	Fyear
-	// Fdate will show 01/02 date formats.
+	// Fdate will show 4 digit year such as 2006
 	Fdate
+	// Fdatemmdd will show 01/02 date formats.
+	Fdatemmdd
 	// Ftime will show HH:MM:SS formats such as 05:02:03
 	Ftime
-	// FtimeMs will show millisecond in its time such as 10:12:13.1234
+	// FtimeMs will show millisecond in its time such as 10:12:13.123
 	FtimeMs
 	// FtimeUnix will show unix time
 	FtimeUnix
@@ -53,7 +53,7 @@ const (
 	// Fjson will print to a JSON
 	Fjson
 	// Fdefault will show month/day with time, and Level of logging.
-	Fdefault = Fyear | Fdate | Ftime | Flevel | Ftag
+	Fdefault = Fdate | Ftime | Flevel | Ftag
 
 	// Fall for all options on
 	Fall = flags(^uint32(0))
@@ -73,9 +73,7 @@ const (
 	Lwarn
 	// Lerror shows error Level or higher
 	Lerror
-	// Lfatal shows fatal Level or higher
-	// If Fatal() or Fatalf() is called, it will exit the process with
-	// os.Exit(1)
+	// Lfatal shows fatal Level or higher. This does not exit the process
 	Lfatal
 )
 
@@ -90,42 +88,20 @@ type Logger struct {
 
 	// logFn is a customizable function space and supercedes builtin Level and Tag filters if set.
 	logFn        func(Level, Tag) bool
-	logLevel     Level
-	logTag       Tag
-	logTagIssued int
-	logTagString [64]string
+	logLevel     Level      // logLevel stores current logging level
+	logTag       Tag        // logTag stores current logging Tag (bitflag)
+	logTagIssued int        // logTagIssued stores number of Tag issued.
+	logTagString [64]string // logTagString stores Tag names.
 
 	out io.Writer
 	mu  sync.Mutex
 
-	// There are two buffers used. Both `buf` and `bufFormat` are being used regardless
-	// of bufUseBuffer setting, however, if bufUseBuffer is false, this buffer will be
-	// flushed for each log.
-	buf []byte // buf is a main buffer; reset per each log entry
-	//bufFmt []byte // bufFmt is a buffer for formatting
-	// sbufc int
-
-	// bufFormat is a buffer strictly used only for formatting - such as printing
-	// date, time, prefix etc; and will be copied to `buf` (main buffer)
-	// bufFormat []byte // for formatting only
-
-	// Prefix will be stored as a byte slice.
-	prefix []byte
-
-	// levelString is an array of byte slice that stores what prefix per each log logLevel
-	// will be used. Eg. "[DEBUG]", etc.
-	//levelString        [7][]byte
-	//levelStringForJson [7][]byte
+	buf    []byte // buf is a main buffer; reset per each log entry
+	prefix []byte // prefix will be stored as a byte slice.
 }
 
-// New function creates new logger. This takes an output writer for its argument (v0.2.0 change)
-// All methods with suffix "Set" returns `*Logger`, therefore can be used together with `*Logger.New`.
-// This is a v0.2.0 change that broke the backward compatibility, however, most of the time, people
-// don't set logger prefix, also uses basic default setting. Therefore it's bit cumbersome to require
-// two (prefix, flag), often, unused parameters. Duct-taping can be done following way:
-// 1. alog.New(nil).SetOutput(os.Stderr) // initially set discard for output but overridden to os.Stderr
-// 2. alog.New(os.Stderr).SetPrefix("TestLog: ").SetLogLevel(alog.Linfo) // set prefix and Level
-// 3. alog.New(os.Stderr).SetPrefix("TestLog: ").SetFormat(alog.Fdefault|alog.FtimeUTC)
+// New function creates new logger.
+// This takes an output writer for its argument. If nil is given, it will discard logs.
 func New(output io.Writer) *Logger {
 	// If output is given as `nil`, it will use io.discard as a default.
 	if output == nil {
@@ -220,6 +196,19 @@ func (l *Logger) SetFormat(flag flags) *Logger {
 	return l
 }
 
+// SetFormatItem allow to adjust a single item on/off without
+// impacting what is already set.
+func (l *Logger) SetFormatItem(item flags, on bool) *Logger {
+	l.mu.Lock()
+	if on {
+		l.flag = l.flag | item
+	} else {
+		l.flag = l.flag &^ item
+	}
+	l.mu.Unlock()
+	return l
+}
+
 func (l *Logger) SetNewTags(names ...string) *Logger {
 	for _, name := range names {
 		if _, ok := l.GetTag(name); !ok {
@@ -261,7 +250,11 @@ func (l *Logger) LogIferr(e error, lvl Level, tag Tag, msg string) {
 // Iferr will run function "do" if error is not nil.
 func (l *Logger) Iferr(e error, do func()) {
 	if e != nil {
-		do()
+		if do != nil {
+			do()
+		} else {
+			l.Error(0, "", "err", e)
+		}
 	}
 }
 
