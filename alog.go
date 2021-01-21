@@ -32,7 +32,7 @@ type flags uint32
 const (
 	// Fprefix will show prefix when printing log message
 	Fprefix flags = 1 << iota
-	// Fdate will show 4 digit year such as 2006
+	// Fdate will show both CCYY and MMDD
 	Fdate
 	// Fdatemmdd will show 01/02 date formats.
 	Fdatemmdd
@@ -52,9 +52,9 @@ const (
 	Ftag
 	// Fjson will print to a JSON
 	Fjson
+
 	// Fdefault will show month/day with time, and Level of logging.
 	Fdefault = Fdate | Ftime | Flevel | Ftag
-
 	// Fall for all options on
 	Fall = flags(^uint32(0))
 	// Fnone for all options off
