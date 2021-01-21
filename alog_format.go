@@ -76,9 +76,6 @@ func (l *Logger) header_json(lvl Level, tag Tag) {
 				l.buf = strconv.AppendInt(l.buf, int64(l.time.Nanosecond()/1e6), 10)
 			}
 		}
-	} else {
-		// This can be hardcoded as it will be the first line
-		l.buf = append(l.buf, '{')
 	}
 
 	// ----------------------

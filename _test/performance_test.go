@@ -6,7 +6,21 @@ import (
 	"testing"
 )
 
-func BenchmarkAll(b *testing.B) {
+func BenchmarkSubWriter(b *testing.B) {
+	b.ReportAllocs()
+
+	l := alog.New(nil).SetNewTags("mytag").SetFormat(alog.Fjson | alog.Ftag)
+	sw := l.NewWriter(alog.Lerror, l.MustGetTag("mytag"))
+
+	msg := []byte(`my test`)
+	for i := 0; i < b.N; i++ {
+		sw.Write(msg)
+	}
+	// l.SetOutput(os.Stdout)
+	// sw.Write(msg)
+}
+
+func BenchmarkCompare(b *testing.B) {
 	b.Run("t1: alog, msg", func(c *testing.B) {
 		l := alog.New(nil).SetNewTags("t1", "t2", "t3")
 		l.SetFormat(alog.Fjson)
