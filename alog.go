@@ -1,7 +1,3 @@
-// (c) 2020 Gon Y Yi. <https://gonyyi.com>
-
-// version 0.4 candidate
-
 package alog
 
 import (
@@ -9,22 +5,6 @@ import (
 	"sync"
 	"time"
 )
-
-const (
-	// newline constant provides byte of newline, so it can be usd right away.
-	newline     = byte('\n')
-	quotation   = byte('"')
-	unsuppTypes = "{??}"
-	// noTag will reset tag if already set
-	noTag Tag = 0
-)
-
-// unsuppType is a slice of byte and will be used when unknown formats string is being used in
-// any formatted prints such as `outputf`, `infof`, `debugf`, etc. This is pre-converted to
-// a byte slice and reused to save process time.
-var unsuppType = []byte("{??}")
-var newlineRepl = []byte(`\n`)
-var quotationRepl = []byte(`\"`)
 
 // flags a bit-flag flag options that is used for variety of configuration.
 type flags uint32
@@ -34,16 +14,14 @@ const (
 	Fprefix flags = 1 << iota
 	// Fdate will show both CCYY and MMDD
 	Fdate
-	// Fdatemmdd will show 01/02 date formats.
-	Fdatemmdd
-	// Ftime will show HH:MM:SS formats such as 05:02:03
+	// FdateDay will show 0-6 for JSON or (Sun-Mon)
+	FdateDay
+	// Ftime will show HHMMSS.000; for json, it will be HHMMSS000
 	Ftime
-	// FtimeMs will show millisecond in its time such as 10:12:13.123
-	FtimeMs
 	// FtimeUnix will show unix time
 	FtimeUnix
 	// FtimeUnixNano will show unix time
-	FtimeUnixNano
+	FtimeUnixMs
 	// FtimeUTC will show UTC time formats
 	FtimeUTC
 	// Flevel show Level in the log messsage.
@@ -86,6 +64,9 @@ type Logger struct {
 	time time.Time
 	flag flags
 
+	pool sync.Pool
+	fmtr AlogFmtr
+
 	// logFn is a customizable function space and supercedes builtin Level and Tag filters if set.
 	logFn        func(Level, Tag) bool
 	logLevel     Level      // logLevel stores current logging level
@@ -96,8 +77,9 @@ type Logger struct {
 	out io.Writer
 	mu  sync.Mutex
 
-	buf    []byte // buf is a main buffer; reset per each log entry
+	// buf    []byte // buf is a main buffer; reset per each log entry
 	prefix []byte // prefix will be stored as a byte slice.
+
 }
 
 // New function creates new logger.
@@ -114,13 +96,18 @@ func New(output io.Writer) *Logger {
 	// eg. If a user called SetFormat with other config flag except the Level, then the log
 	//     Level will not be changed. Therefore default Level should be defined here.
 	l := &Logger{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return newItem(512)
+			},
+		},
+		fmtr:     TextFmtr{},
 		out:      output,
 		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		logLevel: Linfo,      // default logging Level to INFO
 		flag:     Fdefault,   // default flag is given
-		buf:      make([]byte, 1024),
+		// buf:      make([]byte, 1024),
 	}
-
 	return l
 }
 
@@ -163,6 +150,16 @@ func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
 // GetWriter returns the output destination for the logger.
 func (l *Logger) GetWriter() io.Writer {
 	return l.out
+}
+
+// SetFormatter will set logger formatter
+func (l *Logger) SetFormatter(fmtr AlogFmtr) *Logger {
+	if fmtr != nil {
+		l.fmtr = fmtr
+		return l
+	}
+	l.fmtr = TextFmtr{}
+	return l
 }
 
 // SetOutput can redefined the output after logger has been created.
@@ -264,5 +261,23 @@ func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 		l:   l,
 		lvl: lvl,
 		tag: tag,
+	}
+}
+
+// check will check if Level and Tag given is good to be printed.
+// If
+// Eg. if setting is Level INFO, Tag USER, then
+//     any log Level below INFO shouldn't be printed.
+//     Also, any Tag other than USER shouldn't be printed either.
+func (l *Logger) check(lvl Level, tag Tag) bool {
+	switch {
+	case l.logFn != nil: // logFn has the highest order if set.
+		return l.logFn(lvl, tag)
+	case l.logLevel > lvl: // if lvl is below lvl limit, the do not print
+		return false
+	case l.logTag != 0 && l.logTag&tag == 0: // if logTag is set but Tag is not matching, then do not print
+		return false
+	default:
+		return true
 	}
 }
