@@ -37,9 +37,10 @@ func (f TextFmtr) Space(dst []byte) []byte {
 }
 
 // Log specific type
-func (f TextFmtr) LogLevel(dst []byte, lv string) []byte {
-	return append(dst, lv...)
+func (f TextFmtr) LogLevel(dst []byte, lv Level) []byte {
+	return append(dst, lv.ShortName()...)
 }
+
 func (f TextFmtr) LogTag(dst []byte, tag Tag, alogTagStr [64]string, alogTagIssued int) []byte {
 	dst = append(dst, '[')
 

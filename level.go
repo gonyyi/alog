@@ -2,7 +2,7 @@ package alog
 
 type Leveller interface {
 	String() string
-	name_terminal() string
+	ShortName() string
 }
 
 // LevelPrefix is a bit-flag used for different Level of log activity:
@@ -33,7 +33,7 @@ func (l *Level) String() string {
 	}
 }
 
-func (l *Level) name_terminal() string {
+func (l *Level) ShortName() string {
 	switch *l {
 	case Ltrace:
 		return "TRC"

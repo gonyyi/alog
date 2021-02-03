@@ -283,13 +283,13 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 }
 
 func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
-	return l.logString(lvl, tag, msg, nil, a...)
+	return l.log(lvl, tag, msg, nil, a...)
 }
 func (l *Logger) logb(lvl Level, tag Tag, msg []byte) (n int, err error) {
-	return l.logString(lvl, tag, "", msg)
+	return l.log(lvl, tag, "", msg)
 }
 
-func (l *Logger) logString(lvl Level, tag Tag, msg string, msgb []byte, a ...interface{}) (n int, err error) {
+func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface{}) (n int, err error) {
 	lenA := len(a)
 	lenMsg := len(msg)
 	lenMsgb := len(msgb)
@@ -354,7 +354,7 @@ func (l *Logger) logString(lvl Level, tag Tag, msg string, msgb []byte, a ...int
 		if !firstItem {
 			s.buf = l.fmtr.Space(s.buf)
 		}
-		s.buf = l.fmtr.LogLevel(s.buf, lvl.String())
+		s.buf = l.fmtr.LogLevel(s.buf, lvl)
 		firstItem = false
 	}
 

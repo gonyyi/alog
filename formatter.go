@@ -13,7 +13,7 @@ type AlogFmtr interface {
 	// Space adds delimiter; eg. for JSON: "," and for TEXT: " "
 	Space(dst []byte) []byte
 	// LogLevel adds level to buffeer
-	LogLevel(dst []byte, lv string) []byte
+	LogLevel(dst []byte, lv Level) []byte
 	// LogTime adds millisecond level time (hhmmss000); JSON key: "t"
 	LogTime(dst []byte, t time.Time) []byte
 	// LogTimeDate adds CCYYMMDD to buffer; JSON key: "d"

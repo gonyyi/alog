@@ -9,6 +9,7 @@ import (
 func TestAlog_New(t *testing.T) {
 	al := alog.New(os.Stderr).
 		SetFormatItem(alog.Flevel, true).
+		SetFormatItem(alog.Ftag, false).
 		SetNewTags("backend", "frontend", "user", "req").
 		SetFormatter(alog.NewFmtrText())
 
@@ -56,11 +57,16 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 }
 
 func BenchmarkLogger_New(b *testing.B) {
+	// BenchmarkLogger_New/msg-12         	 6399504	       170 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s-12       	 6389883	       186 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/s+s-12         	 6095625	       199 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s+i+b-12   	 4642806	       262 ns/op	       0 B/op	       0 allocs/op
+
 	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFmtrJSON()).SetFormatItem(alog.Ftime|alog.Fdate, false)
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
 
-	b.Run("alog", func(c *testing.B) {
+	b.Run("msg", func(c *testing.B) {
 		c.ReportAllocs()
 		for i := 0; i < c.N; i++ {
 			al.Info(USER|REQ, "message")
@@ -70,8 +76,38 @@ func BenchmarkLogger_New(b *testing.B) {
 		}
 	})
 
-	al.SetOutput(os.Stderr)
-	al.Info(USER|REQ, "message", "name", "gon", "age", 17, "lat", 123.45, "lon", 456.789)
+	b.Run("msg+s", func(c *testing.B) {
+		c.ReportAllocs()
+		for i := 0; i < c.N; i++ {
+			// al.Info(USER|REQ, "message")
+			al.Info(0, "test", "val", "okay")
+			// al.Info(0, "", "val\t\r", "ok\tay", "message", "te\tst")
+			// al.Info(0, "test", "name", "gon", "age", 17, "married", false)
+		}
+	})
+
+	b.Run("s+s", func(c *testing.B) {
+		c.ReportAllocs()
+		for i := 0; i < c.N; i++ {
+			// al.Info(USER|REQ, "message")
+			// al.Info(0, "test", "val", "okay")
+			al.Info(0, "", "val\t\r", "ok\tay", "message", "te\tst")
+			// al.Info(0, "test", "name", "gon", "age", 17, "married", false)
+		}
+	})
+
+	b.Run("msg+s+i+b", func(c *testing.B) {
+		c.ReportAllocs()
+		for i := 0; i < c.N; i++ {
+			// al.Info(USER|REQ, "message")
+			// al.Info(0, "test", "val", "okay")
+			// al.Info(0, "", "val\t\r", "ok\tay", "message", "te\tst")
+			al.Info(0, "test", "name", "gon", "age", 17, "married", false)
+		}
+	})
+	//
+	// al.SetOutput(os.Stderr)
+	// al.Info(USER|REQ, "message", "name", "gon", "age", 17, "lat", 123.45, "lon", 456.789)
 	// al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
 
 	// zl = zl.Output(os.Stderr)

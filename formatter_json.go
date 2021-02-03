@@ -38,8 +38,8 @@ func (f JSONFmtr) Space(dst []byte) []byte {
 }
 
 // Log specific type
-func (f JSONFmtr) LogLevel(dst []byte, lv string) []byte {
-	return f.safeString(dst, "level", lv)
+func (f JSONFmtr) LogLevel(dst []byte, lv Level) []byte {
+	return f.safeString(dst, "level", lv.String())
 }
 
 func (f JSONFmtr) LogTag(dst []byte, tag Tag, alogTagStr [64]string, alogTagIssued int) []byte {
