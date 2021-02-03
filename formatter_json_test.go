@@ -48,7 +48,7 @@ func TestJSONFmtr(t *testing.T) {
 		buf = l.End(buf)
 	}
 
-	l = &JSONFmtr{}
+	l = &alog.JSONFmtr{}
 	f()
 	println(string(buf))
 

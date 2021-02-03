@@ -48,7 +48,7 @@ func TestTextFmtr(t *testing.T) {
 		buf = l.End(buf)
 	}
 
-	l = &TextFmtr{}
+	l = &alog.TextFmtr{}
 	f()
 	println(string(buf))
 }

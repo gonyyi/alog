@@ -1,7 +1,5 @@
 package alog
 
-import "time"
-
 type alogItem struct {
 	bufCap int
 	buf    []byte // this is a buffer that will be created multiple and used by multiple goroutines by sync.Pool
