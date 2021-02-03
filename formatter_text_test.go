@@ -1,12 +1,13 @@
-package alog
+package alog_test
 
 import (
+	"github.com/gonyyi/alog"
 	"testing"
 	"time"
 )
 
-func TestJSONFmtr(t *testing.T) {
-	var l AlogFmtr
+func TestTextFmtr(t *testing.T) {
+	var l alog.AlogFmtr
 	var buf []byte
 	tag0 := []string{}
 	tag1 := []string{"name"}
@@ -27,7 +28,7 @@ func TestJSONFmtr(t *testing.T) {
 		buf = l.Space(buf)
 		buf = l.LogTimeUnixMs(buf, ts)
 		buf = l.Space(buf)
-		// buf = l.LogTag(buf, tag1, nil, 0)
+		// buf = l.LogTag(buf, tag0)
 		buf = l.Space(buf)
 		buf = l.LogMsg(buf, `hello "world"`, ';')
 		buf = l.Space(buf)
@@ -47,8 +48,7 @@ func TestJSONFmtr(t *testing.T) {
 		buf = l.End(buf)
 	}
 
-	l = &JSONFmtr{}
+	l = &TextFmtr{}
 	f()
 	println(string(buf))
-
 }

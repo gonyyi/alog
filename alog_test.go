@@ -1,8 +1,7 @@
 package alog_test
 
 import (
-	"github.com/gonyyi/examples.go/alog"
-	"github.com/rs/zerolog"
+	"github.com/gonyyi/alog"
 	"os"
 	"testing"
 )
@@ -57,7 +56,6 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 }
 
 func BenchmarkLogger_New(b *testing.B) {
-	zl := zerolog.New(nil)
 	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFmtrJSON()).SetFormatItem(alog.Ftime|alog.Fdate, false)
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
@@ -69,16 +67,6 @@ func BenchmarkLogger_New(b *testing.B) {
 			// al.Info(0, "test", "val", "okay")
 			// al.Info(0, "", "val\t\r", "ok\tay", "message", "te\tst")
 			// al.Info(0, "test", "name", "gon", "age", 17, "married", false)
-		}
-	})
-
-	b.Run("zlog", func(c *testing.B) {
-		c.ReportAllocs()
-		for i := 0; i < c.N; i++ {
-			zl.Info().Msg("msg")
-			// zl.Info().Str("val", "okay").Msg("test")
-			// zl.Info().Str("val\t\r", "ok\tay").Msg("te\tst")
-			// zl.Info().Str("msg", "test").Str("name", "gon").Int("age", 17).Bool("married", false).Send()
 		}
 	})
 
