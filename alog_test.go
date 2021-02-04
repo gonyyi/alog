@@ -109,12 +109,4 @@ func BenchmarkLogger_New(b *testing.B) {
 			al.Info(0, "test", "name", "gon", "age", 17, "married", false)
 		}
 	})
-	//
-	// al.SetOutput(os.Stderr)
-	// al.Info(USER|REQ, "message", "name", "gon", "age", 17, "lat", 123.45, "lon", 456.789)
-	// al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
-
-	// zl = zl.Output(os.Stderr)
-	// zl.Info().Str("val\t\r", "ok\tay").Msg("te\tst")
-
 }

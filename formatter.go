@@ -2,8 +2,8 @@ package alog
 
 import "time"
 
-// AlogFmtr is an interface for Alog formatter.
-type AlogFmtr interface {
+// Formatter is an interface for Alog formatter.
+type Formatter interface {
 	// Begin is used for beginning of log entry. This method takes prefix as well.
 	// If it is set, it will be the first message to print regardless of JSON or text.
 	// For JSON, it'd be '{' and none for text.

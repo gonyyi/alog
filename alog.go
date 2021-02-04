@@ -65,7 +65,7 @@ type Logger struct {
 	flag flags
 
 	pool sync.Pool
-	fmtr AlogFmtr
+	fmtr Formatter
 
 	// logFn is a customizable function space and supercedes builtin Level and Tag filters if set.
 	logFn        func(Level, Tag) bool
@@ -100,7 +100,7 @@ func New(output io.Writer) *Logger {
 				return newItem(512)
 			},
 		},
-		fmtr:     TextFmtr{},
+		fmtr:     FormatterText{},
 		out:      output,
 		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		logLevel: Linfo,      // default logging Level to INFO
@@ -177,10 +177,17 @@ func (l *Logger) SetPrefix(s string) *Logger {
 // need additional parsing.
 func (l *Logger) SetFormat(flag flags) *Logger {
 	l.mu.Lock()
-	l.flag = flag
-	if flag&Fjson != 0 {
-		l.SetFormatter(NewFmtrJSON())
+
+	// Previous had a JSON flag on, but anymore, then use text formatter
+	// If previous didn't have JSON flag, but now do, then use json formatter
+	if l.flag&Fjson != 0 && flag&Fjson == 0 {
+		l.SetFormatter(&FormatterText{})
+	} else if l.flag&Fjson == 0 && flag&Fjson != 0 {
+		l.SetFormatter(&FormatterJSON{})
 	}
+
+	l.flag = flag
+
 	l.mu.Unlock()
 	return l
 }
@@ -189,29 +196,34 @@ func (l *Logger) SetFormat(flag flags) *Logger {
 // impacting what is already set.
 func (l *Logger) SetFormatItem(item flags, on bool) *Logger {
 	l.mu.Lock()
+
+	// Previous had a JSON flag on, but anymore, then use text formatter
+	// If previous didn't have JSON flag, but now do, then use json formatter
+	if item&Fjson != 0 {
+		if on && l.flag&Fjson == 0 {
+			l.SetFormatter(&FormatterJSON{})
+		} else if on == false && l.flag&Fjson != 0 {
+			l.SetFormatter(&FormatterText{})
+		}
+	}
+
 	if on {
 		l.flag = l.flag | item
 	} else {
 		l.flag = l.flag &^ item
 	}
-	if item&Fjson != 0 { // Fjson has been used either on or off
-		if on {
-			l.SetFormatter(NewFmtrJSON())
-		} else {
-			l.SetFormatter(NewFmtrText())
-		}
-	}
+
 	l.mu.Unlock()
 	return l
 }
 
 // SetFormatter will set logger formatter
-func (l *Logger) SetFormatter(fmtr AlogFmtr) *Logger {
+func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
 	if fmtr != nil {
 		l.fmtr = fmtr
 		return l
 	}
-	l.fmtr = TextFmtr{}
+	l.fmtr = FormatterText{}
 	return l
 }
 
