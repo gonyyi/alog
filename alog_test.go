@@ -66,7 +66,7 @@ func BenchmarkLogger_New(b *testing.B) {
 	// BenchmarkLogger_New/s+s-12         	 6095625	       199 ns/op	       0 B/op	       0 allocs/op
 	// BenchmarkLogger_New/msg+s+i+b-12   	 4642806	       262 ns/op	       0 B/op	       0 allocs/op
 
-	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFmtrJSON()).SetFormatItem(alog.Ftime|alog.Fdate, false)
+	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFormatterJSON()).SetFormatItem(alog.Ftime|alog.Fdate, false)
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
 
