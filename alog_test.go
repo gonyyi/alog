@@ -7,21 +7,22 @@ import (
 )
 
 func TestAlog_New(t *testing.T) {
-	al := alog.New(os.Stderr).
-		SetFormatItem(alog.Flevel, true).
-		SetFormatItem(alog.Fjson, true).
-		SetNewTags("backend", "frontend", "user", "req")
+	al := alog.New(os.Stderr).SetFormat(alog.Fdefault | alog.FdateDay)
+
+	al.SetNewTags("backend", "frontend", "user", "req")
 
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
 
 	al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
+
 	al.SetFormatItem(alog.Fjson, false)
 	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
+	al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
+
 	al.SetFormatItem(alog.Fjson, true)
 	al.Info(REQ, "test", "name", "gon", "age", 17, "married", false)
-	al.SetFormatItem(alog.Fjson, false)
-	al.Info(0, "test", "name", "gon", "age", 17, "married", false)
+	al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
 
 	// JSON
 	// {"d":20210125,"t":102100324,"level":"info","tag":["user","req"],"msg":"test","name":"gon","age":17,"married":false}

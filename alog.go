@@ -329,7 +329,23 @@ func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface
 		s.buf = l.fmtr.Begin(s.buf, nil)
 	}
 
-	if l.flag&(Fdate|FdateDay|Ftime|FtimeUTC|FtimeUnix|FtimeUnixMs) != 0 {
+	if l.flag&(FtimeUnix|FtimeUnixMs) != 0 {
+		l.time = time.Now()
+
+		if l.flag&FtimeUnixMs != 0 {
+			if !firstItem {
+				s.buf = l.fmtr.Space(s.buf)
+			}
+			s.buf = l.fmtr.LogTimeUnixMs(s.buf, l.time)
+		} else {
+			if !firstItem {
+				s.buf = l.fmtr.Space(s.buf)
+			}
+			s.buf = l.fmtr.LogTimeUnix(s.buf, l.time)
+		}
+
+		firstItem = false
+	} else if l.flag&(Fdate|FdateDay|Ftime|FtimeUTC) != 0 {
 		// at least one item will be printed here, so just check once.
 		l.time = time.Now()
 		if l.flag&FtimeUTC != 0 {
@@ -351,23 +367,13 @@ func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface
 			s.buf = l.fmtr.LogTimeDay(s.buf, l.time)
 		}
 
-		switch {
-		case l.flag&Ftime != 0:
+		if l.flag&Ftime != 0 {
 			if !firstItem {
 				s.buf = l.fmtr.Space(s.buf)
 			}
 			s.buf = l.fmtr.LogTime(s.buf, l.time)
-		case l.flag&FtimeUnix != 0:
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			s.buf = l.fmtr.LogTimeUnix(s.buf, l.time)
-		case l.flag&FtimeUnixMs != 0:
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			s.buf = l.fmtr.LogTimeUnixMs(s.buf, l.time)
 		}
+
 		firstItem = false
 	}
 
