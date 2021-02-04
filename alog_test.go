@@ -9,16 +9,18 @@ import (
 func TestAlog_New(t *testing.T) {
 	al := alog.New(os.Stderr).
 		SetFormatItem(alog.Flevel, true).
-		SetFormatItem(alog.Ftag, false).
-		SetNewTags("backend", "frontend", "user", "req").
-		SetFormatter(alog.NewFmtrText())
+		SetFormatItem(alog.Fjson, true).
+		SetNewTags("backend", "frontend", "user", "req")
 
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
 
 	al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
+	al.SetFormatItem(alog.Fjson, false)
 	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
+	al.SetFormatItem(alog.Fjson, true)
 	al.Info(REQ, "test", "name", "gon", "age", 17, "married", false)
+	al.SetFormatItem(alog.Fjson, false)
 	al.Info(0, "test", "name", "gon", "age", 17, "married", false)
 
 	// JSON
@@ -35,8 +37,9 @@ func TestAlog_New(t *testing.T) {
 }
 
 func BenchmarkLogger_NewWriter(b *testing.B) {
-	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFmtrJSON())
+	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req")
 	al.SetFormatItem(alog.FdateDay, true)
+	//al.SetFormatItem(alog.Fjson, true)
 	// al.SetFormatItem(alog.Ftime|alog.Fdate, false)
 	USER := al.MustGetTag("user")
 	REQ := al.MustGetTag("req")
@@ -49,6 +52,7 @@ func BenchmarkLogger_NewWriter(b *testing.B) {
 		for i := 0; i < c.N; i++ {
 			// sw.WriteString("test") // this doesn't have allocation
 			sw.Write(txt) // this has allocation
+			sw.WriteString("sub writer tet2")
 			// todo: subWriter will take 1 allocation when converting to string.. Create separate one for byte array.
 		}
 	})

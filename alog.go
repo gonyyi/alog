@@ -79,7 +79,6 @@ type Logger struct {
 
 	// buf    []byte // buf is a main buffer; reset per each log entry
 	prefix []byte // prefix will be stored as a byte slice.
-
 }
 
 // New function creates new logger.
@@ -152,16 +151,6 @@ func (l *Logger) GetWriter() io.Writer {
 	return l.out
 }
 
-// SetFormatter will set logger formatter
-func (l *Logger) SetFormatter(fmtr AlogFmtr) *Logger {
-	if fmtr != nil {
-		l.fmtr = fmtr
-		return l
-	}
-	l.fmtr = TextFmtr{}
-	return l
-}
-
 // SetOutput can redefined the output after logger has been created.
 // If output is nil, the logger will set it to ioutil.Discard instead.
 func (l *Logger) SetOutput(output io.Writer) *Logger {
@@ -189,6 +178,9 @@ func (l *Logger) SetPrefix(s string) *Logger {
 func (l *Logger) SetFormat(flag flags) *Logger {
 	l.mu.Lock()
 	l.flag = flag
+	if flag&Fjson != 0 {
+		l.SetFormatter(NewFmtrJSON())
+	}
 	l.mu.Unlock()
 	return l
 }
@@ -202,7 +194,24 @@ func (l *Logger) SetFormatItem(item flags, on bool) *Logger {
 	} else {
 		l.flag = l.flag &^ item
 	}
+	if item&Fjson != 0 { // Fjson has been used either on or off
+		if on {
+			l.SetFormatter(NewFmtrJSON())
+		} else {
+			l.SetFormatter(NewFmtrText())
+		}
+	}
 	l.mu.Unlock()
+	return l
+}
+
+// SetFormatter will set logger formatter
+func (l *Logger) SetFormatter(fmtr AlogFmtr) *Logger {
+	if fmtr != nil {
+		l.fmtr = fmtr
+		return l
+	}
+	l.fmtr = TextFmtr{}
 	return l
 }
 
@@ -467,4 +476,23 @@ func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface
 	l.pool.Put(s)
 
 	return 0, nil
+}
+
+func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
+	l.Log(Ltrace, tag, msg, a...)
+}
+func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
+	l.Log(Ldebug, tag, msg, a...)
+}
+func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
+	l.Log(Linfo, tag, msg, a...)
+}
+func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lwarn, tag, msg, a...)
+}
+func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lerror, tag, msg, a...)
+}
+func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
+	l.Log(Lfatal, tag, msg, a...)
 }
