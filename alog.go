@@ -15,17 +15,18 @@ type Logger struct {
 	time time.Time
 	flag format
 
-	pool sync.Pool
-	fmtr Formatter
+	pool   sync.Pool
+	fmtr   Formatter
+	trigfn TriggerFn
 
 	lvtag tagger // lvtag to replace 5 items below
 
 	// filterFn is a customizable function space and supercedes builtin Level and Tag filters if set.
-	logFn        func(Level, Tag) bool
-	logLevel     Level      // filterLvl stores current logging level
-	logTag       Tag        // filterTag stores current logging Tag (bitflag)
-	logTagIssued int        // numTagIssued stores number of Tag issued.
-	logTagString [64]string // tagNames stores Tag names.
+	//logFn        func(Level, Tag) bool
+	//logLevel     Level      // filterLvl stores current logging level
+	//logTag       Tag        // filterTag stores current logging Tag (bitflag)
+	//logTagIssued int        // numTagIssued stores number of Tag issued.
+	//logTagString [64]string // tagNames stores Tag names.
 
 	out io.Writer
 	mu  sync.Mutex
@@ -50,16 +51,17 @@ func New(output io.Writer) *Logger {
 	l := &Logger{
 		pool: sync.Pool{
 			New: func() interface{} {
-				return newItem(512)
+				return newPoolbuf(256, 512)
 			},
 		},
-		fmtr:     &FormatterText{},
-		out:      output,
-		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
-		logLevel: Linfo,      // default logging Level to INFO
-		flag:     Fdefault,   // default flag is given
+		fmtr:   &FormatterText{},
+		out:    output,
+		prefix: []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
+		flag:   Fdefault,   // default flag is given
 		// buf:      make([]byte, 1024),
 	}
+	l.lvtag.filter.lvl = Linfo // default logging Level to INFO
+
 	return l
 }
 
@@ -183,16 +185,16 @@ func (l *Logger) UpdateFormat(item format, on bool) {
 // SetFilter will define what level or tags to show.
 // Integer 0 can be used, and when it's used, it will not filter anything.
 func (l *Logger) SetFilter(lv Level, tags Tag) *Logger {
-	l.logFn = nil
-	l.logLevel = lv
-	l.logTag = tags
+	l.lvtag.filter.fn = nil
+	l.lvtag.filter.lvl = lv
+	l.lvtag.filter.tag = tags
 
 	return l
 }
 
 // SetFilterFn can control more precisely by taking a FilterFn.
 func (l *Logger) SetFilterFn(fn FilterFn) *Logger {
-	l.logFn = fn
+	l.lvtag.filter.fn = fn
 	return l
 }
 
@@ -204,6 +206,10 @@ func (l *Logger) IfErr(e error, lvl Level, tag Tag, msg string) {
 	if e != nil {
 		l.Log(lvl, tag, msg, "err", e.Error())
 	}
+}
+
+func (l *Logger) SetTriggerFn(fn TriggerFn) {
+	l.trigfn = fn
 }
 
 // NewWriter takes a Level and a Tag and create an Alog writer (SubWriter)

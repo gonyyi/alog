@@ -80,4 +80,5 @@ func BenchmarkLogger_New(b *testing.B) {
 			al.Info(0, "test", "name", "gon", "age", 17, "married", false)
 		}
 	})
+
 }

@@ -12,6 +12,12 @@ func TestAlog_New(t *testing.T) {
 	USER := al.GetTag("user")
 	REQ := al.GetTag("req")
 
+	al.SetTriggerFn(func(level alog.Level, tag alog.Tag, bytes []byte) {
+		if tag&USER != 0 {
+			println("-----\nUSER: " + string(bytes) + "\n-----\n")
+		}
+	})
+
 	al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
 	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
 	al.Info(0, "test", "name", "gon", "age", 17, "married", false)
