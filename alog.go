@@ -82,7 +82,7 @@ func (l *Logger) Close() error {
 	return nil
 }
 
-// SetNewTags will initialize the defaultTag.
+// SetNewTags will initialize the wTag.
 // Although GetTag returns a tag, SetNewTags will initialize those
 // even though those aren't used later on.
 func (l *Logger) SetNewTags(names ...string) *Logger {
@@ -90,7 +90,7 @@ func (l *Logger) SetNewTags(names ...string) *Logger {
 	return l
 }
 
-// GetTag takes a defaultTag name and returns a defaultTag if found.
+// GetTag takes a wTag name and returns a wTag if found.
 func (l *Logger) GetTag(name string) Tag {
 	return l.lvtag.mustGetTag(name)
 }
@@ -211,8 +211,8 @@ func (l *Logger) IfErr(e error, lvl Level, tag Tag, msg string) {
 // logger hook.
 func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 	return &SubWriter{
-		l:            l,
-		defaultLevel: lvl,
-		defaultTag:   tag,
+		l:      l,
+		wLevel: lvl,
+		wTag:   tag,
 	}
 }

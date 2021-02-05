@@ -26,7 +26,7 @@ type Formatter interface {
 	LogTimeUnix(dst []byte, t time.Time) []byte
 	// LogTimeUnixMs adds unix time in millisecond precision; JSON key: "ts"; key is identical to LogTimeUnix
 	LogTimeUnixMs(dst []byte, t time.Time) []byte
-	// LogTag adds defaultTag. When empty it will show "[]"
+	// LogTag adds wTag. When empty it will show "[]"
 	LogTag(dst []byte, tag Tag, alogTagStr [64]string, alogTagIssued int) []byte
 	// LogMsg is a main message; JSON key: "msg"
 	LogMsg(dst []byte, s string, suffix byte) []byte

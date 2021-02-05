@@ -10,7 +10,7 @@ func (l *Logger) check(lvl Level, tag Tag) bool {
 	switch {
 	case l.logFn != nil: // filterFn has the highest order if set.
 		return l.logFn(lvl, tag)
-	case l.logLevel > lvl: // if defaultLevel is below defaultLevel limit, the do not print
+	case l.logLevel > lvl: // if wLevel is below wLevel limit, the do not print
 		return false
 	case l.logTag != 0 && l.logTag&tag == 0: // if filterTag is set but Tag is not matching, then do not print
 		return false
