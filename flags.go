@@ -1,11 +1,11 @@
 package alog
 
-// format a bit-flag flag options that is used for variety of configuration.
-type format uint32
+// Format a bit-flag flag options that is used for variety of configuration.
+type Format uint32
 
 const (
 	// Fprefix will show prefix when printing log message
-	Fprefix format = 1 << iota
+	Fprefix Format = 1 << iota
 	// Fdate will show both CCYY and MMDD
 	Fdate
 	// FdateDay will show 0-6 for JSON or (Sun-Mon)
@@ -28,9 +28,9 @@ const (
 	// Fdefault will show month/day with time, and Level of logging.
 	Fdefault = Fdate | Ftime | Flevel | Ftag
 	// Fall for all options on
-	Fall = format(^uint32(0))
+	Fall = Format(^uint32(0))
 	// Fnone for all options off
-	Fnone = format(uint32(0))
+	Fnone = Format(uint32(0))
 )
 
 const (

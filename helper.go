@@ -13,6 +13,9 @@ func (devNull) Write([]byte) (int, error) {
 	return 0, nil
 }
 
+// TriggerFn is a type for a function designed to run when certain condition meets
+type TriggerFn func(lvl Level, tag Tag, msg []byte)
+
 // FilterFn is a function type to be used with SetFilter.
 type FilterFn func(Level, Tag) bool
 

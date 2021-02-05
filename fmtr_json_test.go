@@ -7,7 +7,7 @@ import (
 )
 
 func TestJSONFmtr(t *testing.T) {
-	var l alog.Formatter
+	var l alog.Fmtr
 	var buf []byte
 	tag0 := []string{}
 	tag1 := []string{"name"}
@@ -48,7 +48,7 @@ func TestJSONFmtr(t *testing.T) {
 		buf = l.End(buf)
 	}
 
-	l = &alog.FormatterJSON{}
+	l = &alog.FmtrJSON{}
 	f()
 	println(string(buf))
 

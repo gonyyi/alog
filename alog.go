@@ -13,10 +13,10 @@ import (
 //    Other:  NewPrint(), NewWriter()
 type Logger struct {
 	time time.Time
-	flag format
+	flag Format
 
 	pool   sync.Pool
-	fmtr   Formatter
+	fmtr   Fmtr
 	trigfn TriggerFn
 
 	lvtag tagger // lvtag to replace 5 items below
@@ -54,7 +54,7 @@ func New(output io.Writer) *Logger {
 				return newPoolbuf(256, 512)
 			},
 		},
-		fmtr:   &FormatterText{},
+		fmtr:   &FmtrText{},
 		out:    output,
 		prefix: []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		flag:   Fdefault,   // default flag is given
@@ -124,31 +124,31 @@ func (l *Logger) SetPrefix(s string) *Logger {
 }
 
 // SetFormatter will set logger formatter. Without this setting,
-// the logger's default will be text formatter (FormatterText).
+// the logger's default will be text formatter (FmtrText).
 // If switching between default JSON and TEXT formatter, it should
 // be done by UpdateFormat() or SetFormat(). This SetFormatter is
 // mainly for a customized formatter.
-func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
+func (l *Logger) SetFormatter(fmtr Fmtr) *Logger {
 	if fmtr != nil {
 		l.fmtr = fmtr
 		return l
 	}
-	l.fmtr = FormatterText{}
+	l.fmtr = FmtrText{}
 	return l
 }
 
 // SetFormat will reconfigure the logger after it has been created.
 // This will first copy flag into *alog.flag, and sets few that
 // need additional parsing.
-func (l *Logger) SetFormat(flag format) *Logger {
+func (l *Logger) SetFormat(flag Format) *Logger {
 	l.mu.Lock()
 
 	// Previous had a JSON flag on, but anymore, then use text formatter
 	// If previous didn't have JSON flag, but now do, then use json formatter
 	if l.flag&Fjson != 0 && flag&Fjson == 0 {
-		l.SetFormatter(&FormatterText{})
+		l.SetFormatter(&FmtrText{})
 	} else if l.flag&Fjson == 0 && flag&Fjson != 0 {
-		l.SetFormatter(&FormatterJSON{})
+		l.SetFormatter(&FmtrJSON{})
 	}
 
 	l.flag = flag
@@ -160,16 +160,16 @@ func (l *Logger) SetFormat(flag format) *Logger {
 // UpdateFormat allow to adjust item(s) on/off without
 // impacting what is already set. This is helpful when override
 // certain flag(s).
-func (l *Logger) UpdateFormat(item format, on bool) {
+func (l *Logger) UpdateFormat(item Format, on bool) {
 	l.mu.Lock()
 
 	// Previous had a JSON flag on, but anymore, then use text formatter
 	// If previous didn't have JSON flag, but now do, then use json formatter
 	if item&Fjson != 0 {
 		if on && l.flag&Fjson == 0 {
-			l.SetFormatter(&FormatterJSON{})
+			l.SetFormatter(&FmtrJSON{})
 		} else if on == false && l.flag&Fjson != 0 {
-			l.SetFormatter(&FormatterText{})
+			l.SetFormatter(&FmtrText{})
 		}
 	}
 

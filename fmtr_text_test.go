@@ -7,7 +7,7 @@ import (
 )
 
 func TestTextFmtr(t *testing.T) {
-	var l alog.Formatter
+	var l alog.Fmtr
 	var buf []byte
 	tag0 := []string{}
 	tag1 := []string{"name"}
@@ -48,7 +48,7 @@ func TestTextFmtr(t *testing.T) {
 		buf = l.End(buf)
 	}
 
-	l = &alog.FormatterText{}
+	l = &alog.FmtrText{}
 	f()
 	println(string(buf))
 }
