@@ -7,43 +7,46 @@ import (
 )
 
 func TestAlog_New(t *testing.T) {
-	al := alog.New(os.Stderr).SetFormat(alog.Fdefault | alog.FdateDay)
-
-	al.SetNewTags("backend", "frontend", "user", "req")
-
-	USER := al.MustGetTag("user")
-	REQ := al.MustGetTag("req")
+	al := alog.New(os.Stderr)
+	al.UpdateFormat(alog.FtimeUnix, true)
+	USER := al.GetTag("user")
+	REQ := al.GetTag("req")
 
 	al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
-
-	al.SetFormatItem(alog.Fjson, false)
 	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
-	al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
+	al.Info(0, "test", "name", "gon", "age", 17, "married", false)
+	al.UpdateFormat(alog.Fjson, true)
+	al.Info(USER|REQ, "test", "name", "gon", "age", 17, "married", false)
+	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
+	al.Info(0, "test", "name", "gon", "age", 17, "married", false)
 
-	al.SetFormatItem(alog.Fjson, true)
-	al.Info(REQ, "test", "name", "gon", "age", 17, "married", false)
-	al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
+	//al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
+	//al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
+	//
+	//al.UpdateFormat(alog.Fjson, true)
+	//al.Info(REQ, "test", "name", "gon", "age", 17, "married", false)
+	//al.Info(REQ, "test", "name", "gon", "ages", []int{17, 18, 20}, "married", []bool{true, false, true})
 
 	// JSON
-	// {"d":20210125,"t":102100324,"level":"info","tag":["user","req"],"msg":"test","name":"gon","age":17,"married":false}
-	// {"d":20210125,"t":102100324,"level":"info","tag":["user"],"msg":"test","name":"gon","age":17,"married":false}
-	// {"d":20210125,"t":102100324,"level":"info","tag":["req"],"msg":"test","name":"gon","age":17,"married":false}
-	// {"d":20210125,"t":102100324,"level":"info","tag":[],"msg":"test","name":"gon","age":17,"married":false}
+	// {"d":20210125,"t":102100324,"level":"info","defaultTag":["user","req"],"msg":"test","name":"gon","age":17,"married":false}
+	// {"d":20210125,"t":102100324,"level":"info","defaultTag":["user"],"msg":"test","name":"gon","age":17,"married":false}
+	// {"d":20210125,"t":102100324,"level":"info","defaultTag":["req"],"msg":"test","name":"gon","age":17,"married":false}
+	// {"d":20210125,"t":102100324,"level":"info","defaultTag":[],"msg":"test","name":"gon","age":17,"married":false}
 
 	// TEXT
-	// 20210125 102128.161 info tag=[user,req] test; name="gon" age=17 married=false
-	// 20210125 102128.161 info tag=[user] test; name="gon" age=17 married=false
-	// 20210125 102128.161 info tag=[req] test; name="gon" age=17 married=false
-	// 20210125 102128.161 info tag=[] test; name="gon" age=17 married=false
+	// 20210125 102128.161 info defaultTag=[user,req] test; name="gon" age=17 married=false
+	// 20210125 102128.161 info defaultTag=[user] test; name="gon" age=17 married=false
+	// 20210125 102128.161 info defaultTag=[req] test; name="gon" age=17 married=false
+	// 20210125 102128.161 info defaultTag=[] test; name="gon" age=17 married=false
 }
 
 func BenchmarkLogger_NewWriter(b *testing.B) {
 	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req")
-	al.SetFormatItem(alog.FdateDay, true)
-	//al.SetFormatItem(alog.Fjson, true)
-	// al.SetFormatItem(alog.Ftime|alog.Fdate, false)
-	USER := al.MustGetTag("user")
-	REQ := al.MustGetTag("req")
+	al.UpdateFormat(alog.FdateDay, true)
+	//al.UpdateFormat(alog.Fjson, true)
+	// al.UpdateFormat(alog.Ftime|alog.Fdate, false)
+	USER := al.GetTag("user")
+	REQ := al.GetTag("req")
 	sw := al.NewWriter(alog.Linfo, USER|REQ)
 	txt := []byte("sub writer test")
 	// al.SetFormatter(nil)
@@ -67,9 +70,10 @@ func BenchmarkLogger_New(b *testing.B) {
 	// BenchmarkLogger_New/s+s-12         	 6095625	       199 ns/op	       0 B/op	       0 allocs/op
 	// BenchmarkLogger_New/msg+s+i+b-12   	 4642806	       262 ns/op	       0 B/op	       0 allocs/op
 
-	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFormatterJSON()).SetFormatItem(alog.Ftime|alog.Fdate, false)
-	USER := al.MustGetTag("user")
-	REQ := al.MustGetTag("req")
+	al := alog.New(nil).SetNewTags("backend", "frontend", "user", "req").SetFormatter(alog.NewFormatterJSON())
+	al.UpdateFormat(alog.Ftime|alog.Fdate, false)
+	USER := al.GetTag("user")
+	REQ := al.GetTag("req")
 
 	b.Run("msg", func(c *testing.B) {
 		c.ReportAllocs()

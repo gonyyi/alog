@@ -6,55 +6,6 @@ import (
 	"time"
 )
 
-// flags a bit-flag flag options that is used for variety of configuration.
-type flags uint32
-
-const (
-	// Fprefix will show prefix when printing log message
-	Fprefix flags = 1 << iota
-	// Fdate will show both CCYY and MMDD
-	Fdate
-	// FdateDay will show 0-6 for JSON or (Sun-Mon)
-	FdateDay
-	// Ftime will show HHMMSS.000; for json, it will be HHMMSS000
-	Ftime
-	// FtimeUnix will show unix time
-	FtimeUnix
-	// FtimeUnixNano will show unix time
-	FtimeUnixMs
-	// FtimeUTC will show UTC time formats
-	FtimeUTC
-	// Flevel show Level in the log messsage.
-	Flevel
-	// Ftag will show tags
-	Ftag
-	// Fjson will print to a JSON
-	Fjson
-
-	// Fdefault will show month/day with time, and Level of logging.
-	Fdefault = Fdate | Ftime | Flevel | Ftag
-	// Fall for all options on
-	Fall = flags(^uint32(0))
-	// Fnone for all options off
-	Fnone = flags(uint32(0))
-)
-
-const (
-	// Ltrace shows trace Level, thee most detailed debugging Level.
-	// This will show everything.
-	Ltrace Level = iota + 1
-	// Ldebug shows debug Level or higher
-	Ldebug
-	// Linfo shows information Level or higher
-	Linfo
-	// Lwarn shows warning Level or higher
-	Lwarn
-	// Lerror shows error Level or higher
-	Lerror
-	// Lfatal shows fatal Level or higher. This does not exit the process
-	Lfatal
-)
-
 // Logger is a main struct for logger.
 // Available methods are:
 //    Simple: Print(), Trace(), Debug(), Info(), Warn(), Error(), Fatal()
@@ -62,17 +13,19 @@ const (
 //    Other:  NewPrint(), NewWriter()
 type Logger struct {
 	time time.Time
-	flag flags
+	flag format
 
 	pool sync.Pool
 	fmtr Formatter
 
-	// logFn is a customizable function space and supercedes builtin Level and Tag filters if set.
+	lvtag tagger // lvtag to replace 5 items below
+
+	// filterFn is a customizable function space and supercedes builtin Level and Tag filters if set.
 	logFn        func(Level, Tag) bool
-	logLevel     Level      // logLevel stores current logging level
-	logTag       Tag        // logTag stores current logging Tag (bitflag)
-	logTagIssued int        // logTagIssued stores number of Tag issued.
-	logTagString [64]string // logTagString stores Tag names.
+	logLevel     Level      // filterLvl stores current logging level
+	logTag       Tag        // filterTag stores current logging Tag (bitflag)
+	logTagIssued int        // numTagIssued stores number of Tag issued.
+	logTagString [64]string // tagNames stores Tag names.
 
 	out io.Writer
 	mu  sync.Mutex
@@ -100,7 +53,7 @@ func New(output io.Writer) *Logger {
 				return newItem(512)
 			},
 		},
-		fmtr:     FormatterText{},
+		fmtr:     &FormatterText{},
 		out:      output,
 		prefix:   []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		logLevel: Linfo,      // default logging Level to INFO
@@ -129,25 +82,21 @@ func (l *Logger) Close() error {
 	return nil
 }
 
-// MustGetTag will ignore "ok" from GetTag.
-// If not found, it will return 0 (none) for the tag.
-func (l *Logger) MustGetTag(name string) Tag {
-	tag, _ := l.GetTag(name)
-	return tag
+// SetNewTags will initialize the defaultTag.
+// Although GetTag returns a tag, SetNewTags will initialize those
+// even though those aren't used later on.
+func (l *Logger) SetNewTags(names ...string) *Logger {
+	l.lvtag.newTags(names...)
+	return l
 }
 
-// GetTag takes a tag name and returns a tag if found.
-func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
-	for i := 0; i < l.logTagIssued; i++ {
-		if l.logTagString[i] == name {
-			return 1 << i, true
-		}
-	}
-	return 0, false
+// GetTag takes a defaultTag name and returns a defaultTag if found.
+func (l *Logger) GetTag(name string) Tag {
+	return l.lvtag.mustGetTag(name)
 }
 
-// GetWriter returns the output destination for the logger.
-func (l *Logger) GetWriter() io.Writer {
+// Output returns the output destination for the logger.
+func (l *Logger) Output() io.Writer {
 	return l.out
 }
 
@@ -172,10 +121,24 @@ func (l *Logger) SetPrefix(s string) *Logger {
 	return l
 }
 
+// SetFormatter will set logger formatter. Without this setting,
+// the logger's default will be text formatter (FormatterText).
+// If switching between default JSON and TEXT formatter, it should
+// be done by UpdateFormat() or SetFormat(). This SetFormatter is
+// mainly for a customized formatter.
+func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
+	if fmtr != nil {
+		l.fmtr = fmtr
+		return l
+	}
+	l.fmtr = FormatterText{}
+	return l
+}
+
 // SetFormat will reconfigure the logger after it has been created.
 // This will first copy flag into *alog.flag, and sets few that
 // need additional parsing.
-func (l *Logger) SetFormat(flag flags) *Logger {
+func (l *Logger) SetFormat(flag format) *Logger {
 	l.mu.Lock()
 
 	// Previous had a JSON flag on, but anymore, then use text formatter
@@ -192,9 +155,10 @@ func (l *Logger) SetFormat(flag flags) *Logger {
 	return l
 }
 
-// SetFormatItem allow to adjust a single item on/off without
-// impacting what is already set.
-func (l *Logger) SetFormatItem(item flags, on bool) *Logger {
+// UpdateFormat allow to adjust item(s) on/off without
+// impacting what is already set. This is helpful when override
+// certain flag(s).
+func (l *Logger) UpdateFormat(item format, on bool) {
 	l.mu.Lock()
 
 	// Previous had a JSON flag on, but anymore, then use text formatter
@@ -214,27 +178,6 @@ func (l *Logger) SetFormatItem(item flags, on bool) *Logger {
 	}
 
 	l.mu.Unlock()
-	return l
-}
-
-// SetFormatter will set logger formatter
-func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
-	if fmtr != nil {
-		l.fmtr = fmtr
-		return l
-	}
-	l.fmtr = FormatterText{}
-	return l
-}
-
-func (l *Logger) SetNewTags(names ...string) *Logger {
-	for _, name := range names {
-		if _, ok := l.GetTag(name); !ok {
-			l.logTagString[l.logTagIssued] = name
-			l.logTagIssued += 1
-		}
-	}
-	return l
 }
 
 // SetFilter will define what level or tags to show.
@@ -253,24 +196,13 @@ func (l *Logger) SetFilterFn(fn FilterFn) *Logger {
 	return l
 }
 
-// LogIferr will check and log error if exist (not nil)
+// IfErr will check and log error if exist (not nil)
 // For instance, when running multiple lines of error check
 // This can save error checking.
 // added as v0.1.6c3, 12/30/2020
-func (l *Logger) LogIferr(e error, lvl Level, tag Tag, msg string) {
+func (l *Logger) IfErr(e error, lvl Level, tag Tag, msg string) {
 	if e != nil {
 		l.Log(lvl, tag, msg, "err", e.Error())
-	}
-}
-
-// Iferr will run function "do" if error is not nil.
-func (l *Logger) Iferr(e error, do func()) {
-	if e != nil {
-		if do != nil {
-			do()
-		} else {
-			l.Error(0, "", "err", e)
-		}
 	}
 }
 
@@ -279,238 +211,8 @@ func (l *Logger) Iferr(e error, do func()) {
 // logger hook.
 func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 	return &SubWriter{
-		l:   l,
-		lvl: lvl,
-		tag: tag,
+		l:            l,
+		defaultLevel: lvl,
+		defaultTag:   tag,
 	}
-}
-
-// check will check if Level and Tag given is good to be printed.
-// If
-// Eg. if setting is Level INFO, Tag USER, then
-//     any log Level below INFO shouldn't be printed.
-//     Also, any Tag other than USER shouldn't be printed either.
-func (l *Logger) check(lvl Level, tag Tag) bool {
-	switch {
-	case l.logFn != nil: // logFn has the highest order if set.
-		return l.logFn(lvl, tag)
-	case l.logLevel > lvl: // if lvl is below lvl limit, the do not print
-		return false
-	case l.logTag != 0 && l.logTag&tag == 0: // if logTag is set but Tag is not matching, then do not print
-		return false
-	default:
-		return true
-	}
-}
-
-func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
-	return l.log(lvl, tag, msg, nil, a...)
-}
-func (l *Logger) logb(lvl Level, tag Tag, msg []byte) (n int, err error) {
-	return l.log(lvl, tag, "", msg)
-}
-
-func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface{}) (n int, err error) {
-	lenA := len(a)
-	lenMsg := len(msg)
-	lenMsgb := len(msgb)
-
-	if !l.check(lvl, tag) || (lenMsg == 0 && lenMsgb == 0 && lenA == 0) {
-		return
-	}
-
-	firstItem := true
-
-	s := l.pool.Get().(*alogItem)
-
-	if l.flag&Fprefix != 0 {
-		s.buf = l.fmtr.Begin(s.buf, l.prefix)
-	} else {
-		s.buf = l.fmtr.Begin(s.buf, nil)
-	}
-
-	if l.flag&(FtimeUnix|FtimeUnixMs) != 0 {
-		l.time = time.Now()
-
-		if l.flag&FtimeUnixMs != 0 {
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			s.buf = l.fmtr.LogTimeUnixMs(s.buf, l.time)
-		} else {
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			s.buf = l.fmtr.LogTimeUnix(s.buf, l.time)
-		}
-
-		firstItem = false
-	} else if l.flag&(Fdate|FdateDay|Ftime|FtimeUTC) != 0 {
-		// at least one item will be printed here, so just check once.
-		l.time = time.Now()
-		if l.flag&FtimeUTC != 0 {
-			l.time = l.time.UTC()
-		}
-
-		if l.flag&Fdate != 0 {
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			firstItem = false
-			s.buf = l.fmtr.LogTimeDate(s.buf, l.time)
-		}
-		if l.flag&FdateDay != 0 {
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			firstItem = false
-			s.buf = l.fmtr.LogTimeDay(s.buf, l.time)
-		}
-
-		if l.flag&Ftime != 0 {
-			if !firstItem {
-				s.buf = l.fmtr.Space(s.buf)
-			}
-			s.buf = l.fmtr.LogTime(s.buf, l.time)
-		}
-
-		firstItem = false
-	}
-
-	if l.flag&Flevel != 0 {
-		if !firstItem {
-			s.buf = l.fmtr.Space(s.buf)
-		}
-		s.buf = l.fmtr.LogLevel(s.buf, lvl)
-		firstItem = false
-	}
-
-	if l.flag&Ftag != 0 {
-		if !firstItem {
-			s.buf = l.fmtr.Space(s.buf)
-		}
-		s.buf = l.fmtr.LogTag(s.buf, tag, l.logTagString, l.logTagIssued)
-		firstItem = false
-	}
-
-	// print msg
-	if lenMsg > 0 {
-		if !firstItem {
-			s.buf = l.fmtr.Space(s.buf)
-		}
-		s.buf = l.fmtr.LogMsg(s.buf, msg, ';') // suffix is only for text one.
-		firstItem = false
-	} else if lenMsgb > 0 {
-		if !firstItem {
-			s.buf = l.fmtr.Space(s.buf)
-		}
-		s.buf = l.fmtr.LogMsgb(s.buf, msgb, ';') // suffix is only for text one.
-		firstItem = false
-	}
-
-	idxA := lenA - 1
-	for i := 0; i < lenA; i += 2 { // 0, 2, 4..
-		key, ok := a[i].(string)
-		if !ok {
-			key = "?badKey?"
-		}
-		if !firstItem {
-			s.buf = l.fmtr.Space(s.buf)
-		}
-		firstItem = false
-		if i < idxA {
-			next := a[i+1]
-			switch next.(type) {
-			case string:
-				s.buf = l.fmtr.String(s.buf, key, next.(string))
-			case nil:
-				s.buf = l.fmtr.Nil(s.buf, key)
-			case error:
-				s.buf = l.fmtr.Error(s.buf, key, next.(error))
-			case bool:
-				s.buf = l.fmtr.Bool(s.buf, key, next.(bool))
-			case int:
-				s.buf = l.fmtr.Int(s.buf, key, next.(int))
-			case int8:
-				s.buf = l.fmtr.Int8(s.buf, key, next.(int8))
-			case int16:
-				s.buf = l.fmtr.Int16(s.buf, key, next.(int16))
-			case int32:
-				s.buf = l.fmtr.Int32(s.buf, key, next.(int32))
-			case int64:
-				s.buf = l.fmtr.Int64(s.buf, key, next.(int64))
-			case uint:
-				s.buf = l.fmtr.Uint(s.buf, key, next.(uint))
-			case uint8:
-				s.buf = l.fmtr.Uint8(s.buf, key, next.(uint8))
-			case uint16:
-				s.buf = l.fmtr.Uint16(s.buf, key, next.(uint16))
-			case uint32:
-				s.buf = l.fmtr.Uint32(s.buf, key, next.(uint32))
-			case uint64:
-				s.buf = l.fmtr.Uint64(s.buf, key, next.(uint64))
-			case float32:
-				s.buf = l.fmtr.Float32(s.buf, key, next.(float32))
-			case float64:
-				s.buf = l.fmtr.Float64(s.buf, key, next.(float64))
-			case []string:
-				s.buf = l.fmtr.Strings(s.buf, key, next.([]string))
-			case []error:
-				s.buf = l.fmtr.Errors(s.buf, key, next.([]error))
-			case []bool:
-				s.buf = l.fmtr.Bools(s.buf, key, next.([]bool))
-			case []float32:
-				s.buf = l.fmtr.Float32s(s.buf, key, next.([]float32))
-			case []float64:
-				s.buf = l.fmtr.Float64s(s.buf, key, next.([]float64))
-			case []int:
-				s.buf = l.fmtr.Ints(s.buf, key, next.([]int))
-			case []int32:
-				s.buf = l.fmtr.Int32s(s.buf, key, next.([]int32))
-			case []int64:
-				s.buf = l.fmtr.Int64s(s.buf, key, next.([]int64))
-			case []uint:
-				s.buf = l.fmtr.Uints(s.buf, key, next.([]uint))
-			case []uint8:
-				s.buf = l.fmtr.Uint8s(s.buf, key, next.([]uint8))
-			case []uint32:
-				s.buf = l.fmtr.Uint32s(s.buf, key, next.([]uint32))
-			case []uint64:
-				s.buf = l.fmtr.Uint64s(s.buf, key, next.([]uint64))
-			default:
-				s.buf = l.fmtr.String(s.buf, key, "?unsupp?")
-			}
-		} else {
-			s.buf = l.fmtr.Nil(s.buf, key)
-		}
-	}
-
-	s.buf = l.fmtr.End(s.buf)
-
-	l.mu.Lock()
-	l.out.Write(s.buf)
-	l.mu.Unlock()
-	s.reset() // reset buffer to prevent potentially large one left in the pool
-	l.pool.Put(s)
-
-	return 0, nil
-}
-
-func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ltrace, tag, msg, a...)
-}
-func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ldebug, tag, msg, a...)
-}
-func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
-	l.Log(Linfo, tag, msg, a...)
-}
-func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lwarn, tag, msg, a...)
-}
-func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lerror, tag, msg, a...)
-}
-func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lfatal, tag, msg, a...)
 }
