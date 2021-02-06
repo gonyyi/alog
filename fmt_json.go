@@ -41,9 +41,7 @@ func (f fmtJSON) LogLevel(dst []byte, lv Level) []byte {
 
 func (f fmtJSON) LogTag(dst []byte, tag Tag, alogTagStr *[64]string, alogTagIssued int) []byte {
 	dst = append(dst, `"tag":[`...)
-
 	firstItem := true
-
 	for i := 0; i < alogTagIssued; i++ {
 		if tag&(1<<i) != 0 {
 			if firstItem {
@@ -58,10 +56,12 @@ func (f fmtJSON) LogTag(dst []byte, tag Tag, alogTagStr *[64]string, alogTagIssu
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) LogMsg(dst []byte, s string, suffix byte) []byte { // suffix to be used for text version only
 	// For JSON suffix won't be applied.
 	return f.String(dst, "msg", s) // faster without addKey
 }
+
 func (f fmtJSON) LogMsgb(dst []byte, b []byte, suffix byte) []byte {
 	dst = f.addKey(dst, "msg")
 	return f.escapeb(dst, b, true)
@@ -74,22 +74,26 @@ func (f fmtJSON) LogTime(dst []byte, t time.Time) []byte {
 	dst = itoa(dst, h*10000+m*100+s, 1, 0)
 	return itoa(dst, t.Nanosecond()/1e6, 3, 0)
 }
+
 func (f fmtJSON) LogTimeDate(dst []byte, t time.Time) []byte {
 	dst = append(dst, `"d":`...) // faster without addKey
 	y, m, d := t.Date()
 	return itoa(dst, y*10000+int(m)*100+d, 4, 0)
 }
+
 func (f fmtJSON) LogTimeDay(dst []byte, t time.Time) []byte {
 	// "wd": 0 being sunday, 6 being saturday
 	dst = append(dst, `"wd":`...) // faster without addKey
 	dst = itoa(dst, int(t.Weekday()), 1, 0)
 	return dst
 }
+
 func (f fmtJSON) LogTimeUnix(dst []byte, t time.Time) []byte {
 	// "ts": unix second
 	dst = append(dst, `"ts":`...) // faster without addKey
 	return itoa(dst, int(t.Unix()), 8, 0)
 }
+
 func (f fmtJSON) LogTimeUnixMs(dst []byte, t time.Time) []byte {
 	// "ts": unix second
 	dst = append(dst, `"ts":`...) // faster without addKey
@@ -152,46 +156,57 @@ func (f fmtJSON) Int(dst []byte, k string, v int) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, v, 1, 0)
 }
+
 func (f fmtJSON) Int8(dst []byte, k string, v int8) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Int16(dst []byte, k string, v int16) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Int32(dst []byte, k string, v int32) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Int64(dst []byte, k string, v int64) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendInt(dst, v, 10)
 }
+
 func (f fmtJSON) Uint(dst []byte, k string, v uint) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Uint8(dst []byte, k string, v uint8) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Uint16(dst []byte, k string, v uint16) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtJSON) Uint32(dst []byte, k string, v uint32) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendUint(dst, uint64(v), 10)
 }
+
 func (f fmtJSON) Uint64(dst []byte, k string, v uint64) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendUint(dst, v, 10)
 }
+
 func (f fmtJSON) Float32(dst []byte, k string, v float32) []byte {
 	dst = f.addKey(dst, k)
 	return ftoa(dst, float64(v), 2)
 }
+
 func (f fmtJSON) Float64(dst []byte, k string, v float64) []byte {
 	dst = f.addKey(dst, k)
 	return ftoa(dst, v, 2)
@@ -217,6 +232,7 @@ func (f fmtJSON) Bools(dst []byte, k string, v *[]bool) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Strings(dst []byte, k string, v *[]string) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -232,6 +248,7 @@ func (f fmtJSON) Strings(dst []byte, k string, v *[]string) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Ints(dst []byte, k string, v *[]int) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -247,6 +264,7 @@ func (f fmtJSON) Ints(dst []byte, k string, v *[]int) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Int32s(dst []byte, k string, v *[]int32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -262,6 +280,7 @@ func (f fmtJSON) Int32s(dst []byte, k string, v *[]int32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Int64s(dst []byte, k string, v *[]int64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -277,6 +296,7 @@ func (f fmtJSON) Int64s(dst []byte, k string, v *[]int64) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Uints(dst []byte, k string, v *[]uint) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -292,6 +312,7 @@ func (f fmtJSON) Uints(dst []byte, k string, v *[]uint) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Uint8s(dst []byte, k string, v *[]uint8) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -307,6 +328,7 @@ func (f fmtJSON) Uint8s(dst []byte, k string, v *[]uint8) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Uint32s(dst []byte, k string, v *[]uint32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -322,6 +344,7 @@ func (f fmtJSON) Uint32s(dst []byte, k string, v *[]uint32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Uint64s(dst []byte, k string, v *[]uint64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -337,6 +360,7 @@ func (f fmtJSON) Uint64s(dst []byte, k string, v *[]uint64) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Float32s(dst []byte, k string, v *[]float32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -353,6 +377,7 @@ func (f fmtJSON) Float32s(dst []byte, k string, v *[]float32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtJSON) Float64s(dst []byte, k string, v *[]float64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -410,6 +435,7 @@ func (f fmtJSON) escape(dst []byte, s string, addQuote bool) []byte {
 	}
 	return dst
 }
+
 func (f fmtJSON) escapeb(dst []byte, b []byte, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')

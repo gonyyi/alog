@@ -29,6 +29,7 @@ func (f fmtText) Begin(dst []byte, prefix []byte) []byte {
 func (f fmtText) End(dst []byte) []byte {
 	return append(dst, '\n')
 }
+
 func (f fmtText) Space(dst []byte) []byte {
 	return append(dst, ' ')
 }
@@ -40,9 +41,7 @@ func (f fmtText) LogLevel(dst []byte, lv Level) []byte {
 
 func (f fmtText) LogTag(dst []byte, tag Tag, alogTagStr *[64]string, alogTagIssued int) []byte {
 	dst = append(dst, '[')
-
 	firstItem := true
-
 	for i := 0; i < alogTagIssued; i++ {
 		if tag&(1<<i) != 0 {
 			if firstItem {
@@ -53,9 +52,9 @@ func (f fmtText) LogTag(dst []byte, tag Tag, alogTagStr *[64]string, alogTagIssu
 			dst = append(dst, alogTagStr[i]...)
 		}
 	}
-
 	return append(dst, ']')
 }
+
 func (f fmtText) LogMsg(dst []byte, s string, suffix byte) []byte {
 	dst = f.escape(dst, s, false)
 	if suffix != 0 {
@@ -78,10 +77,12 @@ func (f fmtText) LogTime(dst []byte, t time.Time) []byte {
 	dst = itoa(dst, h*10000+m*100+s, 6, '.')
 	return itoa(dst, t.Nanosecond()/1e6, 3, 0)
 }
+
 func (f fmtText) LogTimeDate(dst []byte, t time.Time) []byte {
 	y, m, d := t.Date()
 	return itoa(dst, y*10000+int(m)*100+d, 8, 0)
 }
+
 func (f fmtText) LogTimeDay(dst []byte, t time.Time) []byte {
 	return append(dst, t.Weekday().String()[0:3]...)
 }
@@ -90,6 +91,7 @@ func (f fmtText) LogTimeUnix(dst []byte, t time.Time) []byte {
 	// "ts": unix second
 	return itoa(dst, int(t.Unix()), 8, 0)
 }
+
 func (f fmtText) LogTimeUnixMs(dst []byte, t time.Time) []byte {
 	// "ts": unix second
 	return itoa(dst, int(t.UnixNano()/1e6), 8, 0)
@@ -109,6 +111,7 @@ func (f fmtText) Error(dst []byte, k string, v error) []byte {
 		return f.Nil(dst, k)
 	}
 }
+
 func (f fmtText) Errors(dst []byte, k string, v *[]error) []byte {
 	dst = f.addKey(dst, k)
 
@@ -140,26 +143,32 @@ func (f fmtText) Bool(dst []byte, k string, v bool) []byte {
 	}
 	return append(dst, "false"...)
 }
+
 func (f fmtText) String(dst []byte, k string, v string) []byte {
 	dst = f.addKey(dst, k)
 	return f.escape(dst, v, true)
 }
+
 func (f fmtText) Int(dst []byte, k string, v int) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, v, 1, 0)
 }
+
 func (f fmtText) Int8(dst []byte, k string, v int8) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtText) Int16(dst []byte, k string, v int16) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtText) Int32(dst []byte, k string, v int32) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtText) Int64(dst []byte, k string, v int64) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendInt(dst, v, 10)
@@ -168,26 +177,32 @@ func (f fmtText) Uint(dst []byte, k string, v uint) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendUint(dst, uint64(v), 10)
 }
+
 func (f fmtText) Uint8(dst []byte, k string, v uint8) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtText) Uint16(dst []byte, k string, v uint16) []byte {
 	dst = f.addKey(dst, k)
 	return itoa(dst, int(v), 1, 0)
 }
+
 func (f fmtText) Uint32(dst []byte, k string, v uint32) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendUint(dst, uint64(v), 10)
 }
+
 func (f fmtText) Uint64(dst []byte, k string, v uint64) []byte {
 	dst = f.addKey(dst, k)
 	return strconv.AppendUint(dst, v, 10)
 }
+
 func (f fmtText) Float32(dst []byte, k string, v float32) []byte {
 	dst = f.addKey(dst, k)
 	return ftoa(dst, float64(v), 2)
 }
+
 func (f fmtText) Float64(dst []byte, k string, v float64) []byte {
 	dst = f.addKey(dst, k)
 	return ftoa(dst, v, 2)
@@ -213,6 +228,7 @@ func (f fmtText) Bools(dst []byte, k string, v *[]bool) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Strings(dst []byte, k string, v *[]string) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -228,6 +244,7 @@ func (f fmtText) Strings(dst []byte, k string, v *[]string) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Ints(dst []byte, k string, v *[]int) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -243,6 +260,7 @@ func (f fmtText) Ints(dst []byte, k string, v *[]int) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Int32s(dst []byte, k string, v *[]int32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -258,6 +276,7 @@ func (f fmtText) Int32s(dst []byte, k string, v *[]int32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Int64s(dst []byte, k string, v *[]int64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -273,6 +292,7 @@ func (f fmtText) Int64s(dst []byte, k string, v *[]int64) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Uints(dst []byte, k string, v *[]uint) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -288,6 +308,7 @@ func (f fmtText) Uints(dst []byte, k string, v *[]uint) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Uint8s(dst []byte, k string, v *[]uint8) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -303,6 +324,7 @@ func (f fmtText) Uint8s(dst []byte, k string, v *[]uint8) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Uint32s(dst []byte, k string, v *[]uint32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -318,6 +340,7 @@ func (f fmtText) Uint32s(dst []byte, k string, v *[]uint32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Uint64s(dst []byte, k string, v *[]uint64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -333,6 +356,7 @@ func (f fmtText) Uint64s(dst []byte, k string, v *[]uint64) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Float32s(dst []byte, k string, v *[]float32) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -349,6 +373,7 @@ func (f fmtText) Float32s(dst []byte, k string, v *[]float32) []byte {
 	}
 	return append(dst, ']')
 }
+
 func (f fmtText) Float64s(dst []byte, k string, v *[]float64) []byte {
 	dst = f.addKey(dst, k)
 	idxv := len(*v) - 1
@@ -405,8 +430,8 @@ func (f fmtText) escape(dst []byte, s string, addQuote bool) []byte {
 		}
 		return dst
 	}
-
 }
+
 func (f fmtText) escapeb(dst []byte, b []byte, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')
