@@ -1,6 +1,6 @@
 package alog
 
-// Tag is a bit-flag used to show only necessary part of process to show
+// Tag is a bit-formatFlag used to show only necessary part of process to show
 // in the log. For instance, if there's an web service, there can be different
 // Tag such as UI, HTTP request, HTTP response, etc. By setting a Tag
 // for each log using `Print` or `Printf`, a user can only print certain

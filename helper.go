@@ -13,8 +13,8 @@ func (devNull) Write([]byte) (int, error) {
 	return 0, nil
 }
 
-// TriggerFn is a type for a function designed to run when certain condition meets
-type TriggerFn func(lvl Level, tag Tag, msg []byte)
+// HookFn is a type for a function designed to run when certain condition meets
+type HookFn func(lvl Level, tag Tag, msg []byte)
 
 // FilterFn is a function type to be used with SetFilter.
 type FilterFn func(Level, Tag) bool
@@ -50,4 +50,34 @@ func itoa(dst []byte, i int, minLength int, suffix byte) []byte {
 		b[bIdx] = '-'
 	}
 	return append(dst, b[bIdx:]...)
+}
+
+// ftoa takes float64 and converts and add to dst byte slice pointer.
+// this is used to reduce memory allocation.
+func ftoa(dst []byte, f64 float64, decPlace int) []byte {
+	if int(f64) == 0 && f64 < 0 {
+		dst = append(dst, '-')
+	}
+	dst = itoa(dst, int(f64), 0, 0) // add full number first
+
+	if decPlace > 0 {
+		// if decPlace == 3, multiplier will be 1000
+		// get nth power
+		var multiplier = 1
+		for i := decPlace + 1; i > 0; i-- {
+			multiplier = multiplier * 10
+		}
+		dst = append(dst, '.')
+		tmp := int((f64 - float64(int(f64))) * float64(multiplier))
+		if tmp%10 > 4 {
+			tmp = tmp + 10
+		}
+		tmp = tmp / 10
+		if f64 > 0 { // 2nd num shouldn't include decimala
+			dst = itoa(dst, tmp, decPlace, 0)
+		} else {
+			dst = itoa(dst, -tmp, decPlace, 0)
+		}
+	}
+	return dst
 }

@@ -1,7 +1,5 @@
 package alog
 
-// TODO: separate TAG part from logger.
-
 // tagger
 type tagger struct {
 	filter       filters
@@ -42,7 +40,7 @@ func (t *tagger) mustGetTag(name string) Tag {
 }
 
 type filters struct {
-	fn  func(Level, Tag) bool
+	fn  FilterFn
 	lvl Level
 	tag Tag
 }
@@ -62,7 +60,7 @@ func (f *filters) setFn(fn FilterFn) {
 // check will check if Level and Tag given is good to be printed.
 func (f *filters) check(lvl Level, tag Tag) bool {
 	switch {
-	case f.fn != nil: // filterFn has the highest order if set.
+	case f.fn != nil: // FilterFn has the highest order if set.
 		return f.fn(lvl, tag)
 	case f.lvl > lvl: // if wLevel is below wLevel limit, the do not print
 		return false

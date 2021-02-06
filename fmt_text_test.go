@@ -38,17 +38,17 @@ func TestTextFmtr(t *testing.T) {
 		buf = l.Space(buf)
 		buf = l.Float64(buf, "weight64", 123.450)
 		buf = l.Space(buf)
-		buf = l.Strings(buf, "names", []string{"gon", "gone", "yi", "young"})
+		buf = l.Strings(buf, "names", &[]string{"gon", "gone", "yi", "young"})
 		buf = l.Space(buf)
 		buf = l.Nil(buf, "ageinfo")
 		buf = l.Space(buf)
-		buf = l.Float32s(buf, "f32", []float32{1.1, 1.2, 1.3, 1.4})
+		buf = l.Float32s(buf, "f32", &[]float32{1.1, 1.2, 1.3, 1.4})
 		buf = l.Space(buf)
-		buf = l.Float64s(buf, "f64", []float64{1.1, 1.2, 1.3, 1.4})
+		buf = l.Float64s(buf, "f64", &[]float64{1.1, 1.2, 1.3, 1.4})
 		buf = l.End(buf)
 	}
+	l = alog.Default.NewFmtText()
 
-	l = &alog.FmtrText{}
 	f()
 	println(string(buf))
 }

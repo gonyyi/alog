@@ -19,8 +19,5 @@ func newPoolbuf(cheader, cmain int) *poolbuf {
 
 func (i *poolbuf) reset() {
 	i.bufHeader = i.bufHeader[:i.capHeader] // this will shrink the size
-	i.bufHeader = i.bufHeader[:0]
-
-	i.bufMain = i.bufMain[:i.capMain] // this will shrink the size
-	i.bufMain = i.bufMain[:0]
+	i.bufMain = i.bufMain[:i.capMain]       // this will shrink the size
 }

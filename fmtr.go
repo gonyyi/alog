@@ -27,7 +27,7 @@ type Fmtr interface {
 	// LogTimeUnixMs adds unix time in millisecond precision; JSON key: "ts"; key is identical to LogTimeUnix
 	LogTimeUnixMs(dst []byte, t time.Time) []byte
 	// LogTag adds wTag. When empty it will show "[]"
-	LogTag(dst []byte, tag Tag, alogTagStr [64]string, alogTagIssued int) []byte
+	LogTag(dst []byte, tag Tag, alogTagStr *[64]string, alogTagIssued int) []byte
 	// LogMsg is a main message; JSON key: "msg"
 	LogMsg(dst []byte, s string, suffix byte) []byte
 	// LogMsgb is a main message in byte slice
@@ -39,7 +39,7 @@ type Fmtr interface {
 	// Error adds error
 	Error(dst []byte, k string, v error) []byte
 	// Errors adds slice of errors
-	Errors(dst []byte, k string, v []error) []byte
+	Errors(dst []byte, k string, v *[]error) []byte
 
 	// Bool adds bool to buffer
 	Bool(dst []byte, k string, v bool) []byte
@@ -71,25 +71,38 @@ type Fmtr interface {
 	Float64(dst []byte, k string, v float64) []byte
 
 	// Bools add slice of bool values to buffer
-	Bools(dst []byte, k string, v []bool) []byte
+	Bools(dst []byte, k string, v *[]bool) []byte
 	// Strings add slice of strings values to buffer
-	Strings(dst []byte, k string, v []string) []byte
+	Strings(dst []byte, k string, v *[]string) []byte
 	// Ints add slice of ints values to buffer
-	Ints(dst []byte, k string, v []int) []byte
+	Ints(dst []byte, k string, v *[]int) []byte
 	// Int32s add slice of int32s values to buffer
-	Int32s(dst []byte, k string, v []int32) []byte
+	Int32s(dst []byte, k string, v *[]int32) []byte
 	// Int64s add slice of int64s values to buffer
-	Int64s(dst []byte, k string, v []int64) []byte
+	Int64s(dst []byte, k string, v *[]int64) []byte
 	// Uints add slice of uints values to buffer
-	Uints(dst []byte, k string, v []uint) []byte
+	Uints(dst []byte, k string, v *[]uint) []byte
 	// Uint8s add slice of uint8s values to buffer
-	Uint8s(dst []byte, k string, v []uint8) []byte
+	Uint8s(dst []byte, k string, v *[]uint8) []byte
 	// Uint32s add slice of uint32s values to buffer
-	Uint32s(dst []byte, k string, v []uint32) []byte
+	Uint32s(dst []byte, k string, v *[]uint32) []byte
 	// Uint64s add slice of uint64s values to buffer
-	Uint64s(dst []byte, k string, v []uint64) []byte
+	Uint64s(dst []byte, k string, v *[]uint64) []byte
 	// Float32s add slice of float32s values to buffer
-	Float32s(dst []byte, k string, v []float32) []byte
+	Float32s(dst []byte, k string, v *[]float32) []byte
 	// Float64s add slice of float64s values to buffer
-	Float64s(dst []byte, k string, v []float64) []byte
+	Float64s(dst []byte, k string, v *[]float64) []byte
+}
+
+// TimeFmtr is used to format the time.
+// As default time format for alog is very simple,
+// a user can create his/her own time formatter
+// using this interface.
+type TimeFmtr interface {
+	// LogTime adds millisecond level time (hhmmss000); JSON key: "t"
+	LogTime(dst []byte, t time.Time) []byte
+	// LogTimeDate adds CCYYMMDD to buffer; JSON key: "d"
+	LogTimeDate(dst []byte, t time.Time) []byte
+	// LogTimeDay adds weekday to buffer; JSON key: "wd"
+	LogTimeDay(dst []byte, t time.Time) []byte
 }
