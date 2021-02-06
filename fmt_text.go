@@ -374,21 +374,38 @@ func (f fmtText) addKey(dst []byte, s string) []byte {
 func (f fmtText) escape(dst []byte, s string, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')
-	}
-	for j := 0; j < len(s); j++ {
-		switch s[j] {
-		case '\n':
-			dst = append(dst, ';')
-		case '\r':
-			// ignore
-		default:
-			dst = append(dst, s[j])
+		for j := 0; j < len(s); j++ {
+			switch s[j] {
+			case '"', '\\':
+				dst = append(dst, '\\', s[j])
+			case '\n':
+				dst = append(dst, '\\', 'n')
+			case '\t':
+				dst = append(dst, '\\', 't')
+			case '\r':
+				dst = append(dst, '\\', 'r')
+			case '\b':
+				dst = append(dst, '\\', 'b')
+			case '\f':
+				dst = append(dst, '\\', 'f')
+			default:
+				dst = append(dst, s[j])
+			}
 		}
-	}
-	if addQuote {
 		dst = append(dst, '"')
+		return dst
+	} else {
+		for j := 0; j < len(s); j++ {
+			switch s[j] {
+			case '\n', '\t', '\r':
+			// do nothing
+			default:
+				dst = append(dst, s[j])
+			}
+		}
+		return dst
 	}
-	return dst
+
 }
 func (f fmtText) escapeb(dst []byte, b []byte, addQuote bool) []byte {
 	if addQuote {

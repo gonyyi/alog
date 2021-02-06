@@ -133,7 +133,7 @@ func BenchmarkLogger_New(b *testing.B) {
 	// BenchmarkLogger_New/msg+s+i+b-12   	 4642806	       262 ns/op	       0 B/op	       0 allocs/op
 
 	al := alog.New(nil)
-	al.SetFormat(alog.Fjson)
+	al.SetFormat(alog.Ftag)
 
 	USER := al.GetTag("user")
 	REQ := al.GetTag("req")
@@ -172,8 +172,7 @@ func BenchmarkLogger_New(b *testing.B) {
 	al.SetOutput(os.Stdout)
 	al.Info(USER, "message")
 	al.Info(USER, "test", "val", "okay")
-	al.Info(USER, "test", "val", strArr)
 	al.Info(USER, "test", "val", &strArr)
-	al.Info(USER, "", "val\t\r", "ok\tay", "message", "te\tst")
+	al.Info(REQ, "", "val\t\r", "ok\tay", "message", "te\tst")
 	al.Info(USER, "test", "name", "gon", "age", 17, "married", false)
 }
