@@ -21,8 +21,9 @@ type Logger struct {
 
 	lvtag tagger // lvtag to replace 5 items below
 
-	out io.Writer
-	mu  sync.Mutex
+	out      io.Writer
+	mu       sync.Mutex
+	useMutex bool
 
 	// buf    []byte // buf is a main buffer; reset per each log entry
 	prefix []byte // prefix will be stored as a byte slice.
@@ -66,6 +67,12 @@ func (l *Logger) Do(fn ...func(*Logger)) *Logger {
 	for _, f := range fn {
 		f(l)
 	}
+	return l
+}
+
+// SetMutex will set mutex when used for writing to writer.
+func (l *Logger) SetMutex(on bool) *Logger {
+	l.useMutex = on
 	return l
 }
 
@@ -173,7 +180,7 @@ func (l *Logger) Log(lvl Level, tag Tag, msg string, a ...interface{}) (n int, e
 // added as v0.1.6c3, 12/30/2020
 func (l *Logger) LogIf(e error, lvl Level, tag Tag, msg string) {
 	if e != nil {
-		l.Log(lvl, tag, msg, "err", e.Error())
+		l.log(lvl, tag, msg, nil, "err", e.Error())
 	}
 }
 
@@ -354,9 +361,16 @@ func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface
 
 	// Finalize
 	s.bufMain = l.fmtr.End(s.bufMain)
-	l.mu.Lock()
-	l.out.Write(append(s.bufHeader, s.bufMain...))
-	l.mu.Unlock()
+
+	// Use mutex only when necessary
+	if l.useMutex {
+		l.mu.Lock()
+		l.out.Write(append(s.bufHeader, s.bufMain...))
+		l.mu.Unlock()
+	} else {
+		l.out.Write(append(s.bufHeader, s.bufMain...))
+	}
+
 	s.reset() // reset buffer to prevent potentially large one left in the pool
 	l.pool.Put(s)
 

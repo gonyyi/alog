@@ -412,7 +412,7 @@ func (f fmtJSON) escape(dst []byte, s string, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')
 	}
-	cur := 0
+
 	for i := 0; i < len(s); i++ {
 		switch s[i] {
 		case '"', '\\':
@@ -428,8 +428,7 @@ func (f fmtJSON) escape(dst []byte, s string, addQuote bool) []byte {
 		case '\f':
 			dst = append(dst, '\\', 'f')
 		default:
-			dst = append(dst, s[cur:i]...)
-			cur = i
+			dst = append(dst, s[i])
 		}
 	}
 	if addQuote {
