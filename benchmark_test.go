@@ -127,19 +127,51 @@ func BenchmarkLogger_Array(b *testing.B) {
 	})
 }
 func BenchmarkLogger_New(b *testing.B) {
-	// BenchmarkLogger_New/msg-12         	 6399504	       170 ns/op	       0 B/op	       0 allocs/op
-	// BenchmarkLogger_New/msg+s-12       	 6389883	       186 ns/op	       0 B/op	       0 allocs/op
-	// BenchmarkLogger_New/s+s-12         	 6095625	       199 ns/op	       0 B/op	       0 allocs/op
-	// BenchmarkLogger_New/msg+s+i+b-12   	 4642806	       262 ns/op	       0 B/op	       0 allocs/op
+
+	// TEXT
+	// BenchmarkLogger_New/log-4         	16848214	        69.5 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg-4         	14547502	        70.6 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s-4       	 9982562	       138 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/s+s-4         	 8300007	       142 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s+i+b-4   	 5081406	       220 ns/op	       0 B/op	       0 allocs/op
+
+	// JSON
+	// BenchmarkLogger_New
+	// BenchmarkLogger_New/log-4         	11487729	        93.4 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg-4         	11642652	        92.0 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s-4       	 8782598	       130 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/s+s-4         	 7540380	       154 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s+i+b-4   	 4557766	       266 ns/op	       0 B/op	       0 allocs/op
+
+	// JSON + TAG
+	// BenchmarkLogger_New/log-4         	 8843612	       121 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg-4         	 8880391	       119 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s-4       	 7358667	       157 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/s+s-4         	 6315307	       176 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s+i+b-4   	 4146590	       279 ns/op	       0 B/op	       0 allocs/op
+
+	// TEXT + TAG
+	// BenchmarkLogger_New/log-4         	12546020	        94.9 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg-4         	11409054	        95.5 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s-4       	 8271366	       137 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/s+s-4         	 6815278	       168 ns/op	       0 B/op	       0 allocs/op
+	// BenchmarkLogger_New/msg+s+i+b-4   	 4179721	       256 ns/op	       0 B/op	       0 allocs/op
 
 	al := alog.New(nil)
-	al.SetFormat(alog.Ftag)
+	al.SetFormat(0)
 
 	USER := al.GetTag("user")
 	REQ := al.GetTag("req")
 	_, _ = USER, REQ
 
 	strArr := []string{"okay", "not okay"}
+
+	b.Run("log", func(c *testing.B) {
+		c.ReportAllocs()
+		for i := 0; i < c.N; i++ {
+			al.Log(alog.Linfo, USER, "message")
+		}
+	})
 
 	b.Run("msg", func(c *testing.B) {
 		c.ReportAllocs()

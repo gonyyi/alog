@@ -383,20 +383,20 @@ func (l *Logger) NewWriter(lvl Level, tag Tag) *SubWriter {
 }
 
 func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ltrace, tag, msg, a...)
+	l.log(Ltrace, tag, msg, nil, a...)
 }
 func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ldebug, tag, msg, a...)
+	l.log(Ldebug, tag, msg, nil, a...)
 }
 func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
-	l.Log(Linfo, tag, msg, a...)
+	l.log(Linfo, tag, msg, nil, a...)
 }
 func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lwarn, tag, msg, a...)
+	l.log(Lwarn, tag, msg, nil, a...)
 }
 func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lerror, tag, msg, a...)
+	l.log(Lerror, tag, msg, nil, a...)
 }
 func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lfatal, tag, msg, a...)
+	l.log(Lfatal, tag, msg, nil, a...)
 }
