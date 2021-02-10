@@ -144,24 +144,27 @@ func escapestr(dst []byte, s string, addQuote bool) []byte {
 
 type keyable [128]bool
 
-func (k *keyable) Init() {
+func (k *keyable) Init() *keyable {
 	for i := 0; i < 128; i++ {
 		if i == 45 || i == 46 || (47 < i && i < 58) || (64 < i && i < 91) || i == 95 || (96 < i && i < 123) {
 			k[i] = true
 		}
 	}
+	return k
 }
-func (k keyable) FilterStr(dst []byte, s string) {
+func (k keyable) FilterStr(dst []byte, s string) []byte {
 	for i := 0; i < len(s); i++ {
 		if k[s[i]] {
 			dst = append(dst, s[i])
 		}
 	}
+	return dst
 }
-func (k keyable) FilterBytes(dst []byte, b []byte) {
+func (k keyable) FilterBytes(dst []byte, b []byte) []byte {
 	for i := 0; i < len(b); i++ {
 		if k[b[i]] {
 			dst = append(dst, b[i])
 		}
 	}
+	return dst
 }
