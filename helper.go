@@ -81,3 +81,63 @@ func ftoa(dst []byte, f64 float64, decPlace int) []byte {
 	}
 	return dst
 }
+
+func escapebyte(dst []byte, b []byte, addQuote bool) []byte {
+	if addQuote {
+		dst = append(dst, '"')
+	}
+
+	// For for-loop, using len() is the faster than using for-loop with a range.
+	for i := 0; i < len(b); i++ {
+		switch b[i] {
+		case '"', '\\':
+			dst = append(dst, '\\', b[i])
+		case '\n':
+			dst = append(dst, '\\', 'n')
+		case '\t':
+			dst = append(dst, '\\', 't')
+		case '\r':
+			dst = append(dst, '\\', 'r')
+		case '\b':
+			dst = append(dst, '\\', 'b')
+		case '\f':
+			dst = append(dst, '\\', 'f')
+		default:
+			dst = append(dst, b[i])
+		}
+	}
+	if addQuote {
+		dst = append(dst, '"')
+	}
+	return dst
+}
+
+func escapestr(dst []byte, s string, addQuote bool) []byte {
+	if addQuote {
+		dst = append(dst, '"')
+	}
+
+	// For for-loop, using len() is the faster than using for-loop with a range.
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '"', '\\':
+			dst = append(dst, '\\', s[i])
+		case '\n':
+			dst = append(dst, '\\', 'n')
+		case '\t':
+			dst = append(dst, '\\', 't')
+		case '\r':
+			dst = append(dst, '\\', 'r')
+		case '\b':
+			dst = append(dst, '\\', 'b')
+		case '\f':
+			dst = append(dst, '\\', 'f')
+		default:
+			dst = append(dst, s[i])
+		}
+	}
+	if addQuote {
+		dst = append(dst, '"')
+	}
+	return dst
+}

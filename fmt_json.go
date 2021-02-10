@@ -64,7 +64,7 @@ func (f fmtJSON) LogMsg(dst []byte, s string, suffix byte) []byte { // suffix to
 
 func (f fmtJSON) LogMsgb(dst []byte, b []byte, suffix byte) []byte {
 	dst = f.addKey(dst, "msg")
-	return f.escapeb(dst, b, true)
+	return escapebyte(dst, b, true)
 }
 
 func (f fmtJSON) LogTime(dst []byte, t time.Time) []byte {
@@ -102,7 +102,7 @@ func (f fmtJSON) LogTimeUnixMs(dst []byte, t time.Time) []byte {
 
 // Special type
 func (f fmtJSON) Nil(dst []byte, k string) []byte {
-	dst = f.escape(dst, k, true) // faster without addKey
+	dst = escapestr(dst, k, true) // faster without addKey
 	return append(dst, `:null`...)
 }
 
@@ -125,7 +125,7 @@ func (f fmtJSON) Errors(dst []byte, k string, v *[]error) []byte {
 	dst = append(dst, '[')
 	for i, v2 := range *v {
 		if v2 != nil {
-			dst = f.escape(dst, v2.Error(), true)
+			dst = escapestr(dst, v2.Error(), true)
 		} else {
 			// dst = append(dst, '"', '"')
 			dst = append(dst, "null"...) // todo: check if this is acceptable (null in string array)
@@ -149,7 +149,7 @@ func (f fmtJSON) Bool(dst []byte, k string, v bool) []byte {
 
 func (f fmtJSON) String(dst []byte, k string, v string) []byte {
 	dst = f.addKey(dst, k)
-	return f.escape(dst, v, true)
+	return escapestr(dst, v, true)
 }
 
 func (f fmtJSON) Int(dst []byte, k string, v int) []byte {
@@ -241,7 +241,7 @@ func (f fmtJSON) Strings(dst []byte, k string, v *[]string) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = f.escape(dst, v2, true)
+		dst = escapestr(dst, v2, true)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -396,7 +396,7 @@ func (f fmtJSON) Float64s(dst []byte, k string, v *[]float64) []byte {
 }
 
 func (f fmtJSON) addKey(dst []byte, s string) []byte {
-	dst = f.escape(dst, s, true)
+	dst = escapestr(dst, s, true)
 	return append(dst, ':')
 }
 
@@ -406,61 +406,4 @@ func (f fmtJSON) safeString(dst []byte, k string, v string) []byte {
 	dst = append(dst, `":"`...)
 	dst = append(dst, v...)
 	return append(dst, '"')
-}
-
-func (f fmtJSON) escape(dst []byte, s string, addQuote bool) []byte {
-	if addQuote {
-		dst = append(dst, '"')
-	}
-
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '"', '\\':
-			dst = append(dst, '\\', s[i])
-		case '\n':
-			dst = append(dst, '\\', 'n')
-		case '\t':
-			dst = append(dst, '\\', 't')
-		case '\r':
-			dst = append(dst, '\\', 'r')
-		case '\b':
-			dst = append(dst, '\\', 'b')
-		case '\f':
-			dst = append(dst, '\\', 'f')
-		default:
-			dst = append(dst, s[i])
-		}
-	}
-	if addQuote {
-		dst = append(dst, '"')
-	}
-	return dst
-}
-
-func (f fmtJSON) escapeb(dst []byte, b []byte, addQuote bool) []byte {
-	if addQuote {
-		dst = append(dst, '"')
-	}
-	for i := 0; i < len(b); i++ {
-		switch b[i] {
-		case '"', '\\':
-			dst = append(dst, '\\', b[i])
-		case '\n':
-			dst = append(dst, '\\', 'n')
-		case '\t':
-			dst = append(dst, '\\', 't')
-		case '\r':
-			dst = append(dst, '\\', 'r')
-		case '\b':
-			dst = append(dst, '\\', 'b')
-		case '\f':
-			dst = append(dst, '\\', 'f')
-		default:
-			dst = append(dst, b[i])
-		}
-	}
-	if addQuote {
-		dst = append(dst, '"')
-	}
-	return dst
 }
