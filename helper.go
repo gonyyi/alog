@@ -141,3 +141,20 @@ func escapestr(dst []byte, s string, addQuote bool) []byte {
 	}
 	return dst
 }
+
+type acckey [128]bool
+
+func (ak *acckey) init() {
+	for i := 0; i < 128; i++ {
+		if i == 45 || i == 46 || (47 < i && i < 58) || (64 < i && i < 91) || i == 95 || (96 < i && i < 123) {
+			ak[i] = true
+		}
+	}
+}
+func (ak acckey) convstr(dst []byte, s string) {
+	for i := 0; i < len(s); i++ {
+		if ak[s[i]] {
+			dst = append(dst, s[i])
+		}
+	}
+}
