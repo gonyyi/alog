@@ -74,13 +74,13 @@ func (f fmtText) LogMsgb(dst []byte, b []byte, suffix byte) []byte {
 func (f fmtText) LogTime(dst []byte, t time.Time) []byte {
 	// "t":  time shows up to millisecond: 3_04_05_000 = h:3, m:4, s:5, ms: 000
 	h, m, s := t.Clock()
-	dst = itoa(dst, h*10000+m*100+s, 6, '.')
-	return itoa(dst, t.Nanosecond()/1e6, 3, 0)
+	dst = conv.Intf(dst, h*10000+m*100+s, 6, '.')
+	return conv.Intf(dst, t.Nanosecond()/1e6, 3, 0)
 }
 
 func (f fmtText) LogTimeDate(dst []byte, t time.Time) []byte {
 	y, m, d := t.Date()
-	return itoa(dst, y*10000+int(m)*100+d, 8, 0)
+	return conv.Intf(dst, y*10000+int(m)*100+d, 8, 0)
 }
 
 func (f fmtText) LogTimeDay(dst []byte, t time.Time) []byte {
@@ -89,12 +89,12 @@ func (f fmtText) LogTimeDay(dst []byte, t time.Time) []byte {
 
 func (f fmtText) LogTimeUnix(dst []byte, t time.Time) []byte {
 	// "ts": unix second
-	return itoa(dst, int(t.Unix()), 8, 0)
+	return conv.Intf(dst, int(t.Unix()), 8, 0)
 }
 
 func (f fmtText) LogTimeUnixMs(dst []byte, t time.Time) []byte {
 	// "ts": unix second
-	return itoa(dst, int(t.UnixNano()/1e6), 8, 0)
+	return conv.Intf(dst, int(t.UnixNano()/1e6), 8, 0)
 }
 
 // Special type
@@ -151,22 +151,22 @@ func (f fmtText) String(dst []byte, k string, v string) []byte {
 
 func (f fmtText) Int(dst []byte, k string, v int) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, v, 1, 0)
+	return conv.Intf(dst, v, 1, 0)
 }
 
 func (f fmtText) Int8(dst []byte, k string, v int8) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, int(v), 1, 0)
+	return conv.Intf(dst, int(v), 1, 0)
 }
 
 func (f fmtText) Int16(dst []byte, k string, v int16) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, int(v), 1, 0)
+	return conv.Intf(dst, int(v), 1, 0)
 }
 
 func (f fmtText) Int32(dst []byte, k string, v int32) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, int(v), 1, 0)
+	return conv.Intf(dst, int(v), 1, 0)
 }
 
 func (f fmtText) Int64(dst []byte, k string, v int64) []byte {
@@ -180,12 +180,12 @@ func (f fmtText) Uint(dst []byte, k string, v uint) []byte {
 
 func (f fmtText) Uint8(dst []byte, k string, v uint8) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, int(v), 1, 0)
+	return conv.Intf(dst, int(v), 1, 0)
 }
 
 func (f fmtText) Uint16(dst []byte, k string, v uint16) []byte {
 	dst = f.addKey(dst, k)
-	return itoa(dst, int(v), 1, 0)
+	return conv.Intf(dst, int(v), 1, 0)
 }
 
 func (f fmtText) Uint32(dst []byte, k string, v uint32) []byte {
@@ -200,12 +200,12 @@ func (f fmtText) Uint64(dst []byte, k string, v uint64) []byte {
 
 func (f fmtText) Float32(dst []byte, k string, v float32) []byte {
 	dst = f.addKey(dst, k)
-	return ftoa(dst, float64(v), 2)
+	return conv.Floatf(dst, float64(v), 2)
 }
 
 func (f fmtText) Float64(dst []byte, k string, v float64) []byte {
 	dst = f.addKey(dst, k)
-	return ftoa(dst, v, 2)
+	return conv.Floatf(dst, v, 2)
 }
 
 // Slice of basic data type
@@ -253,7 +253,7 @@ func (f fmtText) Ints(dst []byte, k string, v *[]int) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = itoa(dst, v2, 1, 0)
+		dst = conv.Intf(dst, v2, 1, 0)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -269,7 +269,7 @@ func (f fmtText) Int32s(dst []byte, k string, v *[]int32) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = itoa(dst, int(v2), 1, 0)
+		dst = conv.Intf(dst, int(v2), 1, 0)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -317,7 +317,7 @@ func (f fmtText) Uint8s(dst []byte, k string, v *[]uint8) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = itoa(dst, int(v2), 1, 0)
+		dst = conv.Intf(dst, int(v2), 1, 0)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -333,7 +333,7 @@ func (f fmtText) Uint32s(dst []byte, k string, v *[]uint32) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = itoa(dst, int(v2), 1, 0)
+		dst = conv.Intf(dst, int(v2), 1, 0)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -366,7 +366,7 @@ func (f fmtText) Float32s(dst []byte, k string, v *[]float32) []byte {
 	dst = append(dst, '[')
 	for i, v2 := range *v {
 		// dst = strconv.AppendUint(dst, v2, 10)
-		dst = ftoa(dst, float64(v2), 2)
+		dst = conv.Floatf(dst, float64(v2), 2)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -383,7 +383,7 @@ func (f fmtText) Float64s(dst []byte, k string, v *[]float64) []byte {
 	dst = append(dst, '[')
 	for i, v2 := range *v {
 		// dst = strconv.AppendUint(dst, v2, 10)
-		dst = ftoa(dst, v2, 2)
+		dst = conv.Floatf(dst, v2, 2)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}

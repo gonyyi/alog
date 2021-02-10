@@ -13,12 +13,19 @@ type Fmtr2 interface {
 	Logb(bufHead, bufBody *[]byte, lv Level, tag Tag, msg []byte) int
 }
 
+func NewFmtr2JSON() *Fmtr2JSON {
+	return &Fmtr2JSON{
+		conv: conv,
+	}
+}
+
 type Fmtr2JSON struct {
 	hook   HookFn
 	tagger *Tagger
 	format Format
 	prefix string
 	time   time.Time
+	conv   Converter
 }
 
 // TODO: Converter as an interface??

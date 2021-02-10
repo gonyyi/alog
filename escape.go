@@ -1,6 +1,6 @@
 package alog
 
-func escapebyte(dst []byte, b []byte, addQuote bool) []byte {
+func escapeBytes(dst []byte, b []byte, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')
 	}
@@ -30,7 +30,7 @@ func escapebyte(dst []byte, b []byte, addQuote bool) []byte {
 	return dst
 }
 
-func escapestr(dst []byte, s string, addQuote bool) []byte {
+func escapeString(dst []byte, s string, addQuote bool) []byte {
 	if addQuote {
 		dst = append(dst, '"')
 	}
