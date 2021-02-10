@@ -25,6 +25,7 @@ type Logger struct {
 	mu       sync.Mutex
 	useMutex bool
 
+	k keyable
 	// buf    []byte // buf is a main buffer; reset per each log entry
 	prefix []byte // prefix will be stored as a byte slice.
 }
@@ -52,8 +53,11 @@ func New(output io.Writer) *Logger {
 		out:        output,
 		prefix:     []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		formatFlag: Fdefault,   // default formatFlag is given
+		k:          keyable{},
 		// buf:      make([]byte, 1024),
 	}
+
+	l.k.Init()
 	l.lvtag.Filter.lvl = Linfo // default logging Level to INFO
 
 	return l
