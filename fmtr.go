@@ -2,10 +2,12 @@ package alog
 
 import "time"
 
+
+
 // Fmtr is an interface for Alog formatter.
 type Fmtr interface {
 	// Begin is used for beginning of log entry. This method takes prefix as well.
-	// If it is set, it will be the first message to print regardless of JSON or text.
+	// If it is Set, it will be the first message to print regardless of JSON or text.
 	// For JSON, it'd be '{' and none for text.
 	Begin(dst []byte, prefix []byte) []byte
 	// End is used for end of log entry. For JSON, add `}\n`; for text, add '\n'

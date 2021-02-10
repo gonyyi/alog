@@ -19,7 +19,7 @@ type Logger struct {
 	fmtr   Fmtr
 	hookFn HookFn
 
-	lvtag tagger // lvtag to replace 5 items below
+	lvtag Tagger // lvtag to replace 5 items below
 
 	out      io.Writer
 	mu       sync.Mutex
@@ -38,8 +38,8 @@ func New(output io.Writer) *Logger {
 	}
 
 	// Creating new logger object and returns pointer to logger.
-	// Default value will be set here. If a user uses *alog.SetFormat to provoke
-	// unless specifically set certain value, it will not be overwritten.
+	// Default value will be Set here. If a user uses *alog.SetFormat to provoke
+	// unless specifically Set certain value, it will not be overwritten.
 	// eg. If a user called SetFormat with other config formatFlag except the Level, then the log
 	//     Level will not be changed. Therefore default Level should be defined here.
 	l := &Logger{
@@ -54,13 +54,13 @@ func New(output io.Writer) *Logger {
 		formatFlag: Fdefault,   // default formatFlag is given
 		// buf:      make([]byte, 1024),
 	}
-	l.lvtag.filter.lvl = Linfo // default logging Level to INFO
+	l.lvtag.Filter.lvl = Linfo // default logging Level to INFO
 
 	return l
 }
 
 // Do can run a function(s) that were created by a user
-// An example would be set Level prefix with ANSI color
+// An example would be Set Level prefix with ANSI color
 // or series of frequentyly used settings.
 // planned for v0.2.1 release.
 func (l *Logger) Do(fn ...func(*Logger)) *Logger {
@@ -70,7 +70,7 @@ func (l *Logger) Do(fn ...func(*Logger)) *Logger {
 	return l
 }
 
-// SetMutex will set mutex when used for writing to writer.
+// SetMutex will Set mutex when used for writing to writer.
 func (l *Logger) SetMutex(on bool) *Logger {
 	l.useMutex = on
 	return l
@@ -78,7 +78,7 @@ func (l *Logger) SetMutex(on bool) *Logger {
 
 // GetTag takes a wTag name and returns a wTag if found.
 func (l *Logger) GetTag(name string) Tag {
-	return l.lvtag.mustGetTag(name)
+	return l.lvtag.MustGetTag(name)
 }
 
 // Output returns the output destination for the logger.
@@ -87,7 +87,7 @@ func (l *Logger) Output() io.Writer {
 }
 
 // SetOutput can redefined the output after logger has been created.
-// If output is nil, the logger will set it to ioutil.Discard instead.
+// If output is nil, the logger will Set it to ioutil.Discard instead.
 func (l *Logger) SetOutput(output io.Writer) *Logger {
 	l.mu.Lock()
 	if output == nil {
@@ -100,7 +100,7 @@ func (l *Logger) SetOutput(output io.Writer) *Logger {
 }
 
 // Format will return current format flag.
-// This can be modified and set again using SetFormat method.
+// This can be modified and Set again using SetFormat method.
 func (l *Logger) Format() Format {
 	return l.formatFlag
 }
@@ -125,7 +125,7 @@ func (l *Logger) SetFormat(flag Format) *Logger {
 	return l
 }
 
-// SetFormatter will set logger formatter. Without this setting,
+// SetFormatter will Set logger formatter. Without this setting,
 // the logger's default will be text formatter (fmtText).
 // If switching between default JSON and TEXT formatter, it should
 // be done by ModFormat() or SetFormat(). This SetFormatter is
@@ -148,21 +148,21 @@ func (l *Logger) SetPrefix(s string) *Logger {
 }
 
 // SetFilter will define what level or tags to show.
-// Integer 0 can be used, and when it's used, it will not filter anything.
+// Integer 0 can be used, and when it's used, it will not Filter anything.
 func (l *Logger) SetFilter(lv Level, tags Tag) *Logger {
-	l.lvtag.filter.fn = nil
-	l.lvtag.filter.lvl = lv
-	l.lvtag.filter.tag = tags
+	l.lvtag.Filter.fn = nil
+	l.lvtag.Filter.lvl = lv
+	l.lvtag.Filter.tag = tags
 	return l
 }
 
 // SetFilterFn can control more precisely by taking a FilterFn.
 func (l *Logger) SetFilterFn(fn FilterFn) *Logger {
-	l.lvtag.filter.fn = fn
+	l.lvtag.Filter.fn = fn
 	return l
 }
 
-// SetHookFn will create a hookFn that works addition to filter.
+// SetHookFn will create a hookFn that works addition to Filter.
 // Example would be log everything but for HTTP request tags,
 // also write it to a file.
 func (l *Logger) SetHookFn(fn HookFn) {
@@ -193,7 +193,7 @@ func (l *Logger) logb(lvl Level, tag Tag, msg []byte) (n int, err error) {
 func (l *Logger) log(lvl Level, tag Tag, msg string, msgb []byte, a ...interface{}) (n int, err error) {
 	lenA, lenMsg, lenMsgb := len(a), len(msg), len(msgb)
 
-	if !l.lvtag.filter.check(lvl, tag) || (lenMsg == 0 && lenMsgb == 0 && lenA == 0) {
+	if !l.lvtag.Filter.check(lvl, tag) || (lenMsg == 0 && lenMsgb == 0 && lenA == 0) {
 		return
 	}
 
