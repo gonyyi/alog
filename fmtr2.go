@@ -9,8 +9,8 @@ type Fmtr2 interface {
 	SetTagger(*Tagger)
 	SetFormat(Format)
 	SetPrefix(string)
-	Log(bufHead, bufBody *[]byte, lv Level, tag Tag, msg string, a ...interface{}) int
-	Logb(bufHead, bufBody *[]byte, lv Level, tag Tag, msg []byte) int
+	Format(bufHead, bufBody []byte, lv Level, tag Tag, msg string, a ...interface{}) ([]byte, []byte)
+	Formatb(bufHead, bufBody []byte, lv Level, tag Tag, msg []byte) ([]byte, []byte)
 }
 
 func NewFmtr2JSON() *Fmtr2JSON {
@@ -35,18 +35,18 @@ type Fmtr2JSON struct {
 //		String(dst []byte, s string, suffix byte, quote bool, ignoreSpcChar bool)
 //		Byte(dst []byte, b []byte, suffix byte, quote bool, ignoreSpcChar bool)
 
-func (f *Fmtr2JSON) Log(bufHead, bufBody *[]byte, lv Level, tag Tag, msg string, a ...interface{}) int {
+func (f *Fmtr2JSON) Format(bufHead, bufBody []byte, lv Level, tag Tag, msg string, a ...interface{}) ([]byte, []byte) {
 	if f.format&Fprefix != 0 {
-		*bufHead = append(*bufHead, f.prefix...)
+		bufHead = append(bufHead, f.prefix...)
 	}
-	*bufHead = append(*bufHead, '{')
+	bufHead = append(bufHead, '{')
 
 	if f.format&(FtimeUnix|FtimeUnixMs) != 0 {
 		f.time = time.Now()
 		if f.format&FtimeUnixMs != 0 { // MS
-			//s.bufHeader = l.fmtr.LogTimeUnixMs(s.bufHeader, f.time)
+			// s.bufHeader = l.fmtr.LogTimeUnixMs(s.bufHeader, f.time)
 		} else { // Just Unix
-			//s.bufHeader = l.fmtr.LogTimeUnix(s.bufHeader, f.time)
+			// s.bufHeader = l.fmtr.LogTimeUnix(s.bufHeader, f.time)
 		}
 	} else if f.format&(Fdate|FdateDay|Ftime|FtimeUTC) != 0 {
 		// at least one item will be printed here, so just check once.
@@ -56,50 +56,58 @@ func (f *Fmtr2JSON) Log(bufHead, bufBody *[]byte, lv Level, tag Tag, msg string,
 		}
 
 		if f.format&Fdate != 0 {
-			//firstItem = false
-			//s.bufHeader = l.fmtr.LogTimeDate(s.bufHeader, l.time)
+			// firstItem = false
+			// s.bufHeader = l.fmtr.LogTimeDate(s.bufHeader, l.time)
 		}
 		if f.format&FdateDay != 0 {
-			//if !firstItem {
+			// if !firstItem {
 			//	s.bufHeader = l.fmtr.Space(s.bufHeader)
-			//}
-			//firstItem = false
-			//s.bufHeader = l.fmtr.LogTimeDay(s.bufHeader, l.time)
+			// }
+			// firstItem = false
+			// s.bufHeader = l.fmtr.LogTimeDay(s.bufHeader, l.time)
 		}
 		if f.format&Ftime != 0 {
-			//if !firstItem {
+			// if !firstItem {
 			//	s.bufHeader = l.fmtr.Space(s.bufHeader)
-			//}
-			//s.bufHeader = l.fmtr.LogTime(s.bufHeader, l.time)
+			// }
+			// s.bufHeader = l.fmtr.LogTime(s.bufHeader, l.time)
 		}
-		//firstItem = false
+		// firstItem = false
 	}
 
 	if f.format&Flevel != 0 {
-		*bufHead = append(*bufHead, `"level":"`...)
-		*bufHead = append(*bufHead, lv.String()...)
-		*bufHead = append(*bufHead, '"', ',')
+		bufHead = append(bufHead, `"level":"`...)
+		bufHead = append(bufHead, lv.String()...)
+		bufHead = append(bufHead, '"', ',')
 	}
 
 	if f.format&Ftag != 0 {
-		*bufHead = append(*bufHead, `"tag":[`...)
-		*bufHead = f.tagger.AppendTagNames(*bufHead, ',', true, tag)
-		*bufHead = append(*bufHead, ']', ',')
+		bufHead = append(bufHead, `"tag":[`...)
+		bufHead = f.tagger.AppendTagNames(bufHead, ',', true, tag)
+		bufHead = append(bufHead, ']', ',')
 	}
 
-	*bufBody = append(*bufBody, msg...)
+	if len(msg) > 0 {
+		bufBody = append(bufBody, `"msg":`...)
+		// bufBody = append(bufBody, msg...) // 22.49 ns
+		// bufBody = keyable.String(bufBody, msg) // 51.43 ns
+		bufBody = escapeString(bufBody, msg, true, ',') // 64.25 ns, updated one at 48.57 ns
+	}
 
 	if f.hook != nil {
 		f.hook(lv, tag, nil)
 	}
 
+	if len(bufBody) > 0 && bufBody[len(bufBody)-1] == ',' {
+		bufBody = bufBody[0 : len(bufBody)-1]
+	}
 	// Ending
-	*bufBody = append(*bufBody, '}')
-	return 0
+
+	return bufHead, append(bufBody, '}')
 }
 
-func (f *Fmtr2JSON) Logb(bufHead, bufBody *[]byte, lv Level, tag Tag, msg []byte) int {
-	return 0
+func (f *Fmtr2JSON) Formatb(bufHead, bufBody []byte, lv Level, tag Tag, msg []byte) ([]byte, []byte) {
+	return nil, nil
 }
 
 func (f *Fmtr2JSON) SetHook(fn HookFn) {

@@ -34,7 +34,7 @@ func (f fmtText) Space(dst []byte) []byte {
 	return append(dst, ' ')
 }
 
-// Log specific type
+// Format specific type
 func (f fmtText) LogLevel(dst []byte, lv Level) []byte {
 	return append(dst, lv.ShortName()...)
 }

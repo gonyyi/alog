@@ -25,7 +25,7 @@ type Logger struct {
 	mu       sync.Mutex
 	useMutex bool
 
-	k keyable
+	k escKeys
 	// buf    []byte // buf is a main buffer; reset per each log entry
 	prefix []byte // prefix will be stored as a byte slice.
 }
@@ -53,7 +53,7 @@ func New(output io.Writer) *Logger {
 		out:        output,
 		prefix:     []byte(""), // prefix will be saved as a byte slice to prevent need to be converted later.
 		formatFlag: Fdefault,   // default formatFlag is given
-		k:          keyable{},
+		k:          escKeys{},
 		// buf:      make([]byte, 1024),
 	}
 

@@ -34,7 +34,7 @@ func (f fmtJSON) Space(dst []byte) []byte {
 	return append(dst, ',')
 }
 
-// Log specific type
+// Format specific type
 func (f fmtJSON) LogLevel(dst []byte, lv Level) []byte {
 	return f.safeString(dst, "level", lv.String())
 }
@@ -102,7 +102,7 @@ func (f fmtJSON) LogTimeUnixMs(dst []byte, t time.Time) []byte {
 
 // Special type
 func (f fmtJSON) Nil(dst []byte, k string) []byte {
-	dst = escapeString(dst, k, true) // faster without addKey
+	dst = escapeString(dst, k, true, 0) // faster without addKey
 	return append(dst, `:null`...)
 }
 
@@ -125,7 +125,7 @@ func (f fmtJSON) Errors(dst []byte, k string, v *[]error) []byte {
 	dst = append(dst, '[')
 	for i, v2 := range *v {
 		if v2 != nil {
-			dst = escapeString(dst, v2.Error(), true)
+			dst = escapeString(dst, v2.Error(), true, 0)
 		} else {
 			// dst = append(dst, '"', '"')
 			dst = append(dst, "null"...) // todo: check if this is acceptable (null in string array)
@@ -149,7 +149,7 @@ func (f fmtJSON) Bool(dst []byte, k string, v bool) []byte {
 
 func (f fmtJSON) String(dst []byte, k string, v string) []byte {
 	dst = f.addKey(dst, k)
-	return escapeString(dst, v, true)
+	return escapeString(dst, v, true, 0)
 }
 
 func (f fmtJSON) Int(dst []byte, k string, v int) []byte {
@@ -241,7 +241,7 @@ func (f fmtJSON) Strings(dst []byte, k string, v *[]string) []byte {
 	}
 	dst = append(dst, '[')
 	for i, v2 := range *v {
-		dst = escapeString(dst, v2, true)
+		dst = escapeString(dst, v2, true, 0)
 		if i != idxv { // if not last item
 			dst = append(dst, ',')
 		}
@@ -396,8 +396,7 @@ func (f fmtJSON) Float64s(dst []byte, k string, v *[]float64) []byte {
 }
 
 func (f fmtJSON) addKey(dst []byte, s string) []byte {
-	dst = escapeString(dst, s, true)
-	return append(dst, ':')
+	return escapeString(dst, s, true, ':')
 }
 
 func (f fmtJSON) safeString(dst []byte, k string, v string) []byte {

@@ -8,7 +8,7 @@ type Converter interface {
 	Int(dst []byte, i int, quote bool, suffix byte) []byte
 	Float(dst []byte, f float64, quote bool, suffix byte) []byte
 	String(dst []byte, s string, quote bool, suffix byte) []byte
-	ByteString(dst []byte, s []byte, quote bool, suffix byte) []byte
+	Bytes(dst []byte, s []byte, quote bool, suffix byte) []byte
 	Bool(dst []byte, b bool, quote bool, suffix byte) []byte
 	Error(dst []byte, err error, quote bool, suffix byte) []byte
 }
@@ -111,7 +111,7 @@ func (c *Conv) Int(dst []byte, i int, quote bool, suffix byte) []byte {
 	}
 }
 
-func (c *Conv) ByteString(dst []byte, s []byte, quote bool, suffix byte) []byte {
+func (c *Conv) Bytes(dst []byte, s []byte, quote bool, suffix byte) []byte {
 	dst = append(dst, escapeBytes(dst, s, quote)...)
 	if suffix != 0 {
 		return append(dst, suffix)
@@ -120,11 +120,7 @@ func (c *Conv) ByteString(dst []byte, s []byte, quote bool, suffix byte) []byte 
 }
 
 func (c *Conv) String(dst []byte, s string, quote bool, suffix byte) []byte {
-	dst = append(dst, escapeString(dst, s, quote)...)
-	if suffix != 0 {
-		return append(dst, suffix)
-	}
-	return dst
+	return escapeString(dst, s, quote, suffix)
 }
 
 func (c *Conv) Bool(dst []byte, b bool, quote bool, suffix byte) []byte {
