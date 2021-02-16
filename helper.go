@@ -14,7 +14,7 @@ func (devNull) Write([]byte) (int, error) {
 }
 
 // HookFn is a type for a function designed to run when certain condition meets
-type HookFn func(lvl Level, tag Tag, msg []byte)
+type HookFn func(lvl Level, tag Tag, p []byte)
 
 // FilterFn is a function type to be used with SetFilter.
 type FilterFn func(Level, Tag) bool
