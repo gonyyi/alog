@@ -137,12 +137,12 @@ func (c *control) Check(lvl Level, tag Tag) bool {
 	switch {
 	case c.ctlFn != nil: // FilterFn has the highest order if Set.
 		return c.ctlFn(lvl, tag)
-	case c.ctlLevel > lvl: // if wLevel is below wLevel limit, the do not print
-		return false
-	case c.ctlTag != 0 && c.ctlTag&tag == 0: // if filterTag is Set but Tag is not matching, then do not print
-		return false
-	default:
+	case c.ctlLevel < lvl: // if level is higher than set level, print
 		return true
+	case c.ctlTag&tag != 0: // even if level is not high, if tag matches, print
+		return true
+	default:
+		return false
 	}
 }
 

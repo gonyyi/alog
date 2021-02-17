@@ -30,7 +30,7 @@ func (l *Logger) Do(fns ...func(*Logger)) {
 		f(l)
 	}
 }
-func (l *Logger) Output() io.Writer {
+func (l *Logger) Output() AlWriter {
 	return l.out
 }
 func (l *Logger) SetOutput(w io.Writer) *Logger {
@@ -55,6 +55,14 @@ func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
 }
 func (l *Logger) MustGetTag(name string) (tag Tag) {
 	return l.ctl.Tags.MustGetTag(name)
+}
+func (l *Logger) SetControlFn(fn func(Level, Tag) bool) *Logger {
+	l.ctl.CtlFn(fn)
+	return l
+}
+func (l *Logger) SetControl(lv Level, tag Tag) *Logger {
+	l.ctl.CtlTag(lv, tag)
+	return l
 }
 func (l *Logger) SetHook(h HookFn) *Logger {
 	l.ctl.hook = h
