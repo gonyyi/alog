@@ -13,9 +13,9 @@ type AlWriter interface {
 	WriteTag(lv Level, tag Tag, head, body []byte) (int, error)
 }
 
-// iowToAlw convers io.Writer to AlWriter.
+// toAlWriter convers io.Writer to AlWriter.
 // If it can't be converted, use alwBasic.
-func iowToAlw(w io.Writer) AlWriter {
+func toAlWriter(w io.Writer) AlWriter {
 	if w == nil {
 		w = discard
 	}
@@ -35,6 +35,7 @@ type alwBasic struct {
 // WriteLvt will take level and tag. This is to be used as a conditional writer.
 // Eg. When certain tag and/or level, this can write it to a different place.
 func (alwp alwBasic) WriteTag(lv Level, tag Tag, head, body []byte) (int, error) {
+	body = append(body, '\n')
 	return alwp.Write(append(head, body...))
 }
 

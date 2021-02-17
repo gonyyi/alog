@@ -24,14 +24,17 @@ func (c convert) EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
 		dst = append(dst, '"')
 	}
 
+	// Only allowed
 	for i := 0; i < len(s); i++ {
 		if c[s[i]] {
 			dst = append(dst, s[i])
 		}
 	}
 
+	// Add all
 	//dst = append(dst, s...)
 
+	// Smarty way, but doesn't seem fast
 	//cur := 0
 	//for i := 0; i < len(s); i++ {
 	//	if !c[s[i]] {

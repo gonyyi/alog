@@ -7,12 +7,12 @@ import (
 
 func New(w io.Writer) *Logger {
 	l := Logger{
-		out:   iowToAlw(w),
-		fmtr:  &defaultFormatter{},
+		out:   toAlWriter(w),
+		fmtr:  FmtrText, // FmtrJSON,
 		fflag: Fdefault,
 	}
 	l.ctl.ctlLevel = Linfo
-	l.buf.Init([]byte{'{'}, []byte{'}'}, 512, 2048)
+	l.buf.Init(nil, nil, 512, 2048) // TODO: clean up this
 
 	return &l
 }
@@ -26,11 +26,17 @@ type Logger struct {
 	fflag Format
 }
 
+func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
+	if fmtr != nil {
+		l.fmtr = fmtr
+	}
+	return l
+}
 func (l *Logger) Output() io.Writer {
 	return l.out
 }
 func (l *Logger) SetOutput(w io.Writer) *Logger {
-	l.out = iowToAlw(w)
+	l.out = toAlWriter(w)
 	return l
 }
 func (l *Logger) Format() Format {
@@ -51,7 +57,8 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 
-		buf.Head = l.fmtr.AppendPrefix(buf.Head, nil)
+		buf.Head = l.fmtr.Start(buf.Head, nil)
+
 		if l.fflag&fUseTime != 0 {
 			buf.Head = l.fmtr.AppendTime(buf.Head, l.fflag)
 		}
@@ -101,10 +108,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 			}
 		}
 
-		// Replace extra comma
-		buf.Body[len(buf.Body)-1] = '}'
-		buf.Body = append(buf.Body, '\n')
-		l.out.WriteTag(level, tag, buf.Head, buf.Body)
+		l.out.WriteTag(level, tag, buf.Head, l.fmtr.Final(buf.Body, nil))
 	}
 }
 func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
