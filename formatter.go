@@ -2,6 +2,50 @@ package alog
 
 import "time"
 
+// Format a bit-formatFlag formatFlag options that is used for variety of configuration.
+type Format uint32
+
+func (f Format) Reset() Format {
+	return Format(uint32(0))
+}
+func (f Format) On(item Format) Format {
+	return f | item
+}
+func (f Format) Off(item Format) Format {
+	return f &^ item
+}
+
+const (
+	// Fprefix will show prefix when printing log message
+	Fprefix Format = 1 << iota
+	// Fsuffix will add suffix
+	Fsuffix
+	// Fdate will show both CCYY and MMDD
+	Fdate
+	// FdateDay will show 0-6 for JSON or (Sun-Mon)
+	FdateDay
+	// Ftime will show HHMMSS
+	Ftime
+	// FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
+	FtimeMs
+	// FtimeUnix will show unix time
+	FtimeUnix
+	// FtimeUnixNano will show unix time
+	FtimeUnixMs
+	// FtimeUTC will show UTC time formats
+	FtimeUTC
+	// Flevel show Level in the log messsage.
+	Flevel
+	// Ftag will show tags
+	Ftag
+	// Fjson will print to a JSON
+	Fjson
+
+	// Fdefault will show month/day with time, and Level of logging.
+	Fdefault = Fdate | Ftime | Flevel | Ftag
+	fUseTime = Fdate | FdateDay | Ftime | FtimeMs | FtimeUnix | FtimeUnixMs
+)
+
 type Formatter interface {
 	Start(dst []byte, prefix []byte) []byte
 	AppendTime(dst []byte, format Format) []byte
@@ -50,11 +94,15 @@ func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 			dst = append(dst, `"wd":`...) // faster without addKey
 			dst = conv.Intf(dst, int(t.Weekday()), 1, ',')
 		}
-		if Ftime&format != 0 {
+		if (Ftime|FtimeMs)&format != 0 {
 			dst = append(dst, `"t":`...) // faster without addKey
 			h, m, s := t.Clock()
-			dst = conv.Intf(dst, h*10000+m*100+s, 1, '.')
-			dst = conv.Intf(dst, t.Nanosecond()/1e6, 3, ',')
+			if FtimeMs&format != 0 {
+				dst = conv.Intf(dst, h*10000+m*100+s, 1, 0)
+				dst = conv.Intf(dst, t.Nanosecond()/1e6, 0, ',')
+			} else {
+				dst = conv.Intf(dst, h*10000+m*100+s, 1, ',')
+			}
 		}
 	}
 
@@ -158,15 +206,34 @@ func (f *formatText) AppendTime(dst []byte, format Format) []byte {
 		}
 		if FdateDay&format != 0 {
 			// "wd": 0 being sunday, 6 being saturday
-			dst = append(dst, t.Weekday().String()[:3]...)
+			switch t.Weekday() {
+			case 0:
+				dst = append(dst, `Sun`...)
+			case 1:
+				dst = append(dst, `Mon`...)
+			case 2:
+				dst = append(dst, `Tue`...)
+			case 3:
+				dst = append(dst, `Wed`...)
+			case 4:
+				dst = append(dst, `Thu`...)
+			case 5:
+				dst = append(dst, `Fri`...)
+			case 6:
+				dst = append(dst, `Sat`...)
+			}
 			dst = append(dst, ' ')
 		}
-		if Ftime&format != 0 {
+		if (Ftime|FtimeMs)&format != 0 {
 			h, m, s := t.Clock()
 			dst = conv.Intf(dst, h, 2, ':')
 			dst = conv.Intf(dst, m, 2, ':')
-			dst = conv.Intf(dst, s, 2, ',')
-			dst = conv.Intf(dst, t.Nanosecond()/1e6, 3, ' ')
+			if FtimeMs&format != 0 {
+				dst = conv.Intf(dst, s, 2, ',')
+				dst = conv.Intf(dst, t.Nanosecond()/1e6, 3, ' ')
+			} else {
+				dst = conv.Intf(dst, s, 2, ' ')
+			}
 		}
 	}
 	return dst
@@ -184,24 +251,26 @@ func (f *formatText) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	return append(dst, ']', ' ')
 }
 func (f *formatText) AppendMsg(dst []byte, s string) []byte {
-	for _, c := range s {
-		if c != '\n' {
-			dst = append(dst, byte(c))
+	for i := 0; i < len(s); i++ {
+		if s[i] != '\n' {
+			dst = append(dst, s[i])
 		} else {
 			dst = append(dst, ' ')
 		}
 	}
+
 	return append(dst, ' ') //return conv.EscString(dst, s, false, ' ')
 }
 
 func (f *formatText) AppendMsgBytes(dst []byte, p []byte) []byte {
-	for _, c := range p {
-		if c != '\n' {
-			dst = append(dst, c)
+	for i := 0; i < len(p); i++ {
+		if p[i] != '\n' {
+			dst = append(dst, p[i])
 		} else {
 			dst = append(dst, ' ')
 		}
 	}
+
 	return append(dst, ' ') // return conv.EscStringBytes(dst, p, false, ' ')
 }
 
