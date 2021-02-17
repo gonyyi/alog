@@ -23,11 +23,10 @@ var FmtText *formatText = &formatText{}
 type formatJSON struct{}
 
 func (f *formatJSON) Start(dst []byte, prefix []byte) []byte {
-	dst = append(dst, '{')
 	if prefix != nil {
-		return append(dst, prefix...)
+		dst = append(dst, prefix...)
 	}
-	return dst
+	return append(dst, '{')
 }
 func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 	t := time.Now()
@@ -77,6 +76,7 @@ func (f *formatJSON) AppendMsg(dst []byte, s string) []byte {
 	dst = append(dst, `"msg":`...)
 	return conv.EscString(dst, s, true, ',')
 }
+
 func (f *formatJSON) AppendMsgBytes(dst []byte, p []byte) []byte {
 	dst = append(dst, `"msg":`...)
 	return conv.EscStringBytes(dst, p, true, ',')
@@ -139,6 +139,7 @@ func (f *formatText) Start(dst []byte, prefix []byte) []byte {
 	}
 	return dst
 }
+
 func (f *formatText) AppendTime(dst []byte, format Format) []byte {
 	t := time.Now()
 	if FtimeUnixMs&format != 0 {
@@ -183,29 +184,44 @@ func (f *formatText) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	return append(dst, ']', ' ')
 }
 func (f *formatText) AppendMsg(dst []byte, s string) []byte {
-	return conv.EscString(dst, s, false, ' ')
+	for _, c := range s {
+		if c != '\n' {
+			dst = append(dst, byte(c))
+		} else {
+			dst = append(dst, ' ')
+		}
+	}
+	return append(dst, ' ') //return conv.EscString(dst, s, false, ' ')
 }
+
 func (f *formatText) AppendMsgBytes(dst []byte, p []byte) []byte {
-	return conv.EscStringBytes(dst, p, false, ' ')
+	for _, c := range p {
+		if c != '\n' {
+			dst = append(dst, c)
+		} else {
+			dst = append(dst, ' ')
+		}
+	}
+	return append(dst, ' ') // return conv.EscStringBytes(dst, p, false, ' ')
 }
 
 func (f *formatText) AppendKVInt(dst []byte, key string, val int) []byte {
-	dst = conv.EscKey(dst, key, true, '=')
+	dst = conv.EscKey(dst, key, false, '=')
 	return conv.Int(dst, val, false, ',')
 }
 
 func (f *formatText) AppendKVString(dst []byte, key string, val string) []byte {
-	dst = conv.EscKey(dst, key, true, '=')
+	dst = conv.EscKey(dst, key, false, '=')
 	return conv.EscString(dst, val, true, ',')
 }
 
 func (f *formatText) AppendKVFloat(dst []byte, key string, val float64) []byte {
-	dst = conv.EscKey(dst, key, true, '=')
+	dst = conv.EscKey(dst, key, false, '=')
 	return conv.Float(dst, val, false, ',')
 }
 
 func (f *formatText) AppendKVBool(dst []byte, key string, val bool) []byte {
-	dst = conv.EscKey(dst, key, true, '=')
+	dst = conv.EscKey(dst, key, false, '=')
 	if val == true {
 		return append(dst, `true,`...)
 	}
@@ -213,11 +229,11 @@ func (f *formatText) AppendKVBool(dst []byte, key string, val bool) []byte {
 }
 
 func (f *formatText) AppendKVError(dst []byte, key string, val error) []byte {
-	dst = conv.EscKey(dst, key, true, '=')
+	dst = conv.EscKey(dst, key, false, '=')
 	if val != nil {
 		return conv.EscString(dst, val.Error(), true, ',')
 	}
-	return append(dst, `null,`...)
+	return append(dst, `nil,`...)
 }
 
 func (f *formatText) AppendSuffix(dst []byte, suffix []byte) []byte {
