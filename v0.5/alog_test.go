@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 func BenchmarkNew(b *testing.B) {
 	al := alog.New(nil)
 
-	b.Run("Log", func(b2 *testing.B) {
+	b.Run("Check", func(b2 *testing.B) {
 		b2.ReportAllocs()
 		for i := 0; i < b2.N; i++ {
 			al.Log(alog.Lerror, 0, "test")
