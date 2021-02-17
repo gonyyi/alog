@@ -7,30 +7,28 @@ import (
 
 func New(w io.Writer) *Logger {
 	l := Logger{
-		out:   toAlWriter(w),
-		fmtr:  FmtrText, // FmtrJSON,
-		fflag: Fdefault,
+		out:     toAlWriter(w),
+		fmt:     FmtText, // FmtJSON,
+		fmtFlag: Fdefault,
 	}
 	l.ctl.ctlLevel = Linfo
 	l.buf.Init(nil, nil, 512, 2048) // TODO: clean up this
-
 	return &l
 }
 
 type Logger struct {
-	mu    sync.Mutex // check if i really don't need this IF i am using sync.Pool
-	out   AlWriter
-	buf   bufSyncPool
-	fmtr  Formatter
-	ctl   control
-	fflag Format
+	mu      sync.Mutex // check if i really don't need this IF i am using sync.Pool
+	out     AlWriter
+	buf     bufSyncPool
+	fmt     Formatter
+	ctl     control
+	fmtFlag Format
 }
 
-func (l *Logger) SetFormatter(fmtr Formatter) *Logger {
-	if fmtr != nil {
-		l.fmtr = fmtr
+func (l *Logger) Do(fns ...func(*Logger)) {
+	for _, f := range fns {
+		f(l)
 	}
-	return l
 }
 func (l *Logger) Output() io.Writer {
 	return l.out
@@ -39,11 +37,17 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 	l.out = toAlWriter(w)
 	return l
 }
+func (l *Logger) SetFormatter(fmt Formatter) *Logger {
+	if fmt != nil {
+		l.fmt = fmt
+	}
+	return l
+}
 func (l *Logger) Format() Format {
-	return l.fflag
+	return l.fmtFlag
 }
 func (l *Logger) SetFormat(f Format) *Logger {
-	l.fflag = f
+	l.fmtFlag = f
 	return l
 }
 func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
@@ -52,23 +56,27 @@ func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
 func (l *Logger) MustGetTag(name string) (tag Tag) {
 	return l.ctl.Tags.MustGetTag(name)
 }
+func (l *Logger) SetHook(h HookFn) *Logger {
+	l.ctl.hook = h
+	return l
+}
 func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 	if l.ctl.Check(level, tag) {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 
-		buf.Head = l.fmtr.Start(buf.Head, nil)
+		buf.Head = l.fmt.Start(buf.Head, nil)
 
-		if l.fflag&fUseTime != 0 {
-			buf.Head = l.fmtr.AppendTime(buf.Head, l.fflag)
+		if l.fmtFlag&fUseTime != 0 {
+			buf.Head = l.fmt.AppendTime(buf.Head, l.fmtFlag)
 		}
-		if l.fflag&Flevel != 0 {
-			buf.Head = l.fmtr.AppendLevel(buf.Head, level)
+		if l.fmtFlag&Flevel != 0 {
+			buf.Head = l.fmt.AppendLevel(buf.Head, level)
 		}
-		if l.fflag&Ftag != 0 {
-			buf.Head = l.fmtr.AppendTag(buf.Head, &l.ctl.Tags, tag)
+		if l.fmtFlag&Ftag != 0 {
+			buf.Head = l.fmt.AppendTag(buf.Head, &l.ctl.Tags, tag)
 		}
-		buf.Body = l.fmtr.AppendMsg(buf.Body, msg)
+		buf.Body = l.fmt.AppendMsg(buf.Body, msg)
 
 		if a != nil {
 			lenA := len(a)
@@ -82,34 +90,45 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 					next := a[i+1]
 					switch next.(type) {
 					case string:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(string))
+						buf.Body = l.fmt.AppendKVString(buf.Body, key, next.(string))
 					case nil:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `nil`)
+						buf.Body = l.fmt.AppendKVString(buf.Body, key, `nil`)
 					case error:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(error).Error())
+						buf.Body = l.fmt.AppendKVString(buf.Body, key, next.(error).Error())
 					case bool:
-						buf.Body = l.fmtr.AppendKVBool(buf.Body, key, next.(bool))
+						buf.Body = l.fmt.AppendKVBool(buf.Body, key, next.(bool))
 					case int:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, next.(int))
+						buf.Body = l.fmt.AppendKVInt(buf.Body, key, next.(int))
 					case int64:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(int64)))
+						buf.Body = l.fmt.AppendKVInt(buf.Body, key, int(next.(int64)))
 					case uint:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(uint)))
+						buf.Body = l.fmt.AppendKVInt(buf.Body, key, int(next.(uint)))
 					case float32:
-						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, float64(next.(float32)))
+						buf.Body = l.fmt.AppendKVFloat(buf.Body, key, float64(next.(float32)))
 					case float64:
-						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, next.(float64))
+						buf.Body = l.fmt.AppendKVFloat(buf.Body, key, next.(float64))
 					default:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `unsupp??`)
+						buf.Body = l.fmt.AppendKVString(buf.Body, key, `unsupp??`)
 					}
 				} else {
-					buf.Body = l.fmtr.AppendKVString(buf.Body, key, `null`)
+					buf.Body = l.fmt.AppendKVString(buf.Body, key, `null`)
 				}
 			}
 		}
 
-		l.out.WriteTag(level, tag, buf.Head, l.fmtr.Final(buf.Body, nil))
+		if l.ctl.hook != nil {
+			l.ctl.hook(level, tag, buf.Body)
+		}
+
+		l.out.WriteTag(level, tag, buf.Head, l.fmt.Final(buf.Body, nil))
 	}
+}
+func (l *Logger) Iferr(err error, tag Tag, msg string) bool {
+	if err != nil {
+		l.Log(Lerror, tag, msg, "error", err)
+		return true
+	}
+	return false
 }
 func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
 	l.Log(Ltrace, tag, msg, a...)

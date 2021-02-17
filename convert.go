@@ -248,7 +248,7 @@ func (c convert) Floatf(dst []byte, f float64, decPlace int, suffix byte) []byte
 		}
 		dst = append(dst, '.')
 		// 3.145 --> 3.145 - 3 = 0.145 * 100 = 14.5
-		// (fmtr - float32(int(fmtr))) * float32(multiplier)
+		// (fmt - float32(int(fmt))) * float32(multiplier)
 		// (3.145 - float32(3)) * float32(1000) = 145
 		tmp := int((f - float64(int(f))) * float64(multiplier))
 		if tmp%10 > 4 {
