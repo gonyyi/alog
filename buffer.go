@@ -6,13 +6,11 @@ import "sync"
 type buffer struct {
 	HeadCap int
 	BodyCap int
-	Prefix  []byte
 	Head    []byte
 	Body    []byte
-	Suffix  []byte
 }
 
-func (pi *buffer) Init(prefix, suffix []byte, headCap, bodyCap int) {
+func (pi *buffer) Init(headCap, bodyCap int) {
 	if headCap < 1 {
 		headCap = 256
 	}
@@ -20,8 +18,6 @@ func (pi *buffer) Init(prefix, suffix []byte, headCap, bodyCap int) {
 		bodyCap = 1024
 	}
 	pi.HeadCap, pi.BodyCap = headCap, bodyCap
-	pi.Prefix = prefix
-	pi.Suffix = suffix
 	pi.Head = make([]byte, headCap)
 	pi.Body = make([]byte, bodyCap)
 }
@@ -31,15 +27,22 @@ func (pi *buffer) Reset() {
 	pi.Body = pi.Body[:0]
 }
 
+// Future use
+//	type Buffer interface {
+//		Init(headCap, bodyCap int)
+//		Get() *buffer
+//		Reset(b *buffer)
+//	}
+
 type bufSyncPool struct {
 	pool sync.Pool
 }
 
-func (p *bufSyncPool) Init(prefix, suffix []byte, headCap, bodyCap int) {
+func (p *bufSyncPool) Init(headCap, bodyCap int) {
 	p.pool = sync.Pool{
 		New: func() interface{} {
 			b := buffer{}
-			b.Init(prefix, suffix, headCap, bodyCap)
+			b.Init(headCap, bodyCap)
 			return &b
 		},
 	}

@@ -1,12 +1,25 @@
 package alog
 
-var conv = newConvert()
-
-func newConvert() *convert {
+var conv = func() *convert {
 	c := convert{}
 	c.Init()
 	return &c
-}
+}()
+
+// For future need:
+//	type Converter interface {
+//		Init()
+//		EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
+//		EscKeyBytes(dst []byte, b []byte, addQuote bool, suffix byte) []byte
+//		EscString(dst []byte, s string, addQuote bool, suffix byte) []byte
+//		EscStringBytes(dst []byte, p []byte, addQuote bool, suffix byte) []byte
+//		Int(dst []byte, i int, quote bool, suffix byte) []byte
+//		Intf(dst []byte, i int, minLength int, suffix byte) []byte
+//		Float(dst []byte, f float64, quote bool, suffix byte) []byte
+//		Floatf(dst []byte, f float64, decPlace int, suffix byte) []byte
+//		Bool(dst []byte, b bool, quote bool, suffix byte) []byte
+//		Error(dst []byte, err error, quote bool, suffix byte) []byte
+//	}
 
 type convert [128]bool
 

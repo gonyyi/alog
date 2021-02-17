@@ -2,79 +2,138 @@ package alog
 
 import (
 	"io"
-	"sync"
 )
 
-func New(w io.Writer) *Logger {
+// New will return a Alog logger pointer with default values.
+// This function will take an io.Writer and convert it to AlWriter.
+// A user's custom AlWriter will let the user steer more control.
+// (eg. per tag, or per level)
+// Default formatter: 		FmtText
+// Default format flag:		date, time, level, tag
+// Default logging level: 	Info
+// Default buffer size: 	512, 2048
+func New(w io.Writer, fns ...func(*Logger)) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
 		fmt:     FmtText, // FmtJSON,
 		fmtFlag: Fdefault,
 	}
-	l.ctl.ctlLevel = Linfo
-	l.buf.Init(nil, nil, 512, 2048) // TODO: clean up this
+	l.ctl.CtlTag(Linfo, 0)
+	l.buf.Init(1024, 2048)
 	return &l
 }
 
+// Logger is a main struct for Alog.
 type Logger struct {
-	mu      sync.Mutex // check if i really don't need this IF i am using sync.Pool
-	out     AlWriter
-	buf     bufSyncPool
-	fmt     Formatter
-	ctl     control
-	fmtFlag Format
+	out       AlWriter
+	buf       bufSyncPool
+	fmt       Formatter
+	fmtPrefix []byte
+	fmtSuffix []byte
+	ctl       control
+	fmtFlag   Format
 }
 
+// Do will run (series of) function(s) and is used for
+// quick macro like settings for the logger.
 func (l *Logger) Do(fns ...func(*Logger)) {
 	for _, f := range fns {
 		f(l)
 	}
 }
-func (l *Logger) Output() AlWriter {
-	return l.out
+
+// Close will close io.Writer if applicable
+func (l *Logger) Close() error {
+	if c, ok := l.out.(io.Closer); ok && c != nil {
+		return c.Close()
+	}
+	return nil
 }
+
+// SetOutput will set the output writer to be used
+// in the logger. If nil is given, it will discard the output.
 func (l *Logger) SetOutput(w io.Writer) *Logger {
 	l.out = toAlWriter(w)
 	return l
 }
+
+// SetFormatter will take Formatter compatible objects.
+// This will only reset the formatter if it's not nil.
+// In case nil is given as its argument, it will ignore.
 func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 	if fmt != nil {
 		l.fmt = fmt
 	}
 	return l
 }
-func (l *Logger) Format() Format {
-	return l.fmtFlag
-}
+
+// SetFormat will set the format flag.
 func (l *Logger) SetFormat(f Format) *Logger {
 	l.fmtFlag = f
 	return l
 }
+
+// SetBufferSize will initialize head and body buffers.
+func (l *Logger) SetBufferSize(head, body int) *Logger {
+	l.buf.Init(head, body)
+	return l
+}
+
+// SetAffix will set both prefix and suffix. If only is not to be set,
+// use nil. Eg. SetAffix(nil, []byte("--end"))
+func (l *Logger) SetAffix(prefix, suffix []byte) *Logger {
+	l.fmtPrefix, l.fmtSuffix = prefix, suffix
+	return l
+}
+
+// GetTag will take a name of tag and return it. If not found, it will
+// return false for the output ok.
 func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
 	return l.ctl.Tags.GetTag(name)
 }
+
+// MustGetTag will return a tag. If a required tag is not exists,
+// it will create one.
 func (l *Logger) MustGetTag(name string) (tag Tag) {
 	return l.ctl.Tags.MustGetTag(name)
 }
-func (l *Logger) SetControlFn(fn func(Level, Tag) bool) *Logger {
+
+// SetControlFn will set a ControlFn that determines what to log.
+// By using this instead of SetControl, a user can control precisely.
+func (l *Logger) SetControlFn(fn ControlFn) *Logger {
 	l.ctl.CtlFn(fn)
 	return l
 }
+
+// SetControl will set logging level and tag.
+// Note that this is an OR condition: if level has met the minimum logging level OR
+// tag is met, the logger will log. For any precise control, use SetControlFn.
 func (l *Logger) SetControl(lv Level, tag Tag) *Logger {
 	l.ctl.CtlTag(lv, tag)
 	return l
 }
+
+// SetHook will run HookFn if set. This can be used to special custom situation.
+// As HookFn will run AFTER right before formatter's method Final is being called,
+// its argument p []byte will have already formatted body.
 func (l *Logger) SetHook(h HookFn) *Logger {
 	l.ctl.hook = h
 	return l
 }
+
+// Log is a main method of logging. This takes level, tag, message, as well as optional
+// data. The optional data has to be in pairs of name and value. For the speed, Alog only
+// supports basic types: int, int64, uint, string, bool, float32, float64.
 func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
-	if l.ctl.Check(level, tag) {
+	if l.ctl.Check(level, tag) && l.fmt != nil && l.out != nil {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 
-		buf.Head = l.fmt.Start(buf.Head, nil)
-
+		if l.fmtFlag&Fprefix != 0 {
+			buf.Head = l.fmt.Start(buf.Head, l.fmtPrefix)
+		} else {
+			buf.Head = l.fmt.Start(buf.Head, nil)
+		}
 		if l.fmtFlag&fUseTime != 0 {
 			buf.Head = l.fmt.AppendTime(buf.Head, l.fmtFlag)
 		}
@@ -127,10 +186,18 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 		if l.ctl.hook != nil {
 			l.ctl.hook(level, tag, buf.Body)
 		}
-
-		l.out.WriteTag(level, tag, buf.Head, l.fmt.Final(buf.Body, nil))
+		// Check prefix flag, if exist run.
+		if l.fmtFlag&Fsuffix != 0 {
+			buf.Body = l.fmt.Final(buf.Body, l.fmtSuffix)
+		} else {
+			buf.Body = l.fmt.Final(buf.Body, nil)
+		}
+		l.out.WriteTag(level, tag, buf.Head, buf.Body)
 	}
 }
+
+// Iferr method will log an error when argument err is not nil.
+// This also returns true/false if error is or not nil.
 func (l *Logger) Iferr(err error, tag Tag, msg string) bool {
 	if err != nil {
 		l.Log(Lerror, tag, msg, "error", err)
@@ -138,24 +205,43 @@ func (l *Logger) Iferr(err error, tag Tag, msg string) bool {
 	}
 	return false
 }
+
+// Trace records a msg with a trace level with optional additional variables
 func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
 	l.Log(Ltrace, tag, msg, a...)
 }
+
+// Debug records a msg with a debug level with optional additional variables
 func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
 	l.Log(Ldebug, tag, msg, a...)
 }
+
+// Info records a msg with an info level with optional additional variables
+// And info level is default log level of Alog.
 func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
 	l.Log(Linfo, tag, msg, a...)
 }
+
+// Notice records a msg with a notice level with optional additional variables
+// This notice level can be used where additional handling is required, but
+// is not a warning or an error.
 func (l *Logger) Notice(tag Tag, msg string, a ...interface{}) {
 	l.Log(Lnotice, tag, msg, a...)
 }
+
+// Warn records a msg with a warning level with optional additional variables
 func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
 	l.Log(Lwarn, tag, msg, a...)
 }
+
+// Error records a msg with an error level with optional additional variables
 func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
 	l.Log(Lerror, tag, msg, a...)
 }
+
+// Fatal records a msg with a fatal level with optional additional variables.
+// Unlike other logger, Alog will NOT terminal the program with a Fatal method.
+// A user need to handle what to do.
 func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
 	l.Log(Lfatal, tag, msg, a...)
 }

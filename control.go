@@ -81,6 +81,8 @@ func (f Format) Off(item Format) Format {
 const (
 	// Fprefix will show prefix when printing log message
 	Fprefix Format = 1 << iota
+	// Fsuffix will add suffix
+	Fsuffix
 	// Fdate will show both CCYY and MMDD
 	Fdate
 	// FdateDay will show 0-6 for JSON or (Sun-Mon)
@@ -117,6 +119,9 @@ func (c *control) SetHook(h HookFn) {
 	c.hook = h
 }
 
+// ControlFn enables for a user to set a precise control on what to log.
+type ControlFn func(Level, Tag) bool
+
 // HookFn is a type for a function designed to run when certain condition meets
 type HookFn func(lvl Level, tag Tag, p []byte)
 
@@ -137,7 +142,7 @@ func (c *control) Check(lvl Level, tag Tag) bool {
 	switch {
 	case c.ctlFn != nil: // FilterFn has the highest order if Set.
 		return c.ctlFn(lvl, tag)
-	case c.ctlLevel < lvl: // if level is higher than set level, print
+	case c.ctlLevel <= lvl: // if level is higher than set level, print
 		return true
 	case c.ctlTag&tag != 0: // even if level is not high, if tag matches, print
 		return true
