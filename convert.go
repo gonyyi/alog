@@ -23,11 +23,24 @@ func (c convert) EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
 	if addQuote {
 		dst = append(dst, '"')
 	}
+
 	for i := 0; i < len(s); i++ {
 		if c[s[i]] {
 			dst = append(dst, s[i])
 		}
 	}
+
+	//dst = append(dst, s...)
+
+	//cur := 0
+	//for i := 0; i < len(s); i++ {
+	//	if !c[s[i]] {
+	//		dst = append(dst, s[cur:i+1]...)
+	//		cur = i + 1
+	//	}
+	//}
+	//dst = append(dst, s[cur:]...)
+
 	if addQuote {
 		if suffix != 0 {
 			return append(dst, '"', suffix)
