@@ -35,7 +35,7 @@ type formatANSI struct {
 }
 
 func (f *formatANSI) Init() {
-	f.conv = alog.Defaults.Converter()
+	f.conv = alog.Conf.Converter()
 }
 func (f *formatANSI) Start(dst []byte, prefix []byte) []byte {
 	//dst = append(dst, fmtAnsiDIM...)

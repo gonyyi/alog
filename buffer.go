@@ -2,21 +2,21 @@ package alog
 
 import "sync"
 
-// buffer is the main buffer format used in Alog.
+// buf is the main buf format used in Alog.
 // This can be used as standalone or within the sync.Pool
-type buffer struct {
+type buf struct {
 	HeadCap int
 	BodyCap int
 	Head    []byte
 	Body    []byte
 }
 
-func (pi *buffer) Init(headCap, bodyCap int) {
+func (pi *buf) Init(headCap, bodyCap int) {
 	if headCap < 1 {
-		headCap = 256
+		headCap = 512
 	}
 	if bodyCap < 1 {
-		bodyCap = 1024
+		bodyCap = 2048
 	}
 	pi.HeadCap, pi.BodyCap = headCap, bodyCap
 	pi.Head = make([]byte, headCap)
@@ -25,17 +25,16 @@ func (pi *buffer) Init(headCap, bodyCap int) {
 
 // Reset will resize the buffers. In case a large size data came in,
 // this will reset the size of buffers.
-func (pi *buffer) Reset() {
+func (pi *buf) Reset() {
 	pi.Head = pi.Head[:pi.HeadCap]
 	pi.Body = pi.Body[:pi.BodyCap]
 }
 
-// Future use
-//	type Buffer interface {
-//		Init(headCap, bodyCap int)
-//		Get() *buffer
-//		Reset(b *buffer)
-//	}
+type Buffer interface {
+	Init(headCap, bodyCap int)
+	Get() *buf
+	Reset(b *buf)
+}
 
 // bufSyncPool is an a Buffer implementation of sync.Pool.
 type bufSyncPool struct {
@@ -45,21 +44,21 @@ type bufSyncPool struct {
 func (p *bufSyncPool) Init(headCap, bodyCap int) {
 	p.pool = sync.Pool{
 		New: func() interface{} {
-			b := buffer{}
+			b := buf{}
 			b.Init(headCap, bodyCap)
 			return &b
 		},
 	}
 }
 
-func (p *bufSyncPool) Get() *buffer {
-	b := p.pool.Get().(*buffer)
+func (p *bufSyncPool) Get() *buf {
+	b := p.pool.Get().(*buf)
 	b.Body = b.Body[:0]
 	b.Head = b.Head[:0]
 	return b
 }
 
-func (p *bufSyncPool) Reset(b *buffer) {
+func (p *bufSyncPool) Reset(b *buf) {
 	b.Reset()
 	p.pool.Put(b)
 }

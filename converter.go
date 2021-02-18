@@ -18,13 +18,15 @@ type Converter interface {
 // convert is a converter struct that will take certain variables and append to the destination slice.
 // Also, a converter has escape logics as well. The type of convert as an interface object can have
 // anything, but for Alog's convert, boolean array (of size 128) is being used.
-type convert [128]bool
+type convert struct {
+	key [128]bool
+}
 
 func (c *convert) Init() {
 	// Initialize key values
 	for i := 0; i < 128; i++ {
 		if i == 45 || i == 46 || (47 < i && i < 58) || (64 < i && i < 91) || i == 95 || (96 < i && i < 123) {
-			c[i] = true
+			c.key[i] = true
 		}
 	}
 }
@@ -36,7 +38,7 @@ func (c convert) EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
 
 	// Only allowed
 	for i := 0; i < len(s); i++ {
-		if c[s[i]] {
+		if c.key[s[i]] {
 			dst = append(dst, s[i])
 		}
 	}
@@ -70,7 +72,7 @@ func (c convert) EscKeyBytes(dst []byte, b []byte, addQuote bool, suffix byte) [
 		dst = append(dst, '"')
 	}
 	for i := 0; i < len(b); i++ {
-		if c[b[i]] {
+		if c.key[b[i]] {
 			dst = append(dst, b[i])
 		}
 	}
@@ -258,7 +260,7 @@ func (c convert) Floatf(dst []byte, f float64, decPlace int, suffix byte) []byte
 		}
 		dst = append(dst, '.')
 		// 3.145 --> 3.145 - 3 = 0.145 * 100 = 14.5
-		// (fmt - float32(int(fmt))) * float32(multiplier)
+		// (fmtr - float32(int(fmtr))) * float32(multiplier)
 		// (3.145 - float32(3)) * float32(1000) = 145
 		tmp := int((f - float64(int(f))) * float64(multiplier))
 		if tmp%10 > 4 {

@@ -5,7 +5,7 @@ import (
 )
 
 // AlWriter is a combination of a formatter and a writer for Alog.
-// It will be in charge of its own buffer and formatting.
+// It will be in charge of its own buf and formatting.
 type AlWriter interface {
 	io.Writer
 	// WriteLvt will take level and tag. This is to be used as a conditional writer.

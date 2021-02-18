@@ -22,7 +22,7 @@ type formatText struct {
 
 func (f *formatText) Init() {
 	if f.conv == nil {
-		f.conv = alog.Defaults.Converter()
+		f.conv = alog.Conf.Converter()
 	}
 }
 

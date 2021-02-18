@@ -21,7 +21,7 @@ type formatJSON struct {
 }
 
 func (f *formatJSON) Init() {
-	f.conv = alog.Defaults.Converter()
+	f.conv = alog.Conf.Converter()
 }
 func (f *formatJSON) Start(dst []byte, prefix []byte) []byte {
 	if prefix != nil {

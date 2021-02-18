@@ -11,23 +11,26 @@ import (
 // Default formatter: 		FmtText
 // Default format flag:		date, time, level, tag
 // Default logging level: 	Info
-// Default buffer size: 	512, 2048
+// Default buf size: 	512, 2048
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
-		fmt:     Defaults.Formatter(), // or Defaults.formatterJSON
-		fmtFlag: Fdefault,
+		buf:     Conf.Buffer(),
+		fmtr:    Conf.Formatter(),
+		fmtFlag: Conf.FormatFlag,
 	}
-	l.ctl.CtlTag(Linfo, 0)
-	l.buf.Init(1024, 2048)
+
+	l.ctl.CtlTag(Conf.ControlLevel, 0)
+	l.buf.Init(Conf.BufferHead, Conf.BufferBody)
 	return &l
 }
 
 // Logger is a main struct for Alog.
 type Logger struct {
 	out       AlWriter
-	buf       bufSyncPool
-	fmt       Formatter
+	buf       Buffer
+	fmt       formatJSON
+	fmtr      Formatter
 	fmtPrefix []byte
 	fmtSuffix []byte
 	ctl       control
@@ -62,9 +65,9 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 // In case nil is given as its argument, it will ignore.
 func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 	if fmt != nil {
-		l.fmt = fmt
+		l.fmtr = fmt
 	} else {
-		l.fmt = Defaults.Formatter()
+		l.fmtr = Conf.Formatter()
 	}
 	return l
 }
@@ -127,15 +130,15 @@ func (l *Logger) SetHook(h HookFn) *Logger {
 // data. The optional data has to be in pairs of name and value. For the speed, Alog only
 // supports basic types: int, int64, uint, string, bool, float32, float64.
 func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, error) {
-	if l.ctl.Check(level, tag) && l.fmt != nil && l.out != nil {
+	if l.ctl.Check(level, tag) && l.fmtr != nil && l.out != nil {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 
 		buf.Head = l.logHead(level, tag, buf.Head)
-		buf.Body = l.fmt.AppendMsg(buf.Body, msg)
+		buf.Body = l.fmtr.AppendMsg(buf.Body, msg)
 
 		if a != nil {
-			buf.Body = l.fmt.AppendSeparator(buf.Body)
+			buf.Body = l.fmtr.AppendSeparator(buf.Body)
 			lenA := len(a)
 			idxA := lenA - 1
 			for i := 0; i < lenA; i += 2 { // 0, 2, 4..
@@ -147,28 +150,28 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, e
 					next := a[i+1]
 					switch next.(type) {
 					case string:
-						buf.Body = l.fmt.AppendKVString(buf.Body, key, next.(string))
+						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(string))
 					case nil:
-						buf.Body = l.fmt.AppendKVString(buf.Body, key, `nil`)
+						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `nil`)
 					case error:
-						buf.Body = l.fmt.AppendKVString(buf.Body, key, next.(error).Error())
+						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(error).Error())
 					case bool:
-						buf.Body = l.fmt.AppendKVBool(buf.Body, key, next.(bool))
+						buf.Body = l.fmtr.AppendKVBool(buf.Body, key, next.(bool))
 					case int:
-						buf.Body = l.fmt.AppendKVInt(buf.Body, key, next.(int))
+						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, next.(int))
 					case int64:
-						buf.Body = l.fmt.AppendKVInt(buf.Body, key, int(next.(int64)))
+						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(int64)))
 					case uint:
-						buf.Body = l.fmt.AppendKVInt(buf.Body, key, int(next.(uint)))
+						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(uint)))
 					case float32:
-						buf.Body = l.fmt.AppendKVFloat(buf.Body, key, float64(next.(float32)))
+						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, float64(next.(float32)))
 					case float64:
-						buf.Body = l.fmt.AppendKVFloat(buf.Body, key, next.(float64))
+						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, next.(float64))
 					default:
-						buf.Body = l.fmt.AppendKVString(buf.Body, key, `unsupp??`)
+						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `unsupp??`)
 					}
 				} else {
-					buf.Body = l.fmt.AppendKVString(buf.Body, key, `null`)
+					buf.Body = l.fmtr.AppendKVString(buf.Body, key, `null`)
 				}
 			}
 		}
@@ -180,11 +183,11 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, e
 
 // logb will log a simple msg but takes byte slice instead of string
 func (l *Logger) logb(level Level, tag Tag, msgb []byte) (n int, err error) {
-	if l.ctl.Check(level, tag) && l.fmt != nil && l.out != nil {
+	if l.ctl.Check(level, tag) && l.fmtr != nil && l.out != nil {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 		buf.Head = l.logHead(level, tag, buf.Head)
-		buf.Body = l.fmt.AppendMsgBytes(buf.Body, msgb)
+		buf.Body = l.fmtr.AppendMsgBytes(buf.Body, msgb)
 
 		buf.Body = l.logTail(level, tag, buf.Body)
 		return l.out.WriteTag(level, tag, buf.Head, buf.Body)
@@ -195,19 +198,19 @@ func (l *Logger) logb(level Level, tag Tag, msgb []byte) (n int, err error) {
 // logHead creates head part of the log message.
 func (l *Logger) logHead(level Level, tag Tag, dst []byte) []byte {
 	if l.fmtFlag&Fprefix != 0 {
-		dst = l.fmt.Start(dst, l.fmtPrefix)
+		dst = l.fmtr.Start(dst, l.fmtPrefix)
 	} else {
-		dst = l.fmt.Start(dst, nil)
+		dst = l.fmtr.Start(dst, nil)
 	}
 	// If any time components are in the format flag, then append the time
 	if l.fmtFlag&fUseTime != 0 {
-		dst = l.fmt.AppendTime(dst, l.fmtFlag)
+		dst = l.fmtr.AppendTime(dst, l.fmtFlag)
 	}
 	if l.fmtFlag&Flevel != 0 {
-		dst = l.fmt.AppendLevel(dst, level)
+		dst = l.fmtr.AppendLevel(dst, level)
 	}
 	if l.fmtFlag&Ftag != 0 {
-		dst = l.fmt.AppendTag(dst, &l.ctl.Tags, tag)
+		dst = l.fmtr.AppendTag(dst, &l.ctl.Tags, tag)
 	}
 	return dst
 }
@@ -220,9 +223,9 @@ func (l *Logger) logTail(level Level, tag Tag, dst []byte) []byte {
 	}
 	// Check prefix flag, if exist run.
 	if l.fmtFlag&Fsuffix != 0 {
-		return l.fmt.Final(dst, l.fmtSuffix)
+		return l.fmtr.Final(dst, l.fmtSuffix)
 	} else {
-		return l.fmt.Final(dst, nil)
+		return l.fmtr.Final(dst, nil)
 	}
 }
 
