@@ -11,12 +11,12 @@ const (
 	fmtAnsiBOLD   = "\033[0;1m"
 	fmtAnsiITALIC = "\033[0;1;3m"
 
-	fmtAnsiTRACE = "\033[0;37;100m"
-	fmtAnsiDEBUG = "\033[0;42;30m"
-	fmtAnsiINFO  = "\033[0;44;30m"
-	fmtAnsiWARN  = "\033[0;103;30m"
-	fmtAnsiERROR = "\033[0;101;30m"
-	fmtAnsiFATAL = "\033[0;1;105;30m"
+	fmtAnsiTRACE = "\033[100;37m"
+	fmtAnsiDEBUG = "\033[102;90m"
+	fmtAnsiINFO  = "\033[104;90m"
+	fmtAnsiWARN  = "\033[1;103;90m"
+	fmtAnsiERROR = "\033[1;101;90m"
+	fmtAnsiFATAL = "\033[1;105;90m"
 )
 
 var formatterANSI alog.Formatter
