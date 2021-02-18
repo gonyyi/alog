@@ -172,7 +172,9 @@ func (f *formatANSI) AppendMsgBytes(dst []byte, p []byte) []byte {
 	return append(dst, ' ') // return conv.EscStringBytes(dst, p, false, ' ')
 }
 func (f *formatANSI) AppendSeparator(dst []byte) []byte {
-	return append(dst, `// `...)
+	dst = append(dst, fmtAnsiDIM...)
+	dst = append(dst, `// `...)
+	return append(dst, fmtAnsiCLEAR...)
 }
 func (f *formatANSI) AppendKVInt(dst []byte, key string, val int) []byte {
 	dst = append(dst, fmtAnsiDIM...)
