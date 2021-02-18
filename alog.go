@@ -15,7 +15,7 @@ import (
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
-		fmt:     Defaults.FormatterText(), // or Defaults.formatterJSON
+		fmt:     Defaults.Formatter(), // or Defaults.formatterJSON
 		fmtFlag: Fdefault,
 	}
 	l.ctl.CtlTag(Linfo, 0)
@@ -64,7 +64,7 @@ func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 	if fmt != nil {
 		l.fmt = fmt
 	} else {
-		l.fmt = Defaults.FormatterText()
+		l.fmt = Defaults.Formatter()
 	}
 	return l
 }

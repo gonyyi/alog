@@ -9,8 +9,8 @@ func newDefaults() *defaults {
 }
 
 type defaults struct {
-	converter     Converter
-	formatterText Formatter
+	converter Converter
+	formatter Formatter
 }
 
 func (d *defaults) Converter() Converter {
@@ -21,10 +21,10 @@ func (d *defaults) Converter() Converter {
 	return d.converter
 }
 
-func (d *defaults) FormatterText() Formatter {
-	if d.formatterText == nil {
-		d.formatterText = &formatText{}
-		d.formatterText.Init()
+func (d *defaults) Formatter() Formatter {
+	if d.formatter == nil {
+		d.formatter = &formatJSON{}
+		d.formatter.Init()
 	}
-	return d.formatterText
+	return d.formatter
 }
