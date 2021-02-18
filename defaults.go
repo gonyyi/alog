@@ -5,14 +5,26 @@ var Defaults *defaults = newDefaults()
 
 func newDefaults() *defaults {
 	d := defaults{}
-	d.Converter.Init()
-	d.FormatterJSON = &formatJSON{}
-	d.FormatterText = &formatText{}
 	return &d
 }
 
 type defaults struct {
-	Converter     convert
-	FormatterJSON Formatter
-	FormatterText Formatter
+	converter     Converter
+	formatterText Formatter
+}
+
+func (d *defaults) Converter() Converter {
+	if d.converter == nil {
+		d.converter = &convert{}
+		d.converter.Init()
+	}
+	return d.converter
+}
+
+func (d *defaults) FormatterText() Formatter {
+	if d.formatterText == nil {
+		d.formatterText = &formatText{}
+		d.formatterText.Init()
+	}
+	return d.formatterText
 }

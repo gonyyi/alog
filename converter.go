@@ -1,19 +1,19 @@
 package alog
 
 // For future need:
-//	type Converter interface {
-//		Init()
-//		EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
-//		EscKeyBytes(dst []byte, b []byte, addQuote bool, suffix byte) []byte
-//		EscString(dst []byte, s string, addQuote bool, suffix byte) []byte
-//		EscStringBytes(dst []byte, p []byte, addQuote bool, suffix byte) []byte
-//		Int(dst []byte, i int, quote bool, suffix byte) []byte
-//		Intf(dst []byte, i int, minLength int, suffix byte) []byte
-//		Float(dst []byte, f float64, quote bool, suffix byte) []byte
-//		Floatf(dst []byte, f float64, decPlace int, suffix byte) []byte
-//		Bool(dst []byte, b bool, quote bool, suffix byte) []byte
-//		Error(dst []byte, err error, quote bool, suffix byte) []byte
-//	}
+type Converter interface {
+	Init()
+	EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
+	EscKeyBytes(dst []byte, b []byte, addQuote bool, suffix byte) []byte
+	EscString(dst []byte, s string, addQuote bool, suffix byte) []byte
+	EscStringBytes(dst []byte, p []byte, addQuote bool, suffix byte) []byte
+	Int(dst []byte, i int, quote bool, suffix byte) []byte
+	Intf(dst []byte, i int, minLength int, suffix byte) []byte
+	Float(dst []byte, f float64, quote bool, suffix byte) []byte
+	Floatf(dst []byte, f float64, decPlace int, suffix byte) []byte
+	Bool(dst []byte, b bool, quote bool, suffix byte) []byte
+	Error(dst []byte, err error, quote bool, suffix byte) []byte
+}
 
 // convert is a converter struct that will take certain variables and append to the destination slice.
 // Also, a converter has escape logics as well. The type of convert as an interface object can have

@@ -15,7 +15,7 @@ import (
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
-		fmt:     Defaults.FormatterText, // or Defaults.FormatterJSON
+		fmt:     Defaults.FormatterText(), // or Defaults.formatterJSON
 		fmtFlag: Fdefault,
 	}
 	l.ctl.CtlTag(Linfo, 0)
@@ -63,17 +63,14 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 	if fmt != nil {
 		l.fmt = fmt
+	} else {
+		l.fmt = Defaults.FormatterText()
 	}
 	return l
 }
 
 // SetFormat will set the format flag.
 func (l *Logger) SetFormat(f Format) *Logger {
-	if FoutJSON&f != 0 {
-		l.fmt = Defaults.FormatterJSON
-	} else if FoutText&f != 0 {
-		l.fmt = Defaults.FormatterText
-	}
 	l.fmtFlag = f
 	return l
 }
@@ -138,6 +135,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, e
 		buf.Body = l.fmt.AppendMsg(buf.Body, msg)
 
 		if a != nil {
+			buf.Body = l.fmt.AppendSeparator(buf.Body)
 			lenA := len(a)
 			idxA := lenA - 1
 			for i := 0; i < lenA; i += 2 { // 0, 2, 4..
