@@ -5,65 +5,59 @@ import "time"
 // Format a bit-formatFlag formatFlag options that is used for variety of configuration.
 type Format uint32
 
-func (f Format) Reset() Format {
-	return Format(uint32(0))
-}
+// On will turn flags on for the given item(s)
 func (f Format) On(item Format) Format {
 	return f | item
 }
+
+// Off will turn flags off for the given item(s)
 func (f Format) Off(item Format) Format {
 	return f &^ item
 }
 
 const (
 	// Fprefix will show prefix when printing log message
-	Fprefix Format = 1 << iota
-	// Fsuffix will add suffix
-	Fsuffix
-	// Fdate will show both CCYY and MMDD
-	Fdate
-	// FdateDay will show 0-6 for JSON or (Sun-Mon)
-	FdateDay
-	// Ftime will show HHMMSS
-	Ftime
-	// FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
-	FtimeMs
-	// FtimeUnix will show unix time
-	FtimeUnix
-	// FtimeUnixNano will show unix time
-	FtimeUnixMs
-	// FtimeUTC will show UTC time formats
-	FtimeUTC
-	// Flevel show Level in the log messsage.
-	Flevel
-	// Ftag will show tags
-	Ftag
-	// Fjson will print to a JSON
-	Fjson
+	Fprefix     Format = 1 << iota
+	Fsuffix            // Fsuffix will add suffix
+	Fdate              // Fdate will show both CCYY and MMDD
+	FdateDay           // FdateDay will show 0-6 for JSON or (Sun-Mon)
+	Ftime              // Ftime will show HHMMSS
+	FtimeMs            // FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
+	FtimeUnix          // FtimeUnix will show unix time
+	FtimeUnixMs        // FtimeUnixNano will show unix time
+	FtimeUTC           // FtimeUTC will show UTC time formats
+	Flevel             // Flevel show Level in the log messsage.
+	Ftag               // Ftag will show tags
+	FoutJSON           // FoutJSON will print to a JSON
+	FoutText           // FoutText will print to a TEXT
 
 	// Fdefault will show month/day with time, and Level of logging.
-	Fdefault = Fdate | Ftime | Flevel | Ftag
+	Fdefault = Fdate | Ftime | Flevel | Ftag | FoutText
+	// fUseTime is precalculated time for internal functions.
 	fUseTime = Fdate | FdateDay | Ftime | FtimeMs | FtimeUnix | FtimeUnixMs
 )
 
+// Formatter interface allows Alog to have different format of output.
+// Default formatter in Alog is set to formatText, but also has formatJSON built in.
 type Formatter interface {
-	Start(dst []byte, prefix []byte) []byte
-	AppendTime(dst []byte, format Format) []byte
-	AppendLevel(dst []byte, level Level) []byte
-	AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte
-	AppendMsg(dst []byte, s string) []byte
-	AppendMsgBytes(dst []byte, p []byte) []byte
-	AppendKVInt(dst []byte, key string, val int) []byte
-	AppendKVString(dst []byte, key string, val string) []byte
-	AppendKVFloat(dst []byte, key string, val float64) []byte
-	AppendKVBool(dst []byte, key string, val bool) []byte
-	AppendKVError(dst []byte, key string, val error) []byte
-	Final(dst []byte, suffix []byte) []byte
+	Start(dst []byte, prefix []byte) []byte                   // Start to be used at starting of any log message.
+	AppendTime(dst []byte, format Format) []byte              // AppendTime will take format flag and add formatted time.
+	AppendLevel(dst []byte, level Level) []byte               // AppendLevel will add level string.
+	AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte      // AppendTag will add a tag to the log.
+	AppendMsg(dst []byte, s string) []byte                    // AppendMsg will add a main message. (For JSON, "msg")
+	AppendMsgBytes(dst []byte, p []byte) []byte               // AppendMsgBytes is same as AppendMsg but take a byte slice.
+	AppendKVInt(dst []byte, key string, val int) []byte       // AppendKVInt will add key/value for integer
+	AppendKVString(dst []byte, key string, val string) []byte // AppendKVString will add key/value for string
+	AppendKVFloat(dst []byte, key string, val float64) []byte // AppendKVFloat will add key/value for float64
+	AppendKVBool(dst []byte, key string, val bool) []byte     // AppendKVBool will add key/value for boolean
+	AppendKVError(dst []byte, key string, val error) []byte   // AppendKVError will add error value with a key
+	Final(dst []byte, suffix []byte) []byte                   // Final to be used at the end of each log message
 }
 
-var FmtJSON *formatJSON = &formatJSON{}
-var FmtText *formatText = &formatText{}
+var FmtJSON *formatJSON = &formatJSON{} // FmtJSON is a formatJSON object created in the global.
+var FmtText *formatText = &formatText{} // FmtText is a formatText object created in the global.
 
+// formatJSON is a formatter struct for JSON
 type formatJSON struct{}
 
 func (f *formatJSON) Start(dst []byte, prefix []byte) []byte {
@@ -121,6 +115,9 @@ func (f *formatJSON) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	return append(dst, ']', ',')
 }
 func (f *formatJSON) AppendMsg(dst []byte, s string) []byte {
+	if len(s) == 0 {
+		return append(dst, `"msg":null,`...)
+	}
 	dst = append(dst, `"msg":`...)
 	return conv.EscString(dst, s, true, ',')
 }
@@ -241,7 +238,7 @@ func (f *formatText) AppendTime(dst []byte, format Format) []byte {
 func (f *formatText) AppendLevel(dst []byte, level Level) []byte {
 	dst = append(dst, level.ShortName()...)
 	return append(dst, ' ')
-	//return conv.EscKey(dst, level.ShortName(), false, ' ')
+	// return conv.EscKey(dst, level.ShortName(), false, ' ')
 }
 func (f *formatText) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	if tag == 0 {
@@ -251,15 +248,18 @@ func (f *formatText) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	return append(dst, ']', ' ')
 }
 func (f *formatText) AppendMsg(dst []byte, s string) []byte {
+	if len(s) == 0 {
+		return append(dst, `null `...)
+	}
 	for i := 0; i < len(s); i++ {
 		if s[i] != '\n' {
 			dst = append(dst, s[i])
 		} else {
-			dst = append(dst, ' ')
+			dst = append(dst, ';')
 		}
 	}
 
-	return append(dst, ' ') //return conv.EscString(dst, s, false, ' ')
+	return append(dst, ' ') // return conv.EscString(dst, s, false, ' ')
 }
 
 func (f *formatText) AppendMsgBytes(dst []byte, p []byte) []byte {

@@ -12,7 +12,7 @@ import (
 // Default format flag:		date, time, level, tag
 // Default logging level: 	Info
 // Default buffer size: 	512, 2048
-func New(w io.Writer, fns ...func(*Logger)) *Logger {
+func New(w io.Writer) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
 		fmt:     FmtText, // FmtJSON,
@@ -69,6 +69,11 @@ func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 
 // SetFormat will set the format flag.
 func (l *Logger) SetFormat(f Format) *Logger {
+	if FoutJSON&f != 0 {
+		l.fmt = FmtJSON
+	} else if FoutText&f != 0 {
+		l.fmt = FmtText
+	}
 	l.fmtFlag = f
 	return l
 }
@@ -134,6 +139,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 		} else {
 			buf.Head = l.fmt.Start(buf.Head, nil)
 		}
+		// If any time components are in the format flag, then append the time
 		if l.fmtFlag&fUseTime != 0 {
 			buf.Head = l.fmt.AppendTime(buf.Head, l.fmtFlag)
 		}
@@ -143,6 +149,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 		if l.fmtFlag&Ftag != 0 {
 			buf.Head = l.fmt.AppendTag(buf.Head, &l.ctl.Tags, tag)
 		}
+
 		buf.Body = l.fmt.AppendMsg(buf.Body, msg)
 
 		if a != nil {
@@ -182,7 +189,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 				}
 			}
 		}
-
+		// Run control hook func if any.
 		if l.ctl.hook != nil {
 			l.ctl.hook(level, tag, buf.Body)
 		}
@@ -192,6 +199,7 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 		} else {
 			buf.Body = l.fmt.Final(buf.Body, nil)
 		}
+		// Write it to the writer
 		l.out.WriteTag(level, tag, buf.Head, buf.Body)
 	}
 }

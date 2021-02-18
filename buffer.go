@@ -2,7 +2,8 @@ package alog
 
 import "sync"
 
-// This is the main buffer
+// buffer is the main buffer format used in Alog.
+// This can be used as standalone or within the sync.Pool
 type buffer struct {
 	HeadCap int
 	BodyCap int
@@ -22,9 +23,11 @@ func (pi *buffer) Init(headCap, bodyCap int) {
 	pi.Body = make([]byte, bodyCap)
 }
 
+// Reset will resize the buffers. In case a large size data came in,
+// this will reset the size of buffers.
 func (pi *buffer) Reset() {
-	pi.Head = pi.Head[:0]
-	pi.Body = pi.Body[:0]
+	pi.Head = pi.Head[:pi.HeadCap]
+	pi.Body = pi.Body[:pi.BodyCap]
 }
 
 // Future use
@@ -34,6 +37,7 @@ func (pi *buffer) Reset() {
 //		Reset(b *buffer)
 //	}
 
+// bufSyncPool is an a Buffer implementation of sync.Pool.
 type bufSyncPool struct {
 	pool sync.Pool
 }
@@ -56,7 +60,6 @@ func (p *bufSyncPool) Get() *buffer {
 }
 
 func (p *bufSyncPool) Reset(b *buffer) {
-	//b.Head = b.Head[:b.HeadCap]
-	//b.Body = b.Body[:b.BodyCap]
+	b.Reset()
 	p.pool.Put(b)
 }

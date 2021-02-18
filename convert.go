@@ -1,5 +1,7 @@
 package alog
 
+// conv is a pointer to convert object created in global level.
+// This is to be used by Alog's default formatter.
 var conv = func() *convert {
 	c := convert{}
 	c.Init()
@@ -21,6 +23,9 @@ var conv = func() *convert {
 //		Error(dst []byte, err error, quote bool, suffix byte) []byte
 //	}
 
+// convert is a converter struct that will take certain variables and append to the destination slice.
+// Also, a converter has escape logics as well. The type of convert as an interface object can have
+// anything, but for Alog's convert, boolean array (of size 128) is being used.
 type convert [128]bool
 
 func (c *convert) Init() {
