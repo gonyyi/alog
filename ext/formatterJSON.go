@@ -9,9 +9,8 @@ var formatterJson alog.Formatter
 
 func FormatterJSON() alog.Formatter {
 	if formatterJson == nil {
-		formatterJson = &formatJSON{
-			conv: alog.Defaults.Converter(),
-		}
+		formatterJson = &formatJSON{}
+		formatterJson.Init()
 	}
 	return formatterJson
 }
@@ -21,7 +20,9 @@ type formatJSON struct {
 	conv alog.Converter
 }
 
-func (f *formatJSON) Init() {}
+func (f *formatJSON) Init() {
+	f.conv = alog.Defaults.Converter()
+}
 func (f *formatJSON) Start(dst []byte, prefix []byte) []byte {
 	if prefix != nil {
 		dst = append(dst, prefix...)

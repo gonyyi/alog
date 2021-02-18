@@ -23,9 +23,8 @@ var formatterANSI alog.Formatter
 
 func FormatterANSI() alog.Formatter {
 	if formatterANSI == nil {
-		formatterANSI = &formatANSI{
-			conv: alog.Defaults.Converter(),
-		}
+		formatterANSI = &formatANSI{}
+		formatterANSI.Init()
 	}
 	return formatterANSI
 }
@@ -35,7 +34,9 @@ type formatANSI struct {
 	conv alog.Converter
 }
 
-func (f *formatANSI) Init() {}
+func (f *formatANSI) Init() {
+	f.conv = alog.Defaults.Converter()
+}
 func (f *formatANSI) Start(dst []byte, prefix []byte) []byte {
 	//dst = append(dst, fmtAnsiDIM...)
 	//dst = append(dst, "fmtAnsiDIM"...)
