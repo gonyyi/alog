@@ -1,13 +1,5 @@
 package alog
 
-// conv is a pointer to convert object created in global level.
-// This is to be used by Alog's default formatter.
-var conv = func() *convert {
-	c := convert{}
-	c.Init()
-	return &c
-}()
-
 // For future need:
 //	type Converter interface {
 //		Init()

@@ -15,7 +15,7 @@ import (
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out:     toAlWriter(w),
-		fmt:     FmtText, // FmtJSON,
+		fmt:     Defaults.FormatterText, // or Defaults.FormatterJSON
 		fmtFlag: Fdefault,
 	}
 	l.ctl.CtlTag(Linfo, 0)
@@ -70,9 +70,9 @@ func (l *Logger) SetFormatter(fmt Formatter) *Logger {
 // SetFormat will set the format flag.
 func (l *Logger) SetFormat(f Format) *Logger {
 	if FoutJSON&f != 0 {
-		l.fmt = FmtJSON
+		l.fmt = Defaults.FormatterJSON
 	} else if FoutText&f != 0 {
-		l.fmt = FmtText
+		l.fmt = Defaults.FormatterText
 	}
 	l.fmtFlag = f
 	return l

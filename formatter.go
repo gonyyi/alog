@@ -54,9 +54,6 @@ type Formatter interface {
 	Final(dst []byte, suffix []byte) []byte                   // Final to be used at the end of each log message
 }
 
-var FmtJSON *formatJSON = &formatJSON{} // FmtJSON is a formatJSON object created in the global.
-var FmtText *formatText = &formatText{} // FmtText is a formatText object created in the global.
-
 // formatJSON is a formatter struct for JSON
 type formatJSON struct{}
 
@@ -70,10 +67,10 @@ func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 	t := time.Now()
 	if FtimeUnixMs&format != 0 {
 		dst = append(dst, `"ts":`...) // faster without addKey
-		return conv.Intf(dst, int(t.UnixNano())/1e6, 0, ',')
+		return Defaults.Converter.Intf(dst, int(t.UnixNano())/1e6, 0, ',')
 	} else if FtimeUnix&format != 0 {
 		dst = append(dst, `"ts":`...) // faster without addKey
-		return conv.Intf(dst, int(t.Unix()), 0, ',')
+		return Defaults.Converter.Intf(dst, int(t.Unix()), 0, ',')
 	} else {
 		if FtimeUTC&format != 0 {
 			t = t.UTC()
@@ -81,21 +78,21 @@ func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 		if Fdate&format != 0 {
 			dst = append(dst, `"d":`...) // faster without addKey
 			y, m, d := t.Date()
-			dst = conv.Intf(dst, y*10000+int(m)*100+d, 4, ',')
+			dst = Defaults.Converter.Intf(dst, y*10000+int(m)*100+d, 4, ',')
 		}
 		if FdateDay&format != 0 {
 			// "wd": 0 being sunday, 6 being saturday
 			dst = append(dst, `"wd":`...) // faster without addKey
-			dst = conv.Intf(dst, int(t.Weekday()), 1, ',')
+			dst = Defaults.Converter.Intf(dst, int(t.Weekday()), 1, ',')
 		}
 		if (Ftime|FtimeMs)&format != 0 {
 			dst = append(dst, `"t":`...) // faster without addKey
 			h, m, s := t.Clock()
 			if FtimeMs&format != 0 {
-				dst = conv.Intf(dst, h*10000+m*100+s, 1, 0)
-				dst = conv.Intf(dst, t.Nanosecond()/1e6, 0, ',')
+				dst = Defaults.Converter.Intf(dst, h*10000+m*100+s, 1, 0)
+				dst = Defaults.Converter.Intf(dst, t.Nanosecond()/1e6, 0, ',')
 			} else {
-				dst = conv.Intf(dst, h*10000+m*100+s, 1, ',')
+				dst = Defaults.Converter.Intf(dst, h*10000+m*100+s, 1, ',')
 			}
 		}
 	}
@@ -104,7 +101,7 @@ func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 }
 func (f *formatJSON) AppendLevel(dst []byte, level Level) []byte {
 	dst = append(dst, `"lv":`...)
-	return conv.EscKey(dst, level.String(), true, ',')
+	return Defaults.Converter.EscKey(dst, level.String(), true, ',')
 }
 func (f *formatJSON) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	if tag == 0 {
@@ -119,31 +116,31 @@ func (f *formatJSON) AppendMsg(dst []byte, s string) []byte {
 		return append(dst, `"msg":null,`...)
 	}
 	dst = append(dst, `"msg":`...)
-	return conv.EscString(dst, s, true, ',')
+	return Defaults.Converter.EscString(dst, s, true, ',')
 }
 
 func (f *formatJSON) AppendMsgBytes(dst []byte, p []byte) []byte {
 	dst = append(dst, `"msg":`...)
-	return conv.EscStringBytes(dst, p, true, ',')
+	return Defaults.Converter.EscStringBytes(dst, p, true, ',')
 }
 
 func (f *formatJSON) AppendKVInt(dst []byte, key string, val int) []byte {
-	dst = conv.EscKey(dst, key, true, ':')
-	return conv.Int(dst, val, false, ',')
+	dst = Defaults.Converter.EscKey(dst, key, true, ':')
+	return Defaults.Converter.Int(dst, val, false, ',')
 }
 
 func (f *formatJSON) AppendKVString(dst []byte, key string, val string) []byte {
-	dst = conv.EscKey(dst, key, true, ':')
-	return conv.EscString(dst, val, true, ',')
+	dst = Defaults.Converter.EscKey(dst, key, true, ':')
+	return Defaults.Converter.EscString(dst, val, true, ',')
 }
 
 func (f *formatJSON) AppendKVFloat(dst []byte, key string, val float64) []byte {
-	dst = conv.EscKey(dst, key, true, ':')
-	return conv.Float(dst, val, false, ',')
+	dst = Defaults.Converter.EscKey(dst, key, true, ':')
+	return Defaults.Converter.Float(dst, val, false, ',')
 }
 
 func (f *formatJSON) AppendKVBool(dst []byte, key string, val bool) []byte {
-	dst = conv.EscKey(dst, key, true, ':')
+	dst = Defaults.Converter.EscKey(dst, key, true, ':')
 	if val == true {
 		return append(dst, `true,`...)
 	}
@@ -151,9 +148,9 @@ func (f *formatJSON) AppendKVBool(dst []byte, key string, val bool) []byte {
 }
 
 func (f *formatJSON) AppendKVError(dst []byte, key string, val error) []byte {
-	dst = conv.EscKey(dst, key, true, ':')
+	dst = Defaults.Converter.EscKey(dst, key, true, ':')
 	if val != nil {
-		return conv.EscString(dst, val.Error(), true, ',')
+		return Defaults.Converter.EscString(dst, val.Error(), true, ',')
 	}
 	return append(dst, `null,`...)
 }
@@ -188,18 +185,18 @@ func (f *formatText) Start(dst []byte, prefix []byte) []byte {
 func (f *formatText) AppendTime(dst []byte, format Format) []byte {
 	t := time.Now()
 	if FtimeUnixMs&format != 0 {
-		return conv.Intf(dst, int(t.UnixNano())/1e6, 0, ' ')
+		return Defaults.Converter.Intf(dst, int(t.UnixNano())/1e6, 0, ' ')
 	} else if FtimeUnix&format != 0 {
-		return conv.Intf(dst, int(t.Unix()), 0, ' ')
+		return Defaults.Converter.Intf(dst, int(t.Unix()), 0, ' ')
 	} else {
 		if FtimeUTC&format != 0 {
 			t = t.UTC()
 		}
 		if Fdate&format != 0 {
 			y, m, d := t.Date()
-			dst = conv.Intf(dst, y, 4, '/')
-			dst = conv.Intf(dst, int(m), 2, '/')
-			dst = conv.Intf(dst, d, 2, ' ')
+			dst = Defaults.Converter.Intf(dst, y, 4, '/')
+			dst = Defaults.Converter.Intf(dst, int(m), 2, '/')
+			dst = Defaults.Converter.Intf(dst, d, 2, ' ')
 		}
 		if FdateDay&format != 0 {
 			// "wd": 0 being sunday, 6 being saturday
@@ -223,13 +220,13 @@ func (f *formatText) AppendTime(dst []byte, format Format) []byte {
 		}
 		if (Ftime|FtimeMs)&format != 0 {
 			h, m, s := t.Clock()
-			dst = conv.Intf(dst, h, 2, ':')
-			dst = conv.Intf(dst, m, 2, ':')
+			dst = Defaults.Converter.Intf(dst, h, 2, ':')
+			dst = Defaults.Converter.Intf(dst, m, 2, ':')
 			if FtimeMs&format != 0 {
-				dst = conv.Intf(dst, s, 2, ',')
-				dst = conv.Intf(dst, t.Nanosecond()/1e6, 3, ' ')
+				dst = Defaults.Converter.Intf(dst, s, 2, ',')
+				dst = Defaults.Converter.Intf(dst, t.Nanosecond()/1e6, 3, ' ')
 			} else {
-				dst = conv.Intf(dst, s, 2, ' ')
+				dst = Defaults.Converter.Intf(dst, s, 2, ' ')
 			}
 		}
 	}
@@ -275,22 +272,22 @@ func (f *formatText) AppendMsgBytes(dst []byte, p []byte) []byte {
 }
 
 func (f *formatText) AppendKVInt(dst []byte, key string, val int) []byte {
-	dst = conv.EscKey(dst, key, false, '=')
-	return conv.Int(dst, val, false, ',')
+	dst = Defaults.Converter.EscKey(dst, key, false, '=')
+	return Defaults.Converter.Int(dst, val, false, ',')
 }
 
 func (f *formatText) AppendKVString(dst []byte, key string, val string) []byte {
-	dst = conv.EscKey(dst, key, false, '=')
-	return conv.EscString(dst, val, true, ',')
+	dst = Defaults.Converter.EscKey(dst, key, false, '=')
+	return Defaults.Converter.EscString(dst, val, true, ',')
 }
 
 func (f *formatText) AppendKVFloat(dst []byte, key string, val float64) []byte {
-	dst = conv.EscKey(dst, key, false, '=')
-	return conv.Float(dst, val, false, ',')
+	dst = Defaults.Converter.EscKey(dst, key, false, '=')
+	return Defaults.Converter.Float(dst, val, false, ',')
 }
 
 func (f *formatText) AppendKVBool(dst []byte, key string, val bool) []byte {
-	dst = conv.EscKey(dst, key, false, '=')
+	dst = Defaults.Converter.EscKey(dst, key, false, '=')
 	if val == true {
 		return append(dst, `true,`...)
 	}
@@ -298,9 +295,9 @@ func (f *formatText) AppendKVBool(dst []byte, key string, val bool) []byte {
 }
 
 func (f *formatText) AppendKVError(dst []byte, key string, val error) []byte {
-	dst = conv.EscKey(dst, key, false, '=')
+	dst = Defaults.Converter.EscKey(dst, key, false, '=')
 	if val != nil {
-		return conv.EscString(dst, val.Error(), true, ',')
+		return Defaults.Converter.EscString(dst, val.Error(), true, ',')
 	}
 	return append(dst, `nil,`...)
 }
