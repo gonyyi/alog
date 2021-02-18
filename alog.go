@@ -129,27 +129,12 @@ func (l *Logger) SetHook(h HookFn) *Logger {
 // Log is a main method of logging. This takes level, tag, message, as well as optional
 // data. The optional data has to be in pairs of name and value. For the speed, Alog only
 // supports basic types: int, int64, uint, string, bool, float32, float64.
-func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
+func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, error) {
 	if l.ctl.Check(level, tag) && l.fmt != nil && l.out != nil {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
 
-		if l.fmtFlag&Fprefix != 0 {
-			buf.Head = l.fmt.Start(buf.Head, l.fmtPrefix)
-		} else {
-			buf.Head = l.fmt.Start(buf.Head, nil)
-		}
-		// If any time components are in the format flag, then append the time
-		if l.fmtFlag&fUseTime != 0 {
-			buf.Head = l.fmt.AppendTime(buf.Head, l.fmtFlag)
-		}
-		if l.fmtFlag&Flevel != 0 {
-			buf.Head = l.fmt.AppendLevel(buf.Head, level)
-		}
-		if l.fmtFlag&Ftag != 0 {
-			buf.Head = l.fmt.AppendTag(buf.Head, &l.ctl.Tags, tag)
-		}
-
+		buf.Head = l.logHead(level, tag, buf.Head)
 		buf.Body = l.fmt.AppendMsg(buf.Body, msg)
 
 		if a != nil {
@@ -189,18 +174,57 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) {
 				}
 			}
 		}
-		// Run control hook func if any.
-		if l.ctl.hook != nil {
-			l.ctl.hook(level, tag, buf.Body)
-		}
-		// Check prefix flag, if exist run.
-		if l.fmtFlag&Fsuffix != 0 {
-			buf.Body = l.fmt.Final(buf.Body, l.fmtSuffix)
-		} else {
-			buf.Body = l.fmt.Final(buf.Body, nil)
-		}
-		// Write it to the writer
-		l.out.WriteTag(level, tag, buf.Head, buf.Body)
+		buf.Body = l.logTail(level, tag, buf.Body)
+		return l.out.WriteTag(level, tag, buf.Head, buf.Body)
+	}
+	return 0, nil
+}
+
+// logb will log a simple msg but takes byte slice instead of string
+func (l *Logger) logb(level Level, tag Tag, msgb []byte) (n int, err error) {
+	if l.ctl.Check(level, tag) && l.fmt != nil && l.out != nil {
+		buf := l.buf.Get()
+		defer l.buf.Reset(buf)
+		buf.Head = l.logHead(level, tag, buf.Head)
+		buf.Body = l.fmt.AppendMsgBytes(buf.Body, msgb)
+
+		buf.Body = l.logTail(level, tag, buf.Body)
+		return l.out.WriteTag(level, tag, buf.Head, buf.Body)
+	}
+	return 0, nil
+}
+
+// logHead creates head part of the log message.
+func (l *Logger) logHead(level Level, tag Tag, dst []byte) []byte {
+	if l.fmtFlag&Fprefix != 0 {
+		dst = l.fmt.Start(dst, l.fmtPrefix)
+	} else {
+		dst = l.fmt.Start(dst, nil)
+	}
+	// If any time components are in the format flag, then append the time
+	if l.fmtFlag&fUseTime != 0 {
+		dst = l.fmt.AppendTime(dst, l.fmtFlag)
+	}
+	if l.fmtFlag&Flevel != 0 {
+		dst = l.fmt.AppendLevel(dst, level)
+	}
+	if l.fmtFlag&Ftag != 0 {
+		dst = l.fmt.AppendTag(dst, &l.ctl.Tags, tag)
+	}
+	return dst
+}
+
+// logTail creates tail part of the log message
+func (l *Logger) logTail(level Level, tag Tag, dst []byte) []byte {
+	// Run control hook func if any.
+	if l.ctl.hook != nil {
+		l.ctl.hook(level, tag, dst)
+	}
+	// Check prefix flag, if exist run.
+	if l.fmtFlag&Fsuffix != 0 {
+		return l.fmt.Final(dst, l.fmtSuffix)
+	} else {
+		return l.fmt.Final(dst, nil)
 	}
 }
 
@@ -252,4 +276,15 @@ func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
 // A user need to handle what to do.
 func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
 	l.Log(Lfatal, tag, msg, a...)
+}
+
+// NewSubWriter will create a SubWriter that can be used by other
+// library to write a log message using Alog. SubWriter meets io.Writer
+// interface format.
+func (l *Logger) NewSubWriter(dLevel Level, dTag Tag) SubWriter {
+	return SubWriter{
+		l:      l,
+		dLevel: dLevel,
+		dTag:   dTag,
+	}
 }

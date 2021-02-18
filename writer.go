@@ -39,6 +39,22 @@ func (alwp alwBasic) WriteTag(lv Level, tag Tag, head, body []byte) (int, error)
 	return alwp.Write(append(head, body...))
 }
 
+// SubWriter is a writer with predefined Level and Tag.
+type SubWriter struct {
+	l      *Logger
+	dLevel Level // default level for the SubWriter
+	dTag   Tag   // default tag for the SubWriter
+}
+
+// Write is to be used as io.Writer interface
+func (w *SubWriter) Write(p []byte) (n int, err error) { return w.l.logb(w.dLevel, w.dTag, p) }
+func (w *SubWriter) Trace(s string)                    { w.l.Log(Ltrace, w.dTag, s) }
+func (w *SubWriter) Debug(s string)                    { w.l.Log(Ldebug, w.dTag, s) }
+func (w *SubWriter) Info(s string)                     { w.l.Log(Linfo, w.dTag, s) }
+func (w *SubWriter) Warn(s string)                     { w.l.Log(Lwarn, w.dTag, s) }
+func (w *SubWriter) Error(s string)                    { w.l.Log(Lerror, w.dTag, s) }
+func (w *SubWriter) Fatal(s string)                    { w.l.Log(Lfatal, w.dTag, s) }
+
 // discard will be used instead of ioutil.Discard
 const discard = devnull(true)
 
