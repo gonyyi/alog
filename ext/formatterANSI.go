@@ -21,7 +21,7 @@ const (
 
 var formatterANSI alog.Formatter
 
-func FormatterTextANSI() alog.Formatter {
+func FormatterTextColor() alog.Formatter {
 	if formatterANSI == nil {
 		formatterANSI = &formatANSI{}
 		formatterANSI.Init()
