@@ -10,7 +10,7 @@ Version 0.5.0 (2/18/2021)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 [![Coverage](http://gocover.io/_badge/github.com/gonyyi/alog)](http://gocover.io/github.com/gonyyi/alog)
 
-![Alog with an ExtFormatterTextColor](http://alog.lib.gonyyi.com/images/screenshot1.png)
+![Alog with an ExtFormatterTextColor](https://gonyyi.github.io/alog/images/screenshot1.png)
 _(see: <https://github.com/gonyyi/alog/blob/master/benchmark/ext_formatterTextColor_test.go>)_
 
 
