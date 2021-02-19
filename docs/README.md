@@ -70,7 +70,7 @@ Things to consider:
 | Builtin Logger | 2     | 5002394 | 238.8 ns/op | 16 B/op | 1 allocs/op |
 | Builtin Logger | 3     | 4994046 | 239.7 ns/op | 16 B/op | 1 allocs/op |
 
-_Detail can be found in the `/benchmark` folder
+_Detail can be found in the `/benchmark` folder_
 
 
 [^Top](#alog)
