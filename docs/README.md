@@ -1,6 +1,6 @@
 # Alog v0.5
 
-(c) 2020 Gon Y Yi. <https://gonyyi.com>
+(c) 2020 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
 Version 0.5.0 (2/18/2021)
