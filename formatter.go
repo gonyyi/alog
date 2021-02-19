@@ -31,6 +31,7 @@ const (
 	Flevel             // Flevel show Level in the log messsage.
 	Ftag               // Ftag will show tags
 
+	Fdefault = Ftime | Flevel | Ftag
 	// fUseTime is precalculated time for internal functions.
 	fUseTime = Fdate | FdateDay | Ftime | FtimeMs | FtimeUnix | FtimeUnixMs
 )

@@ -1,6 +1,8 @@
 package alog
 
-// will hold default objects
+// Conf is a global variable holding basic configuration.
+// By setting Conf before creating a logger will let the
+// Conf's value as its default.
 var Conf *conf = func() *conf {
 	d := conf{
 		BufferHead:   1024,
