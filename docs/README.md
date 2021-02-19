@@ -10,7 +10,7 @@ Version 0.5.0 (2/18/2021)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 [![Coverage](http://gocover.io/_badge/github.com/gonyyi/alog)](http://gocover.io/github.com/gonyyi/alog)
 
-![Alog with an ExtFormatterTextColor](https://github.com/gonyyi/alog/blob/v0.5/benchmark/Test_ExtFormatterTextColor2.png)
+![Alog with an ExtFormatterTextColor](https://github.com/gonyyi/alog/blob/master/benchmark/Test_ExtFormatterTextColor2.png)
 
 
 ## Introduction
@@ -70,7 +70,7 @@ Things to consider:
 | Builtin Logger | 2     | 5002394 | 238.8 ns/op | 16 B/op | 1 allocs/op |
 | Builtin Logger | 3     | 4994046 | 239.7 ns/op | 16 B/op | 1 allocs/op |
 
-_Detail can be found in the `/benchmark` folder_
+_Detail can be found in the `/benchmark` folder_ <https://github.com/gonyyi/alog/blob/master/benchmark>
 
 
 [^Top](#alog)
