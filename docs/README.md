@@ -11,6 +11,7 @@ Version 0.5.0 (2/18/2021)
 [![Coverage](http://gocover.io/_badge/github.com/gonyyi/alog)](http://gocover.io/github.com/gonyyi/alog)
 
 ![Alog with an ExtFormatterTextColor](https://github.com/gonyyi/alog/blob/master/benchmark/Test_ExtFormatterTextColor2.png)
+_(see: <https://github.com/gonyyi/alog/blob/master/benchmark/ext_formatterTextColor_test.go>)_
 
 
 ## Introduction
