@@ -129,7 +129,14 @@ func (l *Logger) SetHook(h HookFn) *Logger {
 // Log is a main method of logging. This takes level, tag, message, as well as optional
 // data. The optional data has to be in pairs of name and value. For the speed, Alog only
 // supports basic types: int, int64, uint, string, bool, float32, float64.
-func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (int, error) {
+func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
+	// Below recover may not needed but worst possible case..
+	// defer func() {
+	// 	if e := recover() != nil {
+	// 		err = e.(error)
+	// 	}
+	// }()
+
 	if l.ctl.Check(level, tag) && l.fmtr != nil && l.out != nil {
 		buf := l.buf.Get()
 		defer l.buf.Reset(buf)
