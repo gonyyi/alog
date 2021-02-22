@@ -24,6 +24,15 @@ Alog is an Another Logger built with a very simple goal in mind:
 If you find any issues, please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
+## Todo
+
+- [ ] More extensions
+    - [ ] AlWriter for syslog support
+    - [ ] AlWriter supports multiple output
+        - [ ] Simple colored writer for terminal (ANSI colored entire line)
+        - [ ] Based on the condition; (eg. for certain logs, write it to terminal; and some/all for file)
+
+
 ## Level and Tag 
 
 Alog supports both leveled logging and tagging. Tagging allows minimize total number of logging,

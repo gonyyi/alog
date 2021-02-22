@@ -18,10 +18,15 @@ type AlWriter interface {
 // newAlWriter convers io.Writer to AlWriter.
 // If it can't be converted, use alWriter.
 func newAlWriter(w io.Writer) AlWriter {
+	// If nil is given, consider it a discard
 	if w == nil {
 		w = discard
 	}
-	// If not, just create a compatible one.
+	// If AlWriter is given, use as is.
+	if c, ok := w.(AlWriter); ok && c != nil {
+		return c
+	}
+	// If not, create one.
 	return &alWriter{w: w}
 }
 
@@ -64,12 +69,12 @@ func (w SubWriter) Error(s string)                    { w.l.Log(Lerror, w.dTag, 
 func (w SubWriter) Fatal(s string)                    { w.l.Log(Lfatal, w.dTag, s) }
 
 // discard will be used instead of ioutil.Discard
-const discard = devnull(true)
+const discard = discardWriter(true)
 
 // devNull is a type for discard
-type devnull bool
+type discardWriter bool
 
 // Write discards everything
-func (devnull) Write([]byte) (int, error) {
+func (discardWriter) Write([]byte) (int, error) {
 	return 0, nil
 }
