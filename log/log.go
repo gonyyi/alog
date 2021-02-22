@@ -20,6 +20,24 @@ func SetOutput(w io.Writer) {
 	log.SetOutput(w)
 }
 
+// SetFormatter will take Formatter compatible objects.
+// This will only reset the formatter if it's not nil.
+// In case nil is given as its argument, it will ignore.
+func SetFormatter(fmt alog.Formatter) {
+	log.SetFormatter(fmt)
+}
+
+// SetFormat will set the format flag.
+func SetFormat(f alog.Format) {
+	log.SetFormat(f)
+}
+
+// SetAffix will set both prefix and suffix. If only is not to be set,
+// use nil. Eg. SetAffix(nil, []byte("--end"))
+func SetAffix(prefix, suffix []byte) {
+	log.SetAffix(prefix, suffix)
+}
+
 // Do will run (series of) function(s) and is used for
 // quick macro like settings for the logger.
 func Do(fns ...func(*alog.Logger)) {
@@ -37,6 +55,19 @@ func MustGetTag(name string) (tag alog.Tag) {
 // tag is met, the logger will log. For any precise control, use SetControlFn.
 func SetControl(lv alog.Level, tag alog.Tag) {
 	log.SetControl(lv, tag)
+}
+
+// SetControlFn will set a ControlFn that determines what to log.
+// By using this instead of SetControl, a user can control precisely.
+func SetControlFn(fn alog.ControlFn) {
+	log.SetControlFn(fn)
+}
+
+// SetHook will run HookFn if set. This can be used to special custom situation.
+// As HookFn will run AFTER right before formatter's method Final is being called,
+// its argument p []byte will have already formatted body.
+func SetHook(h alog.HookFn) {
+	log.SetHook(h)
 }
 
 // Iferr method will log an error when argument err is not nil.
