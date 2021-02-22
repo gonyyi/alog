@@ -16,7 +16,7 @@ _(see: <https://github.com/gonyyi/alog/blob/master/benchmark/ext_formatterTextCo
 
 ## Introduction
 
-Alog was built with a very simple goal in mind:
+Alog is an Another Logger built with a very simple goal in mind:
 
 - Tagging (besides the level)
 - Minimum memory allocation
