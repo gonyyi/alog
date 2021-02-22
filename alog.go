@@ -46,7 +46,7 @@ func (l *Logger) Do(fns ...func(*Logger)) {
 }
 
 // Close will close io.Writer if applicable
-func (l Logger) Close() error {
+func (l *Logger) Close() error {
 	return l.out.Close()
 }
 
@@ -90,13 +90,13 @@ func (l *Logger) SetAffix(prefix, suffix []byte) *Logger {
 
 // GetTag will take a name of tag and return it. If not found, it will
 // return false for the output ok.
-func (l Logger) GetTag(name string) (tag Tag, ok bool) {
+func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
 	return l.ctl.Tags.GetTag(name)
 }
 
 // MustGetTag will return a tag. If a required tag is not exists,
 // it will create one.
-func (l Logger) MustGetTag(name string) (tag Tag) {
+func (l *Logger) MustGetTag(name string) (tag Tag) {
 	return l.ctl.Tags.MustGetTag(name)
 }
 

@@ -37,15 +37,15 @@ type alWriter struct {
 
 // WriteLvt will take level and tag. This is to be used as a conditional writer.
 // Eg. When certain tag and/or level, this can write it to a different place.
-func (alw alWriter) WriteTag(lv Level, tag Tag, head, body []byte) (int, error) {
+func (alw *alWriter) WriteTag(lv Level, tag Tag, head, body []byte) (int, error) {
 	body = append(body, '\n')
 	return alw.w.Write(append(head, body...))
 }
-func (alw alWriter) Write(p []byte) (n int, err error) {
+func (alw *alWriter) Write(p []byte) (n int, err error) {
 	return alw.w.Write(p)
 }
 
-func (alw alWriter) Close() error {
+func (alw *alWriter) Close() error {
 	if c, ok := alw.w.(io.Closer); ok && c != nil {
 		return c.Close()
 	}
@@ -60,13 +60,13 @@ type SubWriter struct {
 }
 
 // Write is to be used as io.Writer interface
-func (w SubWriter) Write(p []byte) (n int, err error) { return w.l.logb(w.dLevel, w.dTag, p) }
-func (w SubWriter) Trace(s string)                    { w.l.Log(Ltrace, w.dTag, s) }
-func (w SubWriter) Debug(s string)                    { w.l.Log(Ldebug, w.dTag, s) }
-func (w SubWriter) Info(s string)                     { w.l.Log(Linfo, w.dTag, s) }
-func (w SubWriter) Warn(s string)                     { w.l.Log(Lwarn, w.dTag, s) }
-func (w SubWriter) Error(s string)                    { w.l.Log(Lerror, w.dTag, s) }
-func (w SubWriter) Fatal(s string)                    { w.l.Log(Lfatal, w.dTag, s) }
+func (w *SubWriter) Write(p []byte) (n int, err error) { return w.l.logb(w.dLevel, w.dTag, p) }
+func (w *SubWriter) Trace(s string)                    { w.l.Log(Ltrace, w.dTag, s) }
+func (w *SubWriter) Debug(s string)                    { w.l.Log(Ldebug, w.dTag, s) }
+func (w *SubWriter) Info(s string)                     { w.l.Log(Linfo, w.dTag, s) }
+func (w *SubWriter) Warn(s string)                     { w.l.Log(Lwarn, w.dTag, s) }
+func (w *SubWriter) Error(s string)                    { w.l.Log(Lerror, w.dTag, s) }
+func (w *SubWriter) Fatal(s string)                    { w.l.Log(Lfatal, w.dTag, s) }
 
 // discard will be used instead of ioutil.Discard
 const discard = discardWriter(true)
