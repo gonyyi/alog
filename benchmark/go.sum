@@ -1,6 +1,4 @@
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
-github.com/gonyyi/alog v0.4.2 h1:AsgIm5PDUBJkUrOg/rB0FXWaeQk6ZMZOBi78I6fZimA=
-github.com/gonyyi/alog v0.4.2/go.mod h1:SkFUZ5iiFs2FA1E5RgDXQNOWOhxqsK2sU2FVgRNP7mM=
 github.com/gonyyi/alog v0.5.0 h1:uau2SWi6ipSyKhRl4pFdKg3/DsWpa4NpALC5GL7YcS4=
 github.com/gonyyi/alog v0.5.0/go.mod h1:SkFUZ5iiFs2FA1E5RgDXQNOWOhxqsK2sU2FVgRNP7mM=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

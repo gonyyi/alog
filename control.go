@@ -3,13 +3,12 @@ package alog
 const (
 	// Ltrace shows trace Level, thee most detailed debugging Level.
 	// This will show everything.
-	Ltrace  Level = iota + 1
-	Ldebug        // Ldebug shows debug Level or higher
-	Linfo         // Linfo shows information Level or higher
-	Lnotice       // Lnotice is when requires special handling.
-	Lwarn         // Lwarn is for a normal but a significant condition
-	Lerror        // Lerror shows error Level or higher
-	Lfatal        // Lfatal shows fatal Level or higher. This does not exit the process
+	Ltrace Level = iota + 1
+	Ldebug       // Ldebug shows debug Level or higher
+	Linfo        // Linfo shows information Level or higher
+	Lwarn        // Lwarn is for a normal but a significant condition
+	Lerror       // Lerror shows error Level or higher
+	Lfatal       // Lfatal shows fatal Level or higher. This does not exit the process
 )
 
 // Level is a flag for logging level
@@ -24,8 +23,6 @@ func (l *Level) String() string {
 		return "debug"
 	case Linfo:
 		return "info"
-	case Lnotice:
-		return "notice"
 	case Lwarn:
 		return "warn"
 	case Lerror:
@@ -46,8 +43,6 @@ func (l *Level) ShortName() string {
 		return "DBG"
 	case Linfo:
 		return "INF"
-	case Lnotice:
-		return "NTC"
 	case Lwarn:
 		return "WRN"
 	case Lerror:
@@ -89,6 +84,7 @@ type HookFn func(lvl Level, tag Tag, p []byte)
 // Note that given level and tags will be used to check the logging eligibility,
 // and is when either given level OR tags matches.
 func (c *control) CtlTag(lv Level, tags Tag) {
+	c.ctlFn = nil // disable ctlFn when level or tag is given since ctlFn has higher priority
 	c.ctlLevel = lv
 	c.ctlTag = tags
 }
@@ -166,13 +162,16 @@ func (t *TagBucket) MustGetTag(name string) Tag {
 }
 
 // AppendSelectedTags is to be used to append selected tags to the byte slice.
-func (t *TagBucket) AppendSelectedTags(dst []byte, delimiter byte, quote bool, tag Tag) []byte {
+func (t TagBucket) AppendSelectedTags(dst []byte, delimiter byte, quote bool, tag Tag) []byte {
 	if tag == 0 {
 		return dst
 	}
 	cntDst := len(dst)
 	for i := 0; i < t.count; i++ {
 		if tag&(1<<i) != 0 {
+			if delimiter == 0 {
+				delimiter = ',' // default delimiter
+			}
 			if quote { // redundant; as speed matter rather than the binary size
 				dst = append(dst, '"')
 				dst = append(dst, t.names[i]...)

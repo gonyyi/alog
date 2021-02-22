@@ -14,7 +14,7 @@ import (
 // Default buf size: 	512, 2048
 func New(w io.Writer) *Logger {
 	l := Logger{
-		out:     toAlWriter(w),
+		out:     newAlWriter(w),
 		buf:     Conf.Buffer(),
 		fmtr:    Conf.Formatter(),
 		fmtFlag: Conf.FormatFlag,
@@ -46,17 +46,14 @@ func (l *Logger) Do(fns ...func(*Logger)) {
 }
 
 // Close will close io.Writer if applicable
-func (l *Logger) Close() error {
-	if c, ok := l.out.(io.Closer); ok && c != nil {
-		return c.Close()
-	}
-	return nil
+func (l Logger) Close() error {
+	return l.out.Close()
 }
 
 // SetOutput will set the output writer to be used
 // in the logger. If nil is given, it will discard the output.
 func (l *Logger) SetOutput(w io.Writer) *Logger {
-	l.out = toAlWriter(w)
+	l.out = newAlWriter(w)
 	return l
 }
 
@@ -93,13 +90,13 @@ func (l *Logger) SetAffix(prefix, suffix []byte) *Logger {
 
 // GetTag will take a name of tag and return it. If not found, it will
 // return false for the output ok.
-func (l *Logger) GetTag(name string) (tag Tag, ok bool) {
+func (l Logger) GetTag(name string) (tag Tag, ok bool) {
 	return l.ctl.Tags.GetTag(name)
 }
 
 // MustGetTag will return a tag. If a required tag is not exists,
 // it will create one.
-func (l *Logger) MustGetTag(name string) (tag Tag) {
+func (l Logger) MustGetTag(name string) (tag Tag) {
 	return l.ctl.Tags.MustGetTag(name)
 }
 
@@ -122,7 +119,7 @@ func (l *Logger) SetControl(lv Level, tag Tag) *Logger {
 // As HookFn will run AFTER right before formatter's method Final is being called,
 // its argument p []byte will have already formatted body.
 func (l *Logger) SetHook(h HookFn) *Logger {
-	l.ctl.hook = h
+	l.ctl.SetHook(h)
 	return l
 }
 
@@ -195,7 +192,6 @@ func (l *Logger) logb(level Level, tag Tag, msgb []byte) (n int, err error) {
 		defer l.buf.Reset(buf)
 		buf.Head = l.logHead(level, tag, buf.Head)
 		buf.Body = l.fmtr.AppendMsgBytes(buf.Body, msgb)
-
 		buf.Body = l.logTail(level, tag, buf.Body)
 		return l.out.WriteTag(level, tag, buf.Head, buf.Body)
 	}
@@ -260,13 +256,6 @@ func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
 // And info level is default log level of Alog.
 func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
 	l.Log(Linfo, tag, msg, a...)
-}
-
-// Notice records a msg with a notice level with optional additional variables
-// This notice level can be used where additional handling is required, but
-// is not a warning or an error.
-func (l *Logger) Notice(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lnotice, tag, msg, a...)
 }
 
 // Warn records a msg with a warning level with optional additional variables
