@@ -128,11 +128,17 @@ func (l *Logger) SetHook(h HookFn) *Logger {
 // supports basic types: int, int64, uint, string, bool, float32, float64.
 func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
 	// Below recover may not needed but worst possible case..
-	// defer func() {
-	// 	if e := recover() != nil {
-	// 		err = e.(error)
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case error:
+				err = r.(error)
+				println("alog recovered: panic(" + err.Error() + ")")
+			case string:
+				println("alog recovered: panic(" + r.(string) + ")")
+			}
+		}
+	}()
 
 	if l.ctl.Check(level, tag) && l.fmtr != nil && l.out != nil {
 		buf := l.buf.Get()
