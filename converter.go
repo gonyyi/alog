@@ -44,7 +44,7 @@ func (c convert) EscKey(dst []byte, s string, addQuote bool, suffix byte) []byte
 	}
 
 	// Add all
-	//dst = append(dst, s...)
+	// dst = append(dst, s...)
 
 	// Smarty way, but doesn't seem fast
 	//cur := 0

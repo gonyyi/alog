@@ -7,16 +7,6 @@ import (
 // Format a bit-formatFlag formatFlag options that is used for variety of configuration.
 type Format uint32
 
-// On will turn flags on for the given item(s)
-func (f Format) On(item Format) Format {
-	return f | item
-}
-
-// Off will turn flags off for the given item(s)
-func (f Format) Off(item Format) Format {
-	return f &^ item
-}
-
 const (
 	// Fprefix will show prefix when printing log message
 	Fprefix     Format = 1 << iota
@@ -40,19 +30,26 @@ const (
 // Default formatter in Alog is set to formatText, but also has formatJSON built in.
 type Formatter interface {
 	Init()
-	Start(dst []byte, prefix []byte) []byte                   // Start to be used at starting of any log message.
-	AppendTime(dst []byte, format Format) []byte              // AppendTime will take format flag and add formatted time.
-	AppendLevel(dst []byte, level Level) []byte               // AppendLevel will add level string.
-	AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte      // AppendTag will add a tag to the log.
-	AppendMsg(dst []byte, s string) []byte                    // AppendMsg will add a main message. (For JSON, "msg")
-	AppendMsgBytes(dst []byte, p []byte) []byte               // AppendMsgBytes is same as AppendMsg but take a byte slice.
-	AppendSeparator(dst []byte) []byte                        // AppendSeparator will add separate key if any
-	AppendKVInt(dst []byte, key string, val int) []byte       // AppendKVInt will add key/value for integer
+	Start(dst []byte, prefix []byte) []byte              // Start to be used at starting of any log message.
+	AppendTime(dst []byte, format Format) []byte         // AppendTime will take format flag and add formatted time.
+	AppendLevel(dst []byte, level Level) []byte          // AppendLevel will add level string.
+	AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte // AppendTag will add a tag to the log.
+	AppendMsg(dst []byte, s string) []byte               // AppendMsg will add a main message. (For JSON, "msg")
+	AppendMsgBytes(dst []byte, p []byte) []byte          // AppendMsgBytes is same as AppendMsg but take a byte slice.
+	AppendSeparator(dst []byte) []byte                   // AppendSeparator will add separate key if any
+
+	AppendKVInt(dst []byte, key string, val int) []byte         // AppendKVInt will add key/value for integer
+	AppendKVInt64(dst []byte, key string, val int64) []byte     // AppendKVInt64 will add key/value for integer
+	AppendKVUint(dst []byte, key string, val uint) []byte       // AppendKVUint will add key/value for integer
+	AppendKVUint64(dst []byte, key string, val uint64) []byte   // AppendKVUint64 will add key/value for integer
+	AppendKVFloat32(dst []byte, key string, val float32) []byte // AppendKVFloat32 will add key/value for float32
+	AppendKVFloat64(dst []byte, key string, val float64) []byte // AppendKVFloat64 will add key/value for float64
+
 	AppendKVString(dst []byte, key string, val string) []byte // AppendKVString will add key/value for string
-	AppendKVFloat(dst []byte, key string, val float64) []byte // AppendKVFloat will add key/value for float64
 	AppendKVBool(dst []byte, key string, val bool) []byte     // AppendKVBool will add key/value for boolean
 	AppendKVError(dst []byte, key string, val error) []byte   // AppendKVError will add error value with a key
-	Final(dst []byte, suffix []byte) []byte                   // Final to be used at the end of each log message
+
+	Final(dst []byte, suffix []byte) []byte // Final to be used at the end of each log message
 }
 
 // formatJSON is a formatter struct for JSON
@@ -65,13 +62,13 @@ func (f *formatJSON) Init() {
 	f.conv.Init()
 }
 
-func (f *formatJSON) Start(dst []byte, prefix []byte) []byte {
+func (f formatJSON) Start(dst []byte, prefix []byte) []byte {
 	if prefix != nil {
 		dst = append(dst, prefix...)
 	}
 	return append(dst, '{')
 }
-func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
+func (f formatJSON) AppendTime(dst []byte, format Format) []byte {
 	t := time.Now()
 	if FtimeUnixMs&format != 0 {
 		dst = append(dst, `"ts":`...) // faster without addKey
@@ -104,14 +101,13 @@ func (f *formatJSON) AppendTime(dst []byte, format Format) []byte {
 			}
 		}
 	}
-
 	return dst
 }
-func (f *formatJSON) AppendLevel(dst []byte, level Level) []byte {
+func (f formatJSON) AppendLevel(dst []byte, level Level) []byte {
 	dst = append(dst, `"lv":`...)
 	return f.conv.EscKey(dst, level.String(), true, ',')
 }
-func (f *formatJSON) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
+func (f formatJSON) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	if tag == 0 {
 		return append(dst, `"tag":[],`...)
 	}
@@ -119,37 +115,51 @@ func (f *formatJSON) AppendTag(dst []byte, tb *TagBucket, tag Tag) []byte {
 	dst = tb.AppendSelectedTags(dst, ',', true, tag)
 	return append(dst, ']', ',')
 }
-func (f *formatJSON) AppendMsg(dst []byte, s string) []byte {
+func (f formatJSON) AppendMsg(dst []byte, s string) []byte {
 	if len(s) == 0 {
 		return append(dst, `"msg":null,`...)
 	}
 	dst = append(dst, `"msg":`...)
 	return f.conv.EscString(dst, s, true, ',')
 }
-func (f *formatJSON) AppendSeparator(dst []byte) []byte {
+func (f formatJSON) AppendSeparator(dst []byte) []byte {
 	return dst
 }
-func (f *formatJSON) AppendMsgBytes(dst []byte, p []byte) []byte {
+func (f formatJSON) AppendMsgBytes(dst []byte, p []byte) []byte {
 	dst = append(dst, `"msg":`...)
 	return f.conv.EscStringBytes(dst, p, true, ',')
 }
 
-func (f *formatJSON) AppendKVInt(dst []byte, key string, val int) []byte {
+func (f formatJSON) AppendKVInt(dst []byte, key string, val int) []byte {
 	dst = f.conv.EscKey(dst, key, true, ':')
 	return f.conv.Int(dst, val, false, ',')
 }
-
-func (f *formatJSON) AppendKVString(dst []byte, key string, val string) []byte {
-	dst = f.conv.EscKey(dst, key, true, ':')
-	return f.conv.EscString(dst, val, true, ',')
+func (f formatJSON) AppendKVInt64(dst []byte, key string, val int64) []byte {
+	return f.AppendKVInt(dst, key, int(val))
 }
 
-func (f *formatJSON) AppendKVFloat(dst []byte, key string, val float64) []byte {
+func (f formatJSON) AppendKVUint(dst []byte, key string, val uint) []byte {
+	return f.AppendKVInt(dst, key, int(val))
+}
+func (f formatJSON) AppendKVUint64(dst []byte, key string, val uint64) []byte {
+	return f.AppendKVInt(dst, key, int(val))
+}
+
+func (f formatJSON) AppendKVFloat32(dst []byte, key string, val float32) []byte {
+	dst = f.conv.EscKey(dst, key, true, ':')
+	return f.conv.Float(dst, float64(val), false, ',')
+}
+func (f formatJSON) AppendKVFloat64(dst []byte, key string, val float64) []byte {
 	dst = f.conv.EscKey(dst, key, true, ':')
 	return f.conv.Float(dst, val, false, ',')
 }
 
-func (f *formatJSON) AppendKVBool(dst []byte, key string, val bool) []byte {
+func (f formatJSON) AppendKVString(dst []byte, key string, val string) []byte {
+	dst = f.conv.EscKey(dst, key, true, ':')
+	return f.conv.EscString(dst, val, true, ',')
+}
+
+func (f formatJSON) AppendKVBool(dst []byte, key string, val bool) []byte {
 	dst = f.conv.EscKey(dst, key, true, ':')
 	if val == true {
 		return append(dst, `true,`...)
@@ -157,7 +167,7 @@ func (f *formatJSON) AppendKVBool(dst []byte, key string, val bool) []byte {
 	return append(dst, `false,`...)
 }
 
-func (f *formatJSON) AppendKVError(dst []byte, key string, val error) []byte {
+func (f formatJSON) AppendKVError(dst []byte, key string, val error) []byte {
 	dst = f.conv.EscKey(dst, key, true, ':')
 	if val != nil {
 		return f.conv.EscString(dst, val.Error(), true, ',')
@@ -165,14 +175,14 @@ func (f *formatJSON) AppendKVError(dst []byte, key string, val error) []byte {
 	return append(dst, `null,`...)
 }
 
-func (f *formatJSON) AppendSuffix(dst []byte, suffix []byte) []byte {
+func (f formatJSON) AppendSuffix(dst []byte, suffix []byte) []byte {
 	if suffix != nil {
 		return append(dst, suffix...)
 	}
 	return dst
 }
 
-func (f *formatJSON) Final(dst, suffix []byte) []byte {
+func (f formatJSON) Final(dst, suffix []byte) []byte {
 	if len(dst) > 0 { // only do this if dst exists,
 		dst[len(dst)-1] = '}'
 	}

@@ -35,6 +35,7 @@ type Logger struct {
 	fmtSuffix []byte
 	ctl       control
 	fmtFlag   Format
+	keyvals   // todo: find a better way
 }
 
 // Do will run (series of) function(s) and is used for
@@ -126,7 +127,7 @@ func (l *Logger) SetHook(h HookFn) *Logger {
 // Log is a main method of logging. This takes level, tag, message, as well as optional
 // data. The optional data has to be in pairs of name and value. For the speed, Alog only
 // supports basic types: int, int64, uint, string, bool, float32, float64.
-func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (n int, err error) {
+func (l *Logger) Log(level Level, tag Tag, msg string, kvs ...KeyVal) (n int, err error) {
 	// Below recover may not needed but worst possible case..
 	defer func() {
 		if r := recover(); r != nil {
@@ -147,41 +148,28 @@ func (l *Logger) Log(level Level, tag Tag, msg string, a ...interface{}) (n int,
 		buf.Head = l.logHead(level, tag, buf.Head)
 		buf.Body = l.fmtr.AppendMsg(buf.Body, msg)
 
-		if a != nil {
+		if kvs != nil {
 			buf.Body = l.fmtr.AppendSeparator(buf.Body)
-			lenA := len(a)
-			idxA := lenA - 1
-			for i := 0; i < lenA; i += 2 { // 0, 2, 4..
-				key, ok := a[i].(string)
-				if !ok {
-					key = "badKey??"
-				}
-				if i < idxA {
-					next := a[i+1]
-					switch next.(type) {
-					case string:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(string))
-					case nil:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `nil`)
-					case error:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, next.(error).Error())
-					case bool:
-						buf.Body = l.fmtr.AppendKVBool(buf.Body, key, next.(bool))
-					case int:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, next.(int))
-					case int64:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(int64)))
-					case uint:
-						buf.Body = l.fmtr.AppendKVInt(buf.Body, key, int(next.(uint)))
-					case float32:
-						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, float64(next.(float32)))
-					case float64:
-						buf.Body = l.fmtr.AppendKVFloat(buf.Body, key, next.(float64))
-					default:
-						buf.Body = l.fmtr.AppendKVString(buf.Body, key, `unsupp??`)
-					}
-				} else {
-					buf.Body = l.fmtr.AppendKVString(buf.Body, key, `null`)
+			for i := 0; i < len(kvs); i++ {
+				switch kvs[i].t {
+				case kvString:
+					buf.Body = l.fmtr.AppendKVString(buf.Body, kvs[i].k, kvs[i].s)
+				case kvInt:
+					buf.Body = l.fmtr.AppendKVInt(buf.Body, kvs[i].k, kvs[i].i)
+				case kvInt64:
+					buf.Body = l.fmtr.AppendKVInt64(buf.Body, kvs[i].k, kvs[i].i64)
+				case kvError:
+					buf.Body = l.fmtr.AppendKVError(buf.Body, kvs[i].k, kvs[i].e)
+				case kvBool:
+					buf.Body = l.fmtr.AppendKVBool(buf.Body, kvs[i].k, kvs[i].b)
+				case kvUint:
+					buf.Body = l.fmtr.AppendKVUint(buf.Body, kvs[i].k, kvs[i].u)
+				case kvUint64:
+					buf.Body = l.fmtr.AppendKVUint64(buf.Body, kvs[i].k, kvs[i].u64)
+				case kvFloat32:
+					buf.Body = l.fmtr.AppendKVFloat32(buf.Body, kvs[i].k, kvs[i].f32)
+				case kvFloat64:
+					buf.Body = l.fmtr.AppendKVFloat64(buf.Body, kvs[i].k, kvs[i].f64)
 				}
 			}
 		}
@@ -238,56 +226,57 @@ func (l *Logger) logTail(level Level, tag Tag, dst []byte) []byte {
 	}
 }
 
-// Iferr method will log an error when argument err is not nil.
-// This also returns true/false if error is or not nil.
-func (l *Logger) Iferr(err error, tag Tag, msg string) bool {
-	if err != nil {
-		l.Log(Lerror, tag, msg, "error", err)
-		return true
-	}
-	return false
-}
-
-// Trace records a msg with a trace level with optional additional variables
-func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ltrace, tag, msg, a...)
-}
-
-// Debug records a msg with a debug level with optional additional variables
-func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
-	l.Log(Ldebug, tag, msg, a...)
-}
-
-// Info records a msg with an info level with optional additional variables
-// And info level is default log level of Alog.
-func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
-	l.Log(Linfo, tag, msg, a...)
-}
-
-// Warn records a msg with a warning level with optional additional variables
-func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lwarn, tag, msg, a...)
-}
-
-// Error records a msg with an error level with optional additional variables
-func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lerror, tag, msg, a...)
-}
-
-// Fatal records a msg with a fatal level with optional additional variables.
-// Unlike other logger, Alog will NOT terminal the program with a Fatal method.
-// A user need to handle what to do.
-func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
-	l.Log(Lfatal, tag, msg, a...)
-}
-
-// NewSubWriter will create a SubWriter that can be used by other
-// library to write a log message using Alog. SubWriter meets io.Writer
-// interface format.
-func (l *Logger) NewSubWriter(dLevel Level, dTag Tag) SubWriter {
-	return SubWriter{
-		l:      l,
-		dLevel: dLevel,
-		dTag:   dTag,
-	}
-}
+//
+// // Iferr method will log an error when argument err is not nil.
+// // This also returns true/false if error is or not nil.
+// func (l *Logger) Iferr(err error, tag Tag, msg string) bool {
+// 	if err != nil {
+// 		l.Log(Lerror, tag, msg, "error", err)
+// 		return true
+// 	}
+// 	return false
+// }
+//
+// // Trace records a msg with a trace level with optional kvType variables
+// func (l *Logger) Trace(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Ltrace, tag, msg, a...)
+// }
+//
+// // Debug records a msg with a debug level with optional kvType variables
+// func (l *Logger) Debug(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Ldebug, tag, msg, a...)
+// }
+//
+// // Info records a msg with an info level with optional kvType variables
+// // And info level is default log level of Alog.
+// func (l *Logger) Info(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Linfo, tag, msg, a...)
+// }
+//
+// // Warn records a msg with a warning level with optional kvType variables
+// func (l *Logger) Warn(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Lwarn, tag, msg, a...)
+// }
+//
+// // Error records a msg with an error level with optional kvType variables
+// func (l *Logger) Error(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Lerror, tag, msg, a...)
+// }
+//
+// // Fatal records a msg with a fatal level with optional kvType variables.
+// // Unlike other logger, Alog will NOT terminal the program with a Fatal method.
+// // A user need to handle what to do.
+// func (l *Logger) Fatal(tag Tag, msg string, a ...interface{}) {
+// 	l.Log(Lfatal, tag, msg, a...)
+// }
+//
+// // NewSubWriter will create a SubWriter that can be used by other
+// // library to write a log message using Alog. SubWriter meets io.Writer
+// // interface format.
+// func (l *Logger) NewSubWriter(dLevel Level, dTag Tag) SubWriter {
+// 	return SubWriter{
+// 		l:      l,
+// 		dLevel: dLevel,
+// 		dTag:   dTag,
+// 	}
+// }

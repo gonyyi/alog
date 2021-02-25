@@ -63,7 +63,7 @@ type control struct {
 }
 
 // SetHook will add a HookFn to control.
-// This can be used for when additional action is required by either log level OR tag.
+// This can be used for when kvType action is required by either log level OR tag.
 // Since HookFn also takes buf body, it can record the certain type totally
 // independently as a user customize it. OR can create a condition based on the buf body.
 // Note that SetHook is called right BEFORE the Final() is called, which means, IF any log
