@@ -4,8 +4,16 @@ import (
 	"io"
 )
 
+// devNull is a type for discard
+type discard struct{}
+
+// Write discards everything
+func (discard) Write([]byte) (int, error) {
+	return 0, nil
+}
+
 // AlWriter is a combination of a formatter and a writer for Alog.
-// It will be in charge of its own buf and formatting.
+// It will be in charge of its own bufItem and formatting.
 type AlWriter interface {
 	// Write for a Standard io.Writer method
 	Write(p []byte) (int, error)
@@ -20,7 +28,7 @@ type AlWriter interface {
 func newAlWriter(w io.Writer) AlWriter {
 	// If nil is given, consider it a discard
 	if w == nil {
-		w = discard
+		w = discard{}
 	}
 	// If AlWriter is given, use as is.
 	if c, ok := w.(AlWriter); ok && c != nil {
@@ -50,31 +58,4 @@ func (alw *alWriter) Close() error {
 		return c.Close()
 	}
 	return nil
-}
-
-// SubWriter is a writer with predefined Level and Tag.
-type SubWriter struct {
-	l      *Logger
-	dLevel Level // default level for the SubWriter
-	dTag   Tag   // default tag for the SubWriter
-}
-
-// Write is to be used as io.Writer interface
-func (w *SubWriter) Write(p []byte) (n int, err error) { return w.l.logb(w.dLevel, w.dTag, p) }
-func (w *SubWriter) Trace(s string)                    { w.l.Log(Ltrace, w.dTag, s) }
-func (w *SubWriter) Debug(s string)                    { w.l.Log(Ldebug, w.dTag, s) }
-func (w *SubWriter) Info(s string)                     { w.l.Log(Linfo, w.dTag, s) }
-func (w *SubWriter) Warn(s string)                     { w.l.Log(Lwarn, w.dTag, s) }
-func (w *SubWriter) Error(s string)                    { w.l.Log(Lerror, w.dTag, s) }
-func (w *SubWriter) Fatal(s string)                    { w.l.Log(Lfatal, w.dTag, s) }
-
-// discard will be used instead of ioutil.Discard
-const discard = discardWriter(true)
-
-// devNull is a type for discard
-type discardWriter bool
-
-// Write discards everything
-func (discardWriter) Write([]byte) (int, error) {
-	return 0, nil
 }

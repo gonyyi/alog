@@ -15,11 +15,7 @@ func BenchmarkNew(b *testing.B) {
 	b.Run("al-kv", func(c *testing.B) {
 		c.ReportAllocs()
 		for i := 0; i < c.N; i++ {
-			al.Log(alog.Lerror, 0, "msg for err",
-				al.Vstr("name", "gon"),
-				al.Vstr("city", "korea"),
-				al.Vint("count", i))
+			al.Log(alog.Lerror, 0, "msg for err")
 		}
 	})
-
 }
