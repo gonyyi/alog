@@ -32,11 +32,11 @@ func Benchmark_new(b *testing.B) {
 	IO := al.Control.Tags.MustGetTag("IO")
 	_, _, _ = al, TEST, IO
 	for i := 0; i < b.N; i++ {
-		al.Log(Linfo, 0, "hello", Kstr("name", `Gon Yi		ha`))
+		//al.Log(Linfo, 0, "hello", Kstr("name", `Gon Yi		ha`))
 	}
 
 	al.SetOutput(os.Stderr)
-	al.Log(Linfo, 0, "hello", Kstr("name", "Gon Yi"))
+	//al.Log(Linfo, 0, "hello", Kstr("name", "Gon Yi"))
 }
 func Benchmark_formatd(b *testing.B) {
 
@@ -60,20 +60,20 @@ func Benchmark_formatd(b *testing.B) {
 		out = f.addKeyUnsafe(out, "ts")
 		//time.Now()
 		t := time.Now()
-		//t := time.Now().UTC()
+		//vType := time.Now().UTC()
 		_ = t
-		//out = f.addTimeDay(out, &t)
+		//out = f.addTimeDay(out, &vType)
 
-		//out = f.addTimeUnix(out, &t)
+		//out = f.addTimeUnix(out, &vType)
 
-		//y, m, d := t.Date()
+		//y, m, d := vType.Date()
 		//out = f.addTimeDate(out, y, int(m), d)
 
-		//h,m,s := t.Clock()
-		//out = f.addTime(out,h,m,s)
+		//h,m,vStr := vType.Clock()
+		//out = f.addTime(out,h,m,vStr)
 
-		//h,m,s := t.Clock()
-		//out = f.addTimeNano(out, h,m,s,t.Nanosecond())
+		//h,m,vStr := vType.Clock()
+		//out = f.addTimeNano(out, h,m,vStr,vType.Nanosecond())
 
 		//out = f.addKeyUnsafe(out, "level")
 		//out = f.addLevel(out, Linfo)

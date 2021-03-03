@@ -1,7 +1,7 @@
 package alog
 
 // tag is a bit-formatFlag used to show only necessary part of process to show
-// in the log. For instance, if there's an web service, there can be different
+// in the log. For instance, if there'vStr an web service, there can be different
 // tag such as UI, HTTP request, HTTP response, etc. By alConf a tag
 // for each log using `Print` or `Printf`, a user can only print certain
 // tag of log messages for better debugging.

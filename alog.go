@@ -7,11 +7,11 @@ import (
 
 // New will return a Alog logger pointer with default values.
 // This function will take an io.Writer and convert it to AlWriter.
-// A user's custom AlWriter will let the user steer more control.
+// A user'vStr custom AlWriter will let the user steer more control.
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out: w,
-		buf: newAbuffer(512),
+		buf: newEntryPool(512),
 	}
 	if w == nil {
 		l.out = discard{}
@@ -26,7 +26,7 @@ func New(w io.Writer) *Logger {
 // logger is a main struct for Alog.
 type Logger struct {
 	out io.Writer
-	buf abuffer
+	buf entryPool
 	fmt formatd
 	// Formatter Formatter
 	Control control
@@ -37,7 +37,7 @@ func (l *Logger) NewTag(name string) Tag {
 	return l.Control.Tags.MustGetTag(name)
 }
 
-// Do will run (series of) function(s) and is used for
+// Do will run (series of) function(vStr) and is used for
 // quick macro like settings for the logger.
 func (l *Logger) Do(fns ...func(*Logger)) {
 	for _, f := range fns {
@@ -94,9 +94,9 @@ func (l *Logger) logs(tag Tag, level Level) *entry {
 func (e *entry) Bool(key string, val bool) *entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyVal{
-			t: kvBool,
-			k: key,
-			b: val,
+			vType: kvBool,
+			key:   key,
+			vBool: val,
 		})
 	}
 	return e
@@ -104,9 +104,9 @@ func (e *entry) Bool(key string, val bool) *entry {
 func (e *entry) Float(key string, val float64) *entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyVal{
-			t: kvFloat64,
-			k: key,
-			f64: val,
+			vType: kvFloat64,
+			key:   key,
+			vF64:  val,
 		})
 	}
 	return e
@@ -114,20 +114,29 @@ func (e *entry) Float(key string, val float64) *entry {
 func (e *entry) Str(key string, val string) *entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyVal{
-			t: kvString,
-			k: key,
-			s: val,
+			vType: kvString,
+			key:   key,
+			vStr:  val,
 		})
 	}
 	return e
 }
-
 func (e *entry) Int(key string, val int) *entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyVal{
-			t: kvInt,
-			k: key,
-			i: int64(val),
+			vType: kvInt,
+			key:   key,
+			vInt:  int64(val),
+		})
+	}
+	return e
+}
+func (e *entry) Err(key string, val error) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyVal{
+			vType: kvError,
+			key:   key,
+			vErr:  val,
 		})
 	}
 	return e
@@ -196,28 +205,34 @@ func (e *entry) Write(s string) {
 		// INTERFACE: ADD kvs
 		for i := 0; i < len(e.kvs); i++ {
 			// Set name
-			e.buf = e.logger.fmt.addKeyUnsafe(e.buf, e.kvs[i].k)
-			switch e.kvs[i].t {
+			e.buf = e.logger.fmt.addKeyUnsafe(e.buf, e.kvs[i].key)
+			switch e.kvs[i].vType {
 			case kvInt:
-				e.buf = e.logger.fmt.addValInt(e.buf, e.kvs[i].i)
+				e.buf = e.logger.fmt.addValInt(e.buf, e.kvs[i].vInt)
 			case kvString:
-				if ok, _ := e.logger.fmt.isSimpleStr(e.kvs[i].s); ok {
-					e.buf = e.logger.fmt.addValStringUnsafe(e.buf, e.kvs[i].s)
+				if ok, _ := e.logger.fmt.isSimpleStr(e.kvs[i].vStr); ok {
+					e.buf = e.logger.fmt.addValStringUnsafe(e.buf, e.kvs[i].vStr)
 				} else {
-					e.buf = e.logger.fmt.addValString(e.buf, e.kvs[i].s)
+					e.buf = e.logger.fmt.addValString(e.buf, e.kvs[i].vStr)
 				}
 			case kvBool:
-				e.buf = e.logger.fmt.addValBool(e.buf, e.kvs[i].b)
+				e.buf = e.logger.fmt.addValBool(e.buf, e.kvs[i].vBool)
 			case kvFloat64:
-				e.buf = e.logger.fmt.addValFloat(e.buf, e.kvs[i].f64)
+				e.buf = e.logger.fmt.addValFloat(e.buf, e.kvs[i].vF64)
+			case kvError:
+				if e.kvs[i].vErr != nil {
+					e.buf = e.logger.fmt.addValString(e.buf, e.kvs[i].vErr.Error())
+				} else {
+					e.buf = append(e.buf, "null,"...)
+				}
 			default:
-				e.buf = e.logger.fmt.addValStringUnsafe(e.buf, "err.unexpected")
+				e.buf = append(e.buf, "null,"...)
 			}
 		}
 
 		// INTERFACE: FINALIZE
 		e.buf = e.logger.fmt.addEnd(e.buf)
-		if e.logger.out!=nil {
+		if e.logger.out != nil {
 			e.logger.out.Write(e.buf)
 		}
 	}

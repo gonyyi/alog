@@ -36,7 +36,7 @@ const (
 // level is a flag for logging level
 type Level uint8
 
-// Name will print level's full name
+// Name will print level'vStr full name
 func (l Level) Name() string {
 	switch l {
 	case Ltrace:
@@ -56,7 +56,7 @@ func (l Level) Name() string {
 	}
 }
 
-// NameShort will print level's abbreviated name
+// NameShort will print level'vStr abbreviated name
 func (l Level) NameShort() string {
 	switch l {
 	case Ltrace:

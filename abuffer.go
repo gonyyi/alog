@@ -12,8 +12,8 @@ type entry struct {
 	kvs    []KeyVal
 }
 
-func newAbuffer(size int) abuffer {
-	return abuffer{
+func newEntryPool(size int) entryPool {
+	return entryPool{
 		pool: sync.Pool{
 			New: func() interface{} {
 				return &entry{
@@ -26,17 +26,17 @@ func newAbuffer(size int) abuffer {
 }
 
 // buf is an a Buffer implementation of sync.Pool.
-type abuffer struct {
-	pool   sync.Pool
+type entryPool struct {
+	pool sync.Pool
 }
 
-func (p *abuffer) Get(logger *Logger) *entry {
+func (p *entryPool) Get(logger *Logger) *entry {
 	b := p.pool.Get().(*entry)
 	b.logger = logger
 	return b
 }
 
-func (p *abuffer) Put(b *entry) {
+func (p *entryPool) Put(b *entry) {
 	b.buf = b.buf[:512]
 	b.kvs = b.kvs[:10]
 	p.pool.Put(b)
