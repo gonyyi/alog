@@ -14,7 +14,7 @@ const (
 	FtimeUnix          // FtimeUnix will show unix time
 	FtimeUnixMs        // FtimeUnixNano will show unix time
 	FtimeUTC           // FtimeUTC will show UTC time formats
-	Flevel             // Flevel show Level in the log messsage.
+	Flevel             // Flevel show level in the log messsage.
 	Ftag               // Ftag will show tags
 
 	Fdefault = Ftime | Flevel | Ftag
@@ -23,17 +23,17 @@ const (
 )
 
 const (
-	// Ltrace shows trace Level, thee most detailed debugging Level.
+	// Ltrace shows trace level, thee most detailed debugging level.
 	// This will show everything.
 	Ltrace Level = iota + 1
-	Ldebug       // Ldebug shows debug Level or higher
-	Linfo        // Linfo shows information Level or higher
+	Ldebug       // Ldebug shows debug level or higher
+	Linfo        // Linfo shows information level or higher
 	Lwarn        // Lwarn is for a normal but a significant condition
-	Lerror       // Lerror shows error Level or higher
-	Lfatal       // Lfatal shows fatal Level or higher. This does not exit the process
+	Lerror       // Lerror shows error level or higher
+	Lfatal       // Lfatal shows fatal level or higher. This does not exit the process
 )
 
-// Level is a flag for logging level
+// level is a flag for logging level
 type Level uint8
 
 // Name will print level's full name
