@@ -14,13 +14,13 @@ func (f *formatd) init() {
 		f[i] = i >= 0x20 && i != '\\' && i != '"' // all printable will be true
 	}
 }
-func (f *formatd) isSimpleStr(s string) bool {
+func (f *formatd) isSimpleStr(s string) (bool, int) {
 	for i := 0; i < len(s); i++ {
 		if f[s[i]] == false {
-			return false
+			return false, i
 		}
 	}
-	return true
+	return true, 0
 }
 func (formatd) addBegin(dst []byte) []byte {
 	return append(dst, '{')
