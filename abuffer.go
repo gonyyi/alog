@@ -2,19 +2,23 @@ package alog
 
 import "sync"
 
-// bufItem is the main bufItem format used in Alog.
+// entry is the main entry format used in Alog.
 // This can be used as standalone or within the sync.Pool
-type bufItem struct {
-	Buf []byte
+type entry struct {
+	buf    []byte
+	level  Level
+	tag    Tag
+	logger *Logger
+	kvs    []KeyVal
 }
 
 func newAbuffer(size int) abuffer {
 	return abuffer{
-		size: size,
 		pool: sync.Pool{
 			New: func() interface{} {
-				return &bufItem{
-					Buf: make([]byte, size),
+				return &entry{
+					buf: make([]byte, 512),
+					kvs: make([]KeyVal, 10),
 				}
 			},
 		},
@@ -23,17 +27,17 @@ func newAbuffer(size int) abuffer {
 
 // buf is an a Buffer implementation of sync.Pool.
 type abuffer struct {
-	size int
-	pool sync.Pool
+	pool   sync.Pool
 }
 
-func (p *abuffer) Get() *bufItem {
-	b := p.pool.Get().(*bufItem)
-	b.Buf = b.Buf[:0]
+func (p *abuffer) Get(logger *Logger) *entry {
+	b := p.pool.Get().(*entry)
+	b.logger = logger
 	return b
 }
 
-func (p *abuffer) Put(b *bufItem) {
-	b.Buf = b.Buf[:p.size]
+func (p *abuffer) Put(b *entry) {
+	b.buf = b.buf[:512]
+	b.kvs = b.kvs[:10]
 	p.pool.Put(b)
 }
