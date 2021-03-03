@@ -8,7 +8,7 @@ type control struct {
 	Tag   Tag
 }
 
-// check will check if Level and Tag given is good to be printed.
+// check will check if level and tag given is good to be printed.
 func (c *control) Check(lvl Level, tag Tag) bool {
 	if c.Level <= lvl || c.Tag&tag != 0 {
 		return true
