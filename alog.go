@@ -2,7 +2,6 @@ package alog
 
 import (
 	"io"
-	"time"
 )
 
 // New will return a Alog logger pointer with default values.
@@ -11,7 +10,7 @@ import (
 func New(w io.Writer) *Logger {
 	l := Logger{
 		out: w,
-		buf: newEntryPool(512),
+		buf: newEntryPool(),
 	}
 	if w == nil {
 		l.out = discard{}
@@ -59,27 +58,7 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 	l.out = newAlWriter(w)
 	return l
 }
-
-func (l *Logger) Trace(tag Tag) *entry {
-	return l.logs(tag, Ltrace)
-}
-func (l *Logger) Debug(tag Tag) *entry {
-	return l.logs(tag, Ldebug)
-}
-func (l *Logger) Info(tag Tag) *entry {
-	return l.logs(tag, Linfo)
-}
-func (l *Logger) Warn(tag Tag) *entry {
-	return l.logs(tag, Lwarn)
-}
-func (l *Logger) Error(tag Tag) *entry {
-	return l.logs(tag, Lerror)
-}
-func (l *Logger) Fatal(tag Tag) *entry {
-	return l.logs(tag, Lfatal)
-}
-
-func (l *Logger) logs(tag Tag, level Level) *entry {
+func (l *Logger) getEntry(tag Tag, level Level) *entry {
 	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.out != nil {
 		buf := l.buf.Get(l)
 		buf.tag = tag
@@ -91,149 +70,21 @@ func (l *Logger) logs(tag Tag, level Level) *entry {
 	return nil
 }
 
-func (e *entry) Bool(key string, val bool) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyVal{
-			vType: kvBool,
-			key:   key,
-			vBool: val,
-		})
-	}
-	return e
+func (l *Logger) Trace(tag Tag) *entry {
+	return l.getEntry(tag, Ltrace)
 }
-func (e *entry) Float(key string, val float64) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyVal{
-			vType: kvFloat64,
-			key:   key,
-			vF64:  val,
-		})
-	}
-	return e
+func (l *Logger) Debug(tag Tag) *entry {
+	return l.getEntry(tag, Ldebug)
 }
-func (e *entry) Str(key string, val string) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyVal{
-			vType: kvString,
-			key:   key,
-			vStr:  val,
-		})
-	}
-	return e
+func (l *Logger) Info(tag Tag) *entry {
+	return l.getEntry(tag, Linfo)
 }
-func (e *entry) Int(key string, val int) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyVal{
-			vType: kvInt,
-			key:   key,
-			vInt:  int64(val),
-		})
-	}
-	return e
+func (l *Logger) Warn(tag Tag) *entry {
+	return l.getEntry(tag, Lwarn)
 }
-func (e *entry) Err(key string, val error) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyVal{
-			vType: kvError,
-			key:   key,
-			vErr:  val,
-		})
-	}
-	return e
+func (l *Logger) Error(tag Tag) *entry {
+	return l.getEntry(tag, Lerror)
 }
-
-func (e *entry) Write(s string) {
-	if e != nil {
-		defer e.logger.buf.Put(e)
-		e.buf = e.logger.fmt.addBegin(e.buf)
-
-		// INTERFACE: AppendTime()
-		if e.logger.Format&fUseTime != 0 {
-			t := time.Now()
-			if (FtimeUnix|FtimeUnixMs)&e.logger.Format != 0 {
-				e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "ts")
-				if FtimeUnixMs&e.logger.Format != 0 {
-					e.buf = e.logger.fmt.addTimeUnix(e.buf, t.UnixNano()/1e6)
-				} else {
-					e.buf = e.logger.fmt.addTimeUnix(e.buf, t.Unix())
-				}
-			} else {
-				if FtimeUTC&e.logger.Format != 0 {
-					t = t.UTC()
-				}
-				if Fdate&e.logger.Format != 0 {
-					e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "date")
-					y, m, d := t.Date()
-					e.buf = e.logger.fmt.addTimeDate(e.buf, y, int(m), d)
-				}
-				if FdateDay&e.logger.Format != 0 {
-					e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "day")
-					e.buf = e.logger.fmt.addTimeDay(e.buf, int(t.Weekday()))
-				}
-				if (Ftime|FtimeMs)&e.logger.Format != 0 {
-					e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "time")
-					h, m, s := t.Clock()
-					if FtimeMs&e.logger.Format != 0 {
-						e.buf = e.logger.fmt.addTimeMs(e.buf, h, m, s, t.Nanosecond())
-					} else {
-						e.buf = e.logger.fmt.addTime(e.buf, h, m, s)
-					}
-				}
-			}
-		}
-
-		// INTERFACE: LEVEL
-		if e.logger.Format&Flevel != 0 {
-			e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "level")
-			e.buf = e.logger.fmt.addLevel(e.buf, e.level)
-		}
-
-		// INTERFACE: TAG
-		if e.logger.Format&Ftag != 0 {
-			e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "tag")
-			e.buf = e.logger.fmt.addTag(e.buf, &e.logger.Control.Tags, e.tag)
-		}
-
-		// INTERFACE: MSG
-		e.buf = e.logger.fmt.addKeyUnsafe(e.buf, "message")
-		if ok, _ := e.logger.fmt.isSimpleStr(s); ok {
-			e.buf = e.logger.fmt.addValStringUnsafe(e.buf, s)
-		} else {
-			e.buf = e.logger.fmt.addValString(e.buf, s)
-		}
-
-		// INTERFACE: ADD kvs
-		for i := 0; i < len(e.kvs); i++ {
-			// Set name
-			e.buf = e.logger.fmt.addKeyUnsafe(e.buf, e.kvs[i].key)
-			switch e.kvs[i].vType {
-			case kvInt:
-				e.buf = e.logger.fmt.addValInt(e.buf, e.kvs[i].vInt)
-			case kvString:
-				if ok, _ := e.logger.fmt.isSimpleStr(e.kvs[i].vStr); ok {
-					e.buf = e.logger.fmt.addValStringUnsafe(e.buf, e.kvs[i].vStr)
-				} else {
-					e.buf = e.logger.fmt.addValString(e.buf, e.kvs[i].vStr)
-				}
-			case kvBool:
-				e.buf = e.logger.fmt.addValBool(e.buf, e.kvs[i].vBool)
-			case kvFloat64:
-				e.buf = e.logger.fmt.addValFloat(e.buf, e.kvs[i].vF64)
-			case kvError:
-				if e.kvs[i].vErr != nil {
-					e.buf = e.logger.fmt.addValString(e.buf, e.kvs[i].vErr.Error())
-				} else {
-					e.buf = append(e.buf, "null,"...)
-				}
-			default:
-				e.buf = append(e.buf, "null,"...)
-			}
-		}
-
-		// INTERFACE: FINALIZE
-		e.buf = e.logger.fmt.addEnd(e.buf)
-		if e.logger.out != nil {
-			e.logger.out.Write(e.buf)
-		}
-	}
+func (l *Logger) Fatal(tag Tag) *entry {
+	return l.getEntry(tag, Lfatal)
 }

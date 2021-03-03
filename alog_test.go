@@ -11,6 +11,7 @@ func BenchmarkNew(b *testing.B) {
 	al := alog.New(os.Stderr)
 	e1 := errors.New("error msg my")
 	al.Info(0).Err("err1", nil).Err("err2", e1).Str("ok", "yes okay").Write("log starts")
+
 	al.SetOutput(nil)
 
 	//b.Run("al-kv", func(c *testing.B) {

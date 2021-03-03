@@ -53,6 +53,7 @@ func (t *TagBucket) AppendTag(dst []byte, tag Tag) []byte {
 	}
 	return dst
 }
+
 func (t *TagBucket) AppendTagForJSON(dst []byte, tag Tag) []byte {
 	origLen := len(dst)
 	for i := 0; i < t.count; i++ {
