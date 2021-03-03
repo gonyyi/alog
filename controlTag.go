@@ -1,10 +1,10 @@
 package alog
 
-// Tag is a bit-formatFlag used to show only necessary part of process to show
+// tag is a bit-formatFlag used to show only necessary part of process to show
 // in the log. For instance, if there's an web service, there can be different
-// Tag such as UI, HTTP request, HTTP response, etc. By alConf a Tag
+// tag such as UI, HTTP request, HTTP response, etc. By alConf a tag
 // for each log using `Print` or `Printf`, a user can only print certain
-// Tag of log messages for better debugging.
+// tag of log messages for better debugging.
 type Tag uint64
 
 // TagBucket can issue a tag and also holds the total number
@@ -13,8 +13,8 @@ type Tag uint64
 // to be set at the very beginning of the process.
 // Also, the maximum number of tag can be issue is limited to 63.
 type TagBucket struct {
-	count int        // count stores number of Tag issued.
-	names [64]string // names stores Tag names.
+	count int        // count stores number of tag issued.
+	names [64]string // names stores tag names.
 }
 
 // GetTag returns a tag if found
