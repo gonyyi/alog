@@ -6,12 +6,12 @@ type control struct {
 	TagBucket *TagBucket // this is 1032 bytes, better to be used as a pointer
 	Fn        ControlFn
 	Level     Level
-	Tag       Tag
+	Tags      Tag
 }
 
 // Check will check if level and tag given is good to be printed.
 func (c control) Check(lvl Level, tag Tag) bool {
-	if c.Level <= lvl || c.Tag&tag != 0 {
+	if c.Level <= lvl || c.Tags&tag != 0 {
 		return true
 	}
 	return false

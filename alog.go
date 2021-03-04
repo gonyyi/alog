@@ -17,7 +17,7 @@ func New(w io.Writer) Logger {
 	}
 	//l.fmat.init()
 	l.Control.Level = Linfo
-	l.Control.Tag = 0
+	l.Control.Tags = 0
 	l.Control.TagBucket = &TagBucket{}
 	l.Flag = Fdefault
 
