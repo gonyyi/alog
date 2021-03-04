@@ -1,21 +1,25 @@
 package alog
 
-// Format a bit-formatFlag formatFlag options that is used for variety of configuration.
-type Format uint32
+func init() {
+	dFmt.init() // prepare default formatter
+}
+
+// Flag a bit-formatFlag formatFlag options that is used for variety of configuration.
+type Flag uint32
 
 const (
 	// Fprefix will show prefix when printing log message
-	Fprefix     Format = 1 << iota
-	Fsuffix            // Fsuffix will add suffix
-	Fdate              // Fdate will show both CCYY and MMDD
-	FdateDay           // FdateDay will show 0-6 for JSON or (Sun-Mon)
-	Ftime              // Ftime will show HHMMSS
-	FtimeMs            // FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
-	FtimeUnix          // FtimeUnix will show unix time
-	FtimeUnixMs        // FtimeUnixNano will show unix time
-	FUTC               // FUTC will show UTC time formats
-	Flevel             // Flevel show level in the log messsage.
-	Ftag               // Ftag will show tags
+	Fprefix     Flag = 1 << iota
+	Fsuffix          // Fsuffix will add suffix
+	Fdate            // Fdate will show both CCYY and MMDD
+	FdateDay         // FdateDay will show 0-6 for JSON or (Sun-Mon)
+	Ftime            // Ftime will show HHMMSS
+	FtimeMs          // FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
+	FtimeUnix        // FtimeUnix will show unix time
+	FtimeUnixMs      // FtimeUnixNano will show unix time
+	FUTC             // FUTC will show UTC time formats
+	Flevel           // Flevel show level in the log messsage.
+	Ftag             // Ftag will show tags
 
 	Fdefault = Ftime | Fdate | Flevel | Ftag
 	// fUseTime is precalculated time for internal functions.

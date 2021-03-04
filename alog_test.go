@@ -11,13 +11,13 @@ import (
 func TestNew(t *testing.T) {
 	al := alog.New(os.Stderr)
 	e1 := errors.New("error msg my")
-	os := al.NewTag("OS")
-	sys := al.NewTag("SYS")
+	tOS := al.NewTag("OS")
+	tSYS := al.NewTag("SYS")
 	test := func() {
-		al.Info(os|sys).Err("err1", nil).Err("err2", e1).Str("ok", "yes okay").Write()
+		al.Info(tOS|tSYS).Err("err1", nil).Err("err2", e1).Str("ok", "yes okay").Write()
 	}
 
 	test()
-	al.CusFmat = ext.NewFormatterTerminal()
+	al.SetFormatter(ext.NewFormatterTerminal())
 	test()
 }

@@ -2,35 +2,71 @@ package ext
 
 import (
 	"github.com/gonyyi/alog"
+	"io"
 	"strconv"
 	"time"
 )
 
+// NewFormatterTerminal will take io.Writer and returns
+// a Logger.Formatter object.
 func NewFormatterTerminal() *fmtTxt {
 	return &fmtTxt{}
 }
 
-type fmtTxt struct{}
+type fmtTxt struct {
+	out       io.Writer
+	format    alog.Flag
+	tagBucket alog.TagBucket
+}
 
-func (f fmtTxt) Begin(dst []byte) []byte {
+func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket alog.TagBucket) {
+	f.out = w
+	if w == nil {
+		f.out = io.Discard
+	}
+
+	f.format = formatFlag
+	f.tagBucket = tagBucket
+}
+
+func (f *fmtTxt) Write(dst []byte) (int, error) {
+	return f.out.Write(dst)
+}
+
+func (f *fmtTxt) Close() error {
+	if c, ok := f.out.(io.Closer); ok && c != nil {
+		return c.Close()
+	}
+	return nil
+}
+
+func (fmtTxt) Begin(dst []byte) []byte {
 	return dst
 }
-func (f fmtTxt) AddTime(dst []byte, format alog.Format) []byte {
-	return append(append(dst, time.Now().String()...), ' ')
+
+func (f *fmtTxt) AddTime(dst []byte) []byte {
+	if (alog.FtimeUnix|alog.Fdate|alog.Ftime)&f.format != 0 {
+		return append(append(dst, time.Now().Format("2006-0102 15:04:05")...), ' ')
+	}
+	return dst
 }
-func (f fmtTxt) AddLevel(dst []byte, level alog.Level) []byte {
+
+func (fmtTxt) AddLevel(dst []byte, level alog.Level) []byte {
 	return append(append(dst, level.NameShort()...), ' ')
 }
-func (f fmtTxt) AddTag(dst []byte, tag alog.Tag, bucket *alog.TagBucket) []byte {
-	return append(bucket.AppendTag(append(dst, '['), tag), ']', ' ')
+
+func (f *fmtTxt) AddTag(dst []byte, tag alog.Tag) []byte {
+	return append(f.tagBucket.AppendTag(append(dst, '['), tag), ']', ' ')
 }
-func (f fmtTxt) AddMsg(dst []byte, s string) []byte {
+
+func (fmtTxt) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
 		return append(append(dst, s...), ` // `...)
 	}
 	return dst
 }
-func (f fmtTxt) AddKvs(dst []byte, kvs []alog.KeyValue) []byte {
+
+func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 	for i := 0; i < len(kvs); i++ {
 		dst = append(append(dst, kvs[i].Key...), '=')
 		switch kvs[i].Vtype {
@@ -54,7 +90,8 @@ func (f fmtTxt) AddKvs(dst []byte, kvs []alog.KeyValue) []byte {
 	}
 	return dst
 }
-func (f fmtTxt) End(dst []byte) []byte {
+
+func (fmtTxt) End(dst []byte) []byte {
 	if len(dst) > 1 {
 		dst[len(dst)-2] = '\n'
 		return dst[:len(dst)-1]
@@ -65,21 +102,26 @@ func (f fmtTxt) End(dst []byte) []byte {
 func (fmtTxt) addKeyUnsafe(dst []byte, s string) []byte {
 	return append(append(dst, s...), '=')
 }
+
 func (fmtTxt) addValString(dst []byte, s string) []byte {
 	return append(strconv.AppendQuote(dst, s), ',', ' ')
 }
+
 func (fmtTxt) addValStringUnsafe(dst []byte, s string) []byte {
 	return append(append(append(dst, '"'), s...), `", `...)
 }
+
 func (fmtTxt) addValBool(dst []byte, b bool) []byte {
 	if b {
 		return append(dst, `true, `...)
 	}
 	return append(dst, `false, `...)
 }
+
 func (fmtTxt) addValInt(dst []byte, i int64) []byte {
 	return append(strconv.AppendInt(dst, i, 10), ',', ' ')
 }
+
 func (fmtTxt) addValFloat(dst []byte, f float64) []byte {
 	return append(strconv.AppendFloat(dst, f, 'f', -1, 64), ',', ' ')
 }

@@ -1,158 +1,86 @@
 package alog
 
 import (
-	"sync"
 	"time"
 )
 
-const (
-	entry_buf_size = 512
-	entry_kv_size  = 10
-)
-
-func newEntryPoolItem() interface{} {
-	return &entry{
-		buf: make([]byte, entry_buf_size),
-		kvs: make([]KeyValue, entry_kv_size),
-	}
-}
-
-func newEntryPool() entryPool {
-	return entryPool{
-		pool: sync.Pool{
-			New: newEntryPoolItem,
-		},
-	}
-}
-
-// pool is an a Buffer implementation of sync.Pool.
-type entryPool struct {
-	pool sync.Pool
-}
-
-func (p *entryPool) Get(logger *Logger) *entry {
-	b := p.pool.Get().(*entry)
-	b.logger = logger
-	//b.format = logger.Format
-	//b.out = logger.out
-	return b
-}
-
-func (p *entryPool) Put(b *entry) {
-	b.buf = b.buf[:entry_buf_size]
-	b.kvs = b.kvs[:0]
-	p.pool.Put(b)
-}
-
-// entry is the main entry format used in Alog.
-// This can be used as standalone or within the sync.Pool
+// entry is a log entry will be used with a entryPool to
+// reuse the resource.
 type entry struct {
 	buf    []byte
 	level  Level
 	tag    Tag
 	logger *Logger
-	//format Format
-	//out    io.Writer
-	kvs []KeyValue
+	kvs    []KeyValue
 }
 
-func (e *entry) Bool(key string, val bool) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyValue{
-			Vtype: KvBool,
-			Key:   key,
-			Vbool: val,
-		})
-	}
-	return e
-}
-func (e *entry) Float(key string, val float64) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyValue{
-			Vtype: KvFloat64,
-			Key:   key,
-			Vf64:  val,
-		})
-	}
-	return e
-}
-func (e *entry) Str(key string, val string) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyValue{
-			Vtype: KvString,
-			Key:   key,
-			Vstr:  val,
-		})
-	}
-	return e
-}
-func (e *entry) Int(key string, val int) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyValue{
-			Vtype: KvInt,
-			Key:   key,
-			Vint:  int64(val),
-		})
-	}
-	return e
-}
-func (e *entry) Err(key string, val error) *entry {
-	if e != nil {
-		e.kvs = append(e.kvs, KeyValue{
-			Vtype: KvError,
-			Key:   key,
-			Verr:  val,
-		})
-	}
-	return e
-}
-
-func (e *entry) Write() {
-	e.Writes("")
-}
-
+// Writes will finalize the log message, format it, and
+// write it to writer. Besides *logger.getEntry(), this is
+// the only other method which isn't inline-able.
 func (e *entry) Writes(s string) {
+	// When log message was created from *Logger.getEntry(),
+	// it examines logability (should log or not). Once it's not eligible,
+	// it will return nil.
+	// eg. log.Trace(0).Str("name", "gon").Int("age", 39).Write()
+	//   1. Trace(0) will call getEntry(), if it determines the log shouldn't be
+	//      logged, it will return nil.
+	//   2. Next method with Str() receives nil for the pointer and will ignore,
+	//      and return nil to next.
+	//   3. Int method will receive nil, and just pass nil to next.
+	//   4. Write method finally receives it, if entry pointer is nil, it won't
+	//      do anything as it's not eligible to log.
+
+	// if entry is not nil (=loggable),
 	if e != nil {
+		// since pointer receiver *entry is obtained from the pool,
+		// make sure this will be put back to memory.
 		defer e.logger.pool.Put(e)
 
-		if e.logger.CusFmat != nil {
-			e.buf = e.logger.CusFmat.Begin(e.buf)
-			//e.buf = e.logger.CusFmat.AddTime(e.buf, e.logger.Format)
-			e.buf = e.logger.CusFmat.AddLevel(e.buf, e.level)
-			e.buf = e.logger.CusFmat.AddTag(e.buf, e.tag, e.logger.Control.Tags)
-			e.buf = e.logger.CusFmat.AddMsg(e.buf, s)
-			e.buf = e.logger.CusFmat.AddKvs(e.buf, e.kvs)
-			e.buf = e.logger.CusFmat.End(e.buf)
+		// if custom formatter exists, use it instead of default formatter.
+		// for default formatter (formatd), it's a concrete function for speed.
+		// rather than using from the interface.
+		if e.logger.orFmtr != nil {
+			// CUSTOM FORMATTER
+			e.buf = e.logger.orFmtr.Begin(e.buf)
+			e.buf = e.logger.orFmtr.AddTime(e.buf)
+			e.buf = e.logger.orFmtr.AddLevel(e.buf, e.level)
+			e.buf = e.logger.orFmtr.AddTag(e.buf, e.tag)
+			e.buf = e.logger.orFmtr.AddMsg(e.buf, s)
+			e.buf = e.logger.orFmtr.AddKVs(e.buf, e.kvs)
+			e.buf = e.logger.orFmtr.End(e.buf)
+			e.logger.orFmtr.Write(e.buf)
 		} else {
-			// BUILTIN PRINTER
+			// BUILT-IN FORMATTER
+			// using dFmt (of formatd)
 			e.buf = dFmt.addBegin(e.buf)
-			// INTERFACE: AppendTime()
-			if e.logger.Format&fUseTime != 0 {
+
+			// APPEND TIME
+			if e.logger.Flag&fUseTime != 0 {
 				t := time.Now()
-				if (FtimeUnix|FtimeUnixMs)&e.logger.Format != 0 {
+				if (FtimeUnix|FtimeUnixMs)&e.logger.Flag != 0 {
 					e.buf = dFmt.addKeyUnsafe(e.buf, "ts")
-					if FtimeUnixMs&e.logger.Format != 0 {
+					if FtimeUnixMs&e.logger.Flag != 0 {
 						e.buf = dFmt.addTimeUnix(e.buf, t.UnixNano()/1e6)
 					} else {
 						e.buf = dFmt.addTimeUnix(e.buf, t.Unix())
 					}
 				} else {
-					if FUTC&e.logger.Format != 0 {
+					if FUTC&e.logger.Flag != 0 {
 						t = t.UTC()
 					}
-					if Fdate&e.logger.Format != 0 {
+					if Fdate&e.logger.Flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "date")
 						y, m, d := t.Date()
 						e.buf = dFmt.addTimeDate(e.buf, y, int(m), d)
 					}
-					if FdateDay&e.logger.Format != 0 {
+					if FdateDay&e.logger.Flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "day")
 						e.buf = dFmt.addTimeDay(e.buf, int(t.Weekday()))
 					}
-					if (Ftime|FtimeMs)&e.logger.Format != 0 {
+					if (Ftime|FtimeMs)&e.logger.Flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "time")
 						h, m, s := t.Clock()
-						if FtimeMs&e.logger.Format != 0 {
+						if FtimeMs&e.logger.Flag != 0 {
 							e.buf = dFmt.addTimeMs(e.buf, h, m, s, t.Nanosecond())
 						} else {
 							e.buf = dFmt.addTime(e.buf, h, m, s)
@@ -161,19 +89,19 @@ func (e *entry) Writes(s string) {
 				}
 			}
 
-			// INTERFACE: LEVEL
-			if e.logger.Format&Flevel != 0 {
+			// APPEND LEVEL
+			if e.logger.Flag&Flevel != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "level")
 				e.buf = dFmt.addLevel(e.buf, e.level)
 			}
 
-			// INTERFACE: TAG
-			if e.logger.Format&Ftag != 0 {
+			// APPEND TAG
+			if e.logger.Flag&Ftag != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "tag")
-				e.buf = dFmt.addTag(e.buf, e.logger.Control.Tags, e.tag)
+				e.buf = dFmt.addTag(e.buf, e.logger.Control.TagBucket, e.tag)
 			}
 
-			// INTERFACE: MSG
+			// APPEND MSG
 			if s != "" {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
 				if ok, _ := dFmt.isSimpleStr(s); ok {
@@ -183,7 +111,7 @@ func (e *entry) Writes(s string) {
 				}
 			}
 
-			// INTERFACE: ADD kvs
+			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
 				// Set name
 				e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
@@ -215,12 +143,98 @@ func (e *entry) Writes(s string) {
 					e.buf = append(e.buf, `null,`...)
 				}
 			}
-			// INTERFACE: FINALIZE
-			e.buf = dFmt.addEnd(e.buf)
-		}
 
-		if e.logger.out != nil {
-			e.logger.out.Write(e.buf)
+			// APPEND FINAL
+			e.buf = dFmt.addEnd(e.buf)
+
+			// Write to output
+			if e.logger.outd != nil {
+				e.logger.outd.Write(e.buf)
+			}
 		}
 	}
+}
+
+// Bool adds KeyValue of boolean into kvs slice.
+func (e *entry) Bool(key string, val bool) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvBool,
+			Key:   key,
+			Vbool: val,
+		})
+	}
+	return e
+}
+
+// Float adds KeyValue of float64 into kvs slice.
+// To minimize the size of entry, alog only supports float64.
+func (e *entry) Float(key string, val float64) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvFloat64,
+			Key:   key,
+			Vf64:  val,
+		})
+	}
+	return e
+}
+
+// Str adds KeyValue item of a string into kvs slice.
+func (e *entry) Str(key string, val string) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvString,
+			Key:   key,
+			Vstr:  val,
+		})
+	}
+	return e
+}
+
+// Int adds KeyValue item for integer. This will convert int to int64.
+// As both int and int64 are widely used, Alog has both Int and Int64
+// but they share same kind (Vint).
+func (e *entry) Int(key string, val int) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvInt,
+			Key:   key,
+			Vint:  int64(val),
+		})
+	}
+	return e
+}
+
+// Int64 adds KeyValue item for 64 bit integer.
+// As both int and int64 are widely used, Alog has both Int and Int64
+// but they share same kind (Vint).
+func (e *entry) Int64(key string, val int64) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvInt,
+			Key:   key,
+			Vint:  val,
+		})
+	}
+	return e
+}
+
+// Err adds KeyValue for error item.
+func (e *entry) Err(key string, val error) *entry {
+	if e != nil {
+		e.kvs = append(e.kvs, KeyValue{
+			Vtype: KvError,
+			Key:   key,
+			Verr:  val,
+		})
+	}
+	return e
+}
+
+// Write will call *Logger.Writes() without param.
+// As Writes without parameter can be used frequently,
+// Alog has both Write() and Writes(string).
+func (e *entry) Write() {
+	e.Writes("")
 }

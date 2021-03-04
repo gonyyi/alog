@@ -1,11 +1,11 @@
 package alog
 
 type control struct {
-	Tags  *TagBucket
-	Hook  func(Level, Tag, []byte)
-	Fn    func(Level, Tag) bool
-	Level Level
-	Tag   Tag
+	TagBucket *TagBucket
+	Hook      func(Level, Tag, []byte)
+	Fn        func(Level, Tag) bool
+	Level     Level
+	Tag       Tag
 }
 
 // check will check if level and tag given is good to be printed.
