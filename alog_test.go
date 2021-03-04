@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 	os := al.NewTag("OS")
 	sys := al.NewTag("SYS")
 	test := func() {
-		al.Info(os|sys).Err("err1", nil).Err("err2", e1).Str("ok", "yes okay").Write("log starts")
+		al.Info(os|sys).Err("err1", nil).Err("err2", e1).Str("ok", "yes okay").Write()
 	}
 
 	test()

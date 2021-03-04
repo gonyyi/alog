@@ -25,7 +25,10 @@ func (f fmtTxt) AddTag(dst []byte, tag alog.Tag, bucket *alog.TagBucket) []byte 
 	return append(bucket.AppendTag(append(dst, '['), tag), ']', ' ')
 }
 func (f fmtTxt) AddMsg(dst []byte, s string) []byte {
-	return append(append(dst, s...), ` // `...)
+	if s != "" {
+		return append(append(dst, s...), ` // `...)
+	}
+	return dst
 }
 func (f fmtTxt) AddKvs(dst []byte, kvs []alog.KeyValue) []byte {
 	for i := 0; i < len(kvs); i++ {

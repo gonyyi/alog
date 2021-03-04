@@ -40,7 +40,7 @@ func (p *entryPool) Get(logger *Logger) *entry {
 
 func (p *entryPool) Put(b *entry) {
 	b.buf = b.buf[:entry_buf_size]
-	b.kvs = b.kvs[:entry_kv_size]
+	b.kvs = b.kvs[:0]
 	p.pool.Put(b)
 }
 
@@ -107,7 +107,11 @@ func (e *entry) Err(key string, val error) *entry {
 	return e
 }
 
-func (e *entry) Write(s string) {
+func (e *entry) Write() {
+	e.Writes("")
+}
+
+func (e *entry) Writes(s string) {
 	if e != nil {
 		defer e.logger.pool.Put(e)
 
@@ -170,11 +174,13 @@ func (e *entry) Write(s string) {
 			}
 
 			// INTERFACE: MSG
-			e.buf = dFmt.addKeyUnsafe(e.buf, "message")
-			if ok, _ := dFmt.isSimpleStr(s); ok {
-				e.buf = dFmt.addValStringUnsafe(e.buf, s)
-			} else {
-				e.buf = dFmt.addValString(e.buf, s)
+			if s != "" {
+				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
+				if ok, _ := dFmt.isSimpleStr(s); ok {
+					e.buf = dFmt.addValStringUnsafe(e.buf, s)
+				} else {
+					e.buf = dFmt.addValString(e.buf, s)
+				}
 			}
 
 			// INTERFACE: ADD kvs
@@ -196,12 +202,17 @@ func (e *entry) Write(s string) {
 					e.buf = dFmt.addValFloat(e.buf, e.kvs[i].Vf64)
 				case KvError:
 					if e.kvs[i].Verr != nil {
-						e.buf = dFmt.addValString(e.buf, e.kvs[i].Verr.Error())
+						errStr := e.kvs[i].Verr.Error()
+						if ok, _ := dFmt.isSimpleStr(errStr); ok {
+							e.buf = dFmt.addValStringUnsafe(e.buf, errStr)
+						} else {
+							e.buf = dFmt.addValString(e.buf, errStr)
+						}
 					} else {
-						e.buf = append(e.buf, "null,"...)
+						e.buf = append(e.buf, `null,`...)
 					}
 				default:
-					e.buf = append(e.buf, "null,"...)
+					e.buf = append(e.buf, `null,`...)
 				}
 			}
 			// INTERFACE: FINALIZE
