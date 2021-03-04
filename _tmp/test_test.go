@@ -39,6 +39,8 @@ func fzl(i int) {
 var al = alog.New(nil)
 var zl = zerolog.New(nil)
 
+const repeat = 3
+
 func init() {
 	al.Flag = alog.Flevel
 	al.Control.Level = alog.Linfo
@@ -46,16 +48,16 @@ func init() {
 }
 
 func TestCompSimple(t *testing.T) {
-	al.SetOutput(os.Stderr)
+	al = al.SetOutput(os.Stderr)
 	zl = zl.Output(os.Stderr)
 	fal(123)
 	fzl(123)
-	al.SetOutput(nil)
+	al = al.SetOutput(nil)
 	zl = zl.Output(nil)
 }
 
 func BenchmarkCompSingleThread(b *testing.B) {
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("zl", func(c *testing.B) {
 			c.ReportAllocs()
 			for i := 0; i < c.N; i++ {
@@ -63,7 +65,7 @@ func BenchmarkCompSingleThread(b *testing.B) {
 			}
 		})
 	}
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("al", func(c *testing.B) {
 			c.ReportAllocs()
 			for i := 0; i < c.N; i++ {
@@ -74,7 +76,7 @@ func BenchmarkCompSingleThread(b *testing.B) {
 }
 
 func BenchmarkCompParallel(b *testing.B) {
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("al", func(c *testing.B) {
 			c.ReportAllocs()
 			c.RunParallel(func(p *testing.PB) {
@@ -84,7 +86,7 @@ func BenchmarkCompParallel(b *testing.B) {
 			})
 		})
 	}
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("zl", func(c *testing.B) {
 			c.ReportAllocs()
 			c.RunParallel(func(p *testing.PB) {
@@ -100,7 +102,7 @@ func BenchmarkCompCheck(b *testing.B) {
 	zl = zl.Level(zerolog.FatalLevel)
 	al.Control.Level = alog.Lfatal
 
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("al", func(c *testing.B) {
 			c.ReportAllocs()
 			c.RunParallel(func(p *testing.PB) {
@@ -110,7 +112,7 @@ func BenchmarkCompCheck(b *testing.B) {
 			})
 		})
 	}
-	for rep := 0; rep < 5; rep++ {
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("zl", func(c *testing.B) {
 			c.ReportAllocs()
 			c.RunParallel(func(p *testing.PB) {

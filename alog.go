@@ -7,7 +7,7 @@ import (
 // New will return a Alog logger pointer with default values.
 // This function will take an io.Writer and convert it to AlWriter.
 // A user'Vstr custom AlWriter will let the user steer more control.
-func New(w io.Writer) *Logger {
+func New(w io.Writer) Logger {
 	l := Logger{
 		w:    w,
 		pool: newEntryPool(),
@@ -21,7 +21,7 @@ func New(w io.Writer) *Logger {
 	l.Control.TagBucket = &TagBucket{}
 	l.Flag = Fdefault
 
-	return &l
+	return l
 }
 
 // logger is a main struct for Alog.
@@ -33,14 +33,14 @@ type Logger struct {
 	Flag    Flag
 }
 
-func (l *Logger) NewTag(name string) Tag {
+func (l Logger) NewTag(name string) Tag {
 	return l.Control.TagBucket.MustGetTag(name)
 }
 
 // Do will run (series of) function(Vstr) and is used for
 // quick macro like settings for the logger.
-func (l *Logger) Do(fn func(*Logger)) *Logger {
-	fn(l)
+func (l Logger) Do(fn func(*Logger)) Logger {
+	fn(&l)
 	return l
 }
 
@@ -57,7 +57,7 @@ func (l *Logger) Close() error {
 
 // SetOutput will set the output writer to be used
 // in the logger. If nil is given, it will discard the output.
-func (l *Logger) SetOutput(w io.Writer) *Logger {
+func (l Logger) SetOutput(w io.Writer) Logger {
 	l.w = w
 	if w == nil {
 		l.w = io.Discard
@@ -66,26 +66,18 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 }
 
 // Output will return currently used default writer.
-func (l *Logger) Output() io.Writer {
+func (l Logger) Output() io.Writer {
 	return l.w
 }
 
 // SetFormatter will take an object with Formatter interface
 // For Alog, nil can be used to disable the override.
-func (l *Logger) SetFormatter(f Formatter) *Logger {
+func (l Logger) SetFormatter(f Formatter) Logger {
 	l.orFmtr = f
 	if l.orFmtr != nil {
 		l.orFmtr.Init(l.w, l.Flag, *l.Control.TagBucket)
 	}
 	return l
-}
-
-type entryInfo struct {
-	flag    Flag
-	tbucket *TagBucket
-	pool    *entryPool
-	orFmtr  Formatter
-	w       io.Writer
 }
 
 func (l Logger) entryInfo() entryInfo {

@@ -1,7 +1,12 @@
 package alog
 
+var dFmtChars [256]bool
+var dFmt formatd
+
 func init() {
-	dFmt.init() // prepare default formatter
+	for i := 0; i <= 0x7e; i++ {
+		dFmtChars[i] = i >= 0x20 && i != '\\' && i != '"' // all printable will be true
+	}
 }
 
 // Flag a bit-formatFlag formatFlag options that is used for variety of configuration.
@@ -79,3 +84,7 @@ func (l Level) NameShort() string {
 		return ""
 	}
 }
+
+// ControlFn is used to trigger whether log or not in control.
+// Once ControlFn is set, level/tag conditions will be ignored.
+type ControlFn func(Level, Tag) bool

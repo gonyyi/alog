@@ -1,23 +1,27 @@
 package alog
 
 import (
+	"io"
 	"time"
 )
 
+type entryInfo struct {
+	flag    Flag
+	tbucket *TagBucket
+	pool    *entryPool
+	orFmtr  Formatter
+	w       io.Writer
+}
+
 // entry is a log entry will be used with a entryPool to
 // reuse the resource.
+// entry is 120 bytes, use pointer.
 type entry struct {
 	buf   []byte
 	level Level
 	tag   Tag
 	kvs   []KeyValue
 	info  entryInfo
-	// disable below for inlining -- replced with info (entryInfo)
-	//flag    Flag
-	//pool    *entryPool
-	//tbucket *TagBucket
-	//w       io.Writer
-	//orFmtr  Formatter
 }
 
 // Writes will finalize the log message, format it, and
