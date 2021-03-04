@@ -38,8 +38,8 @@ func TestNew(t *testing.T) {
 	}
 
 	test()
-	al = al.SetFormatter(ext.NewFormatterTerminal())
+	al = al.Do(ext.DoFmt.TXTColor())
 	test()
-	al = al.SetFormatter(ext.NewFormatterTerminalColor())
+	al = al.Do(ext.DoFmt.TXT())
 	test()
 }
