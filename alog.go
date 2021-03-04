@@ -94,9 +94,9 @@ func (l *Logger) getEntry(tag Tag, level Level) *entry {
 		})
 		e.tag = tag
 		e.level = level
-		// buf and kvs are reset when *entryPool.Put()
-		// e.buf = e.buf[:0]
-		// e.kvs = e.kvs[:0]
+
+		e.buf = e.buf[:0]
+		e.kvs = e.kvs[:0]
 		return e
 	}
 	return nil
