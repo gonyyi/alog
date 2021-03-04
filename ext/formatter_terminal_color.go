@@ -59,7 +59,7 @@ func (fmtTxtColor) Begin(dst []byte) []byte {
 }
 
 func (f *fmtTxtColor) AddTime(dst []byte) []byte {
-	if (alog.FtimeUnix|alog.Fdate|alog.Ftime)&f.format != 0 {
+	if (alog.UseUnixTime|alog.UseDate|alog.UseTime)&f.format != 0 {
 		return append(append(dst, time.Now().Format(fcDIM+"2006-0102 15:04:05"+fcCLEAR)...), ' ')
 	}
 	return dst
@@ -68,17 +68,17 @@ func (f *fmtTxtColor) AddTime(dst []byte) []byte {
 func (fmtTxtColor) AddLevel(dst []byte, level alog.Level) []byte {
 
 	switch level {
-	case alog.Ltrace:
+	case alog.TraceLevel:
 		dst = append(dst, fcTRACE...)
-	case alog.Ldebug:
+	case alog.DebugLevel:
 		dst = append(dst, fcDEBUG...)
-	case alog.Linfo:
+	case alog.InfoLevel:
 		dst = append(dst, fcINFO...)
-	case alog.Lwarn:
+	case alog.WarnLevel:
 		dst = append(dst, fcWARN...)
-	case alog.Lerror:
+	case alog.ErrorLevel:
 		dst = append(dst, fcERROR...)
-	case alog.Lfatal:
+	case alog.FatalLevel:
 		dst = append(dst, fcFATAL...)
 	}
 	return append(append(append(append(dst, ' '), level.NameShort()...), ' '), fcCLEAR+" "...)
@@ -97,7 +97,7 @@ func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
 
 func (f *fmtTxtColor) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 	for i := 0; i < len(kvs); i++ {
-		dst = append(append(append(dst, fcDIM...), kvs[i].Key...), "=" + fcCLEAR...)
+		dst = append(append(append(dst, fcDIM...), kvs[i].Key...), "="+fcCLEAR...)
 		switch kvs[i].Vtype {
 		case alog.KvString:
 			dst = f.addValStringUnsafe(dst, kvs[i].Vstr)

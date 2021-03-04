@@ -68,30 +68,30 @@ func (e *Entry) Write(s string) {
 			// APPEND TIME
 			if e.info.flag&fUseTime != 0 {
 				t := time.Now()
-				if (FtimeUnix|FtimeUnixMs)&e.info.flag != 0 {
+				if (UseUnixTime|UseUnixTimeMs)&e.info.flag != 0 {
 					e.buf = dFmt.addKeyUnsafe(e.buf, "ts")
-					if FtimeUnixMs&e.info.flag != 0 {
+					if UseUnixTimeMs&e.info.flag != 0 {
 						e.buf = dFmt.addTimeUnix(e.buf, t.UnixNano()/1e6)
 					} else {
 						e.buf = dFmt.addTimeUnix(e.buf, t.Unix())
 					}
 				} else {
-					if FUTC&e.info.flag != 0 {
+					if UseUTC&e.info.flag != 0 {
 						t = t.UTC()
 					}
-					if Fdate&e.info.flag != 0 {
+					if UseDate&e.info.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "date")
 						y, m, d := t.Date()
 						e.buf = dFmt.addTimeDate(e.buf, y, int(m), d)
 					}
-					if FdateDay&e.info.flag != 0 {
+					if UseDay&e.info.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "day")
 						e.buf = dFmt.addTimeDay(e.buf, int(t.Weekday()))
 					}
-					if (Ftime|FtimeMs)&e.info.flag != 0 {
+					if (UseTime|UseTimeMs)&e.info.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "time")
 						h, m, s := t.Clock()
-						if FtimeMs&e.info.flag != 0 {
+						if UseTimeMs&e.info.flag != 0 {
 							e.buf = dFmt.addTimeMs(e.buf, h, m, s, t.Nanosecond())
 						} else {
 							e.buf = dFmt.addTime(e.buf, h, m, s)
@@ -101,13 +101,13 @@ func (e *Entry) Write(s string) {
 			}
 
 			// APPEND LEVEL
-			if e.info.flag&Flevel != 0 {
+			if e.info.flag&UseLevel != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "level")
 				e.buf = dFmt.addLevel(e.buf, e.level)
 			}
 
 			// APPEND TAG
-			if e.info.flag&Ftag != 0 {
+			if e.info.flag&UseTag != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "tag")
 				e.buf = dFmt.addTag(e.buf, e.info.tbucket, e.tag)
 			}

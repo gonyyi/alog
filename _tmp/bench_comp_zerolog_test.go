@@ -42,8 +42,8 @@ var zl = zerolog.New(nil)
 const repeat = 3
 
 func init() {
-	al.Flag = alog.Flevel
-	al.Control.Level = alog.Linfo
+	al.Flag = alog.UseLevel
+	al.Control.Level = alog.InfoLevel
 	zl = zl.Level(zerolog.InfoLevel)
 }
 
@@ -100,7 +100,7 @@ func BenchmarkCompParallel(b *testing.B) {
 
 func BenchmarkCompCheck(b *testing.B) {
 	zl = zl.Level(zerolog.FatalLevel)
-	al.Control.Level = alog.Lfatal
+	al.Control.Level = alog.FatalLevel
 
 	for rep := 0; rep < repeat; rep++ {
 		b.Run("al", func(c *testing.B) {
@@ -123,5 +123,5 @@ func BenchmarkCompCheck(b *testing.B) {
 		})
 	}
 	zl = zl.Level(zerolog.InfoLevel)
-	al.Control.Level = alog.Lfatal
+	al.Control.Level = alog.FatalLevel
 }

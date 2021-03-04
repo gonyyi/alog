@@ -13,33 +13,31 @@ func init() {
 type Flag uint32
 
 const (
-	// Fprefix will show prefix when printing log message
-	Fprefix     Flag = 1 << iota
-	Fsuffix          // Fsuffix will add suffix
-	Fdate            // Fdate will show both CCYY and MMDD
-	FdateDay         // FdateDay will show 0-6 for JSON or (Sun-Mon)
-	Ftime            // Ftime will show HHMMSS
-	FtimeMs          // FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
-	FtimeUnix        // FtimeUnix will show unix time
-	FtimeUnixMs      // FtimeUnixNano will show unix time
-	FUTC             // FUTC will show UTC time formats
-	Flevel           // Flevel show level in the log messsage.
-	Ftag             // Ftag will show tags
+	UseLevel      Flag = 1 << iota // UseLevel show level in the log messsage.
+	UseTag                         // UseTag will show tags
+	UseDate                        // UseDate will show both CCYY and MMDD
+	UseDay                         // UseDay will show 0-6 for JSON or (Sun-Mon)
+	UseTime                        // UseTime will show HHMMSS
+	UseTimeMs                      // UseTimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
+	UseUnixTime                    // UseUnixTime will show unix time
+	UseUnixTimeMs                  // UseUnixTimeMs will show unix time with millisecond
+	UseUTC                         // UseUTC will show UTC time formats
 
-	Fdefault = Ftime | Fdate | Flevel | Ftag
-	// fUseTime is precalculated time for internal functions.
-	fUseTime = Fdate | FdateDay | Ftime | FtimeMs | FtimeUnix | FtimeUnixMs
+	UseDefault = UseTime | UseDate | UseLevel | UseTag
+	// fUseTime is precalculated time for internal functions. Not that if UseUTC is used by it self,
+	// without any below, it won't print any time.
+	fUseTime = UseDate | UseDay | UseTime | UseTimeMs | UseUnixTime | UseUnixTimeMs
 )
 
 const (
-	// Ltrace shows trace level, thee most detailed debugging level.
+	// TraceLevel shows trace level, thee most detailed debugging level.
 	// This will show everything.
-	Ltrace Level = iota + 1
-	Ldebug       // Ldebug shows debug level or higher
-	Linfo        // Linfo shows information level or higher
-	Lwarn        // Lwarn is for a normal but a significant condition
-	Lerror       // Lerror shows error level or higher
-	Lfatal       // Lfatal shows fatal level or higher. This does not exit the process
+	TraceLevel Level = iota + 1
+	DebugLevel       // DebugLevel shows debug level or higher
+	InfoLevel        // InfoLevel shows information level or higher
+	WarnLevel        // WarnLevel is for a normal but a significant condition
+	ErrorLevel       // ErrorLevel shows error level or higher
+	FatalLevel       // FatalLevel shows fatal level or higher. This does not exit the process
 )
 
 // level is a flag for logging level
@@ -48,17 +46,17 @@ type Level uint8
 // Name will print level'Vstr full name
 func (l Level) Name() string {
 	switch l {
-	case Ltrace:
+	case TraceLevel:
 		return "trace"
-	case Ldebug:
+	case DebugLevel:
 		return "debug"
-	case Linfo:
+	case InfoLevel:
 		return "info"
-	case Lwarn:
+	case WarnLevel:
 		return "warn"
-	case Lerror:
+	case ErrorLevel:
 		return "error"
-	case Lfatal:
+	case FatalLevel:
 		return "fatal"
 	default:
 		return ""
@@ -68,17 +66,17 @@ func (l Level) Name() string {
 // NameShort will print level'Vstr abbreviated name
 func (l Level) NameShort() string {
 	switch l {
-	case Ltrace:
+	case TraceLevel:
 		return "TRC"
-	case Ldebug:
+	case DebugLevel:
 		return "DBG"
-	case Linfo:
+	case InfoLevel:
 		return "INF"
-	case Lwarn:
+	case WarnLevel:
 		return "WRN"
-	case Lerror:
+	case ErrorLevel:
 		return "ERR"
-	case Lfatal:
+	case FatalLevel:
 		return "FTL"
 	default:
 		return ""

@@ -6,12 +6,13 @@ import (
 )
 
 var DoMode doMode
-type doMode struct {}
+
+type doMode struct{}
 
 func (doMode) PROD(filename string) alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
-		l.Control.Level = alog.Linfo
-		l.Flag = alog.Fdefault|alog.FtimeUnixMs
+		l.Control.Level = alog.InfoLevel
+		l.Flag = alog.UseDefault | alog.UseUnixTimeMs
 		bw, err := NewBufWriter(filename)
 		if err != nil {
 			l.Error(0).Err("err", err).Write("failed to open")
@@ -24,8 +25,8 @@ func (doMode) PROD(filename string) alog.DoFn {
 
 func (doMode) DEV(filename string) alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
-		l.Control.Level = alog.Ltrace
-		l.Flag = alog.FtimeMs|alog.Fdefault
+		l.Control.Level = alog.TraceLevel
+		l.Flag = alog.UseTimeMs | alog.UseDefault
 		if fo, err := os.Create(filename); err != nil {
 			l.Error(0).Err("error", err).Write("cannot create file")
 		} else {
@@ -37,8 +38,8 @@ func (doMode) DEV(filename string) alog.DoFn {
 
 func (doMode) TEST(filename string) alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
-		l.Control.Level = alog.Ltrace
-		l.Flag = alog.FtimeMs|alog.Ftag|alog.Flevel
+		l.Control.Level = alog.TraceLevel
+		l.Flag = alog.UseTimeMs | alog.UseTag | alog.UseLevel
 		l = l.SetFormatter(NewFormatterTerminalColor())
 		return l
 	}

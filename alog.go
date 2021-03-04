@@ -16,10 +16,10 @@ func New(w io.Writer) Logger {
 		l.w = io.Discard
 	}
 	//l.fmat.init()
-	l.Control.Level = Linfo
+	l.Control.Level = InfoLevel
 	l.Control.Tags = 0
 	l.Control.TagBucket = &TagBucket{}
-	l.Flag = Fdefault
+	l.Flag = UseDefault
 
 	return l
 }
@@ -107,30 +107,30 @@ func (l *Logger) getEntry(tag Tag, level Level) *Entry {
 
 // Trace takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Trace(tag Tag) *Entry {
-	return l.getEntry(tag, Ltrace)
+	return l.getEntry(tag, TraceLevel)
 }
 
 // Debug takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Debug(tag Tag) *Entry {
-	return l.getEntry(tag, Ldebug)
+	return l.getEntry(tag, DebugLevel)
 }
 
 // Info takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Info(tag Tag) *Entry {
-	return l.getEntry(tag, Linfo)
+	return l.getEntry(tag, InfoLevel)
 }
 
 // Warn takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Warn(tag Tag) *Entry {
-	return l.getEntry(tag, Lwarn)
+	return l.getEntry(tag, WarnLevel)
 }
 
 // Error takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Error(tag Tag) *Entry {
-	return l.getEntry(tag, Lerror)
+	return l.getEntry(tag, ErrorLevel)
 }
 
 // Fatal takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Fatal(tag Tag) *Entry {
-	return l.getEntry(tag, Lfatal)
+	return l.getEntry(tag, FatalLevel)
 }

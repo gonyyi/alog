@@ -23,7 +23,7 @@ func TestRandom(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	al := alog.New(os.Stderr)
-	al.Control.Level = alog.Ltrace
+	al.Control.Level = alog.TraceLevel
 
 	tOS := al.NewTag("OS")
 	tSYS := al.NewTag("SYS")
