@@ -1,7 +1,6 @@
 package alog
 
 import (
-	"io"
 	"sync"
 )
 
@@ -35,14 +34,18 @@ type entryPool struct {
 	pool sync.Pool
 }
 
+// Disable this for inlining
 // Get will obtain entry (pointer) from the pool
-func (p *entryPool) Get(f Flag, tb *TagBucket, pool *entryPool, w io.Writer, orfmtr Formatter) *entry {
-	b := p.pool.Get().(*entry)
-	b.flag = f
-	b.tbucket = tb
-	b.pool = pool
-	b.orFmtr = orfmtr
-	b.w = w
+//func (p *entryPool) Get(f Flag, tb *TagBucket, pool *entryPool, w io.Writer, orfmtr Formatter) *entry {
+//	b := p.pool.Get().(*entry)
+//	b.flag, b.tbucket, b.pool, b.orFmtr, b.w = f, tb, pool, orfmtr, w
+//	return b
+//}
+
+// Get will obtain entry (pointer) from the pool
+func (p *entryPool) Get(info entryInfo) *entry {
+	b := p.pool.Get().(*entry) // cost: 69
+	b.info = info
 	return b
 }
 

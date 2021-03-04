@@ -80,11 +80,30 @@ func (l *Logger) SetFormatter(f Formatter) *Logger {
 	return l
 }
 
+type entryInfo struct {
+	flag    Flag
+	tbucket *TagBucket
+	pool    *entryPool
+	orFmtr  Formatter
+	w       io.Writer
+}
+
+func (l Logger) entryInfo() entryInfo {
+	return entryInfo{
+		flag:    l.Flag,
+		tbucket: l.Control.TagBucket,
+		pool:    l.pool,
+		orFmtr:  l.orFmtr,
+		w:       l.w,
+	}
+}
+
 // getEntry gets entry from the entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
 func (l *Logger) getEntry(tag Tag, level Level) *entry {
 	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.w != nil {
-		e := l.pool.Get(l.Flag, l.Control.TagBucket, l.pool, l.w, l.orFmtr)
+		//e := l.pool.Get(l.Flag, l.Control.TagBucket, l.pool, l.w, l.orFmtr)
+		e := l.pool.Get(l.entryInfo())
 		e.tag = tag
 		e.level = level
 		e.buf = e.buf[:0]
