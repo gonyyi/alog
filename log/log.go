@@ -11,6 +11,11 @@ func Do(fn alog.DoFn) {
 	al = al.Do(fn)
 }
 
+func Control(level alog.Level, tag alog.Tag) {
+	al.Control.Level = level
+	al.Control.Tags = tag
+}
+
 func NewTag(name string) alog.Tag {
 	return al.NewTag(name)
 }
