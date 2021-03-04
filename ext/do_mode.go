@@ -2,9 +2,13 @@ package ext
 
 import (
 	"github.com/gonyyi/alog"
+	"os"
 )
 
-func DoModeProd(filename string) alog.DoFn {
+var DoMode doMode
+type doMode struct {}
+
+func (doMode) PROD(filename string) alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.Linfo
 		l.Flag = alog.Fdefault|alog.FtimeUnixMs
@@ -18,9 +22,23 @@ func DoModeProd(filename string) alog.DoFn {
 	}
 }
 
-func DoModeDev(filenamePlaceHolder string) alog.DoFn {
+func (doMode) DEV(filename string) alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.Ltrace
+		l.Flag = alog.FtimeMs|alog.Fdefault
+		if fo, err := os.Create(filename); err != nil {
+			l.Error(0).Err("error", err).Write("cannot create file")
+		} else {
+			l = l.SetOutput(fo)
+		}
+		return l
+	}
+}
+
+func (doMode) TEST(filename string) alog.DoFn {
+	return func(l alog.Logger) alog.Logger {
+		l.Control.Level = alog.Ltrace
+		l.Flag = alog.FtimeMs|alog.Ftag|alog.Flevel
 		l = l.SetFormatter(NewFormatterTerminalColor())
 		return l
 	}
