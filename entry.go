@@ -14,10 +14,10 @@ type entryInfo struct {
 	w       io.Writer
 }
 
-// entry is a log entry will be used with a entryPool to
+// Entry is a log Entry will be used with a entryPool to
 // reuse the resource.
-// entry is 120 bytes, use pointer.
-type entry struct {
+// Entry is 120 bytes, use pointer.
+type Entry struct {
 	buf   []byte
 	level Level
 	tag   Tag
@@ -28,7 +28,7 @@ type entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *entry) Write(s string) {
+func (e *Entry) Write(s string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -38,12 +38,12 @@ func (e *entry) Write(s string) {
 	//   2. Next method with Str() receives nil for the pointer and will ignore,
 	//      and return nil to next.
 	//   3. Int method will receive nil, and just pass nil to next.
-	//   4. Write method finally receives it, if entry pointer is nil, it won't
+	//   4. Write method finally receives it, if Entry pointer is nil, it won't
 	//      do anything as it's not eligible to log.
 
-	// if entry is not nil (=loggable),
+	// if Entry is not nil (=loggable),
 	if e != nil {
-		// since pointer receiver *entry is obtained from the pool,
+		// since pointer receiver *Entry is obtained from the pool,
 		// make sure this will be put back to memory.
 		defer e.info.pool.Put(e)
 
@@ -168,7 +168,7 @@ func (e *entry) Write(s string) {
 }
 
 // Bool adds KeyValue of boolean into kvs slice.
-func (e *entry) Bool(key string, val bool) *entry {
+func (e *Entry) Bool(key string, val bool) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvBool,
@@ -180,8 +180,8 @@ func (e *entry) Bool(key string, val bool) *entry {
 }
 
 // Float adds KeyValue of float64 into kvs slice.
-// To minimize the size of entry, alog only supports float64.
-func (e *entry) Float(key string, val float64) *entry {
+// To minimize the size of Entry, alog only supports float64.
+func (e *Entry) Float(key string, val float64) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvFloat64,
@@ -193,7 +193,7 @@ func (e *entry) Float(key string, val float64) *entry {
 }
 
 // Str adds KeyValue item of a string into kvs slice.
-func (e *entry) Str(key string, val string) *entry {
+func (e *Entry) Str(key string, val string) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvString,
@@ -207,7 +207,7 @@ func (e *entry) Str(key string, val string) *entry {
 // Int adds KeyValue item for integer. This will convert int to int64.
 // As both int and int64 are widely used, Alog has both Int and Int64
 // but they share same kind (Vint).
-func (e *entry) Int(key string, val int) *entry {
+func (e *Entry) Int(key string, val int) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvInt,
@@ -221,7 +221,7 @@ func (e *entry) Int(key string, val int) *entry {
 // Int64 adds KeyValue item for 64 bit integer.
 // As both int and int64 are widely used, Alog has both Int and Int64
 // but they share same kind (Vint).
-func (e *entry) Int64(key string, val int64) *entry {
+func (e *Entry) Int64(key string, val int64) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvInt,
@@ -233,7 +233,7 @@ func (e *entry) Int64(key string, val int64) *entry {
 }
 
 // Err adds KeyValue for error item.
-func (e *entry) Err(key string, val error) *entry {
+func (e *Entry) Err(key string, val error) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvError,

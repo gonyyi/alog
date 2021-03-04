@@ -42,7 +42,10 @@ func (l Logger) NewTag(name string) Tag {
 // Do will run (series of) function(Vstr) and is used for
 // quick macro like settings for the logger.
 func (l Logger) Do(fn DoFn) Logger {
-	return fn(l)
+	if fn != nil {
+		return fn(l)
+	}
+	return l
 }
 
 // Close will close io.Writer if applicable
@@ -81,9 +84,9 @@ func (l Logger) SetFormatter(f Formatter) Logger {
 	return l
 }
 
-// getEntry gets entry from the entry pool. This is the very first point
+// getEntry gets Entry from the Entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
-func (l *Logger) getEntry(tag Tag, level Level) *entry {
+func (l *Logger) getEntry(tag Tag, level Level) *Entry {
 	if l.Control.CheckFn(level, tag) || l.Control.Check(level, tag) {
 		e := l.pool.Get(entryInfo{
 			flag:    l.Flag,
@@ -102,32 +105,32 @@ func (l *Logger) getEntry(tag Tag, level Level) *entry {
 	return nil
 }
 
-// Trace takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Trace(tag Tag) *entry {
+// Trace takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Trace(tag Tag) *Entry {
 	return l.getEntry(tag, Ltrace)
 }
 
-// Debug takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Debug(tag Tag) *entry {
+// Debug takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Debug(tag Tag) *Entry {
 	return l.getEntry(tag, Ldebug)
 }
 
-// Info takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Info(tag Tag) *entry {
+// Info takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Info(tag Tag) *Entry {
 	return l.getEntry(tag, Linfo)
 }
 
-// Warn takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Warn(tag Tag) *entry {
+// Warn takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Warn(tag Tag) *Entry {
 	return l.getEntry(tag, Lwarn)
 }
 
-// Error takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Error(tag Tag) *entry {
+// Error takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Error(tag Tag) *Entry {
 	return l.getEntry(tag, Lerror)
 }
 
-// Fatal takes a tag (0 for no tag) and returns an entry point.
-func (l *Logger) Fatal(tag Tag) *entry {
+// Fatal takes a tag (0 for no tag) and returns an Entry point.
+func (l *Logger) Fatal(tag Tag) *Entry {
 	return l.getEntry(tag, Lfatal)
 }
