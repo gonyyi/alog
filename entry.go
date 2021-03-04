@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// entryInfo is 56 bytes
 type entryInfo struct {
 	flag    Flag
 	tbucket *TagBucket

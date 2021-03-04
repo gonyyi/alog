@@ -85,6 +85,9 @@ func (l Level) NameShort() string {
 	}
 }
 
+// DoFn will be used to manipulate multiple functionality at once.
+type DoFn func(Logger) Logger
+
 // ControlFn is used to trigger whether log or not in control.
 // Once ControlFn is set, level/tag conditions will be ignored.
 type ControlFn func(Level, Tag) bool

@@ -33,15 +33,16 @@ type Logger struct {
 	Flag    Flag
 }
 
+// NewTag will create a new tag
+// Using value receiver as this won't be used many times anyway
 func (l Logger) NewTag(name string) Tag {
 	return l.Control.TagBucket.MustGetTag(name)
 }
 
 // Do will run (series of) function(Vstr) and is used for
 // quick macro like settings for the logger.
-func (l Logger) Do(fn func(*Logger)) Logger {
-	fn(&l)
-	return l
+func (l Logger) Do(fn DoFn) Logger {
+	return fn(l)
 }
 
 // Close will close io.Writer if applicable

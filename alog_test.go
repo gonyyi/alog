@@ -6,13 +6,19 @@ import (
 	"github.com/gonyyi/alog/ext"
 	"os"
 	"testing"
+	"unsafe"
 )
 
 var err1 = errors.New("error msg my")
 
 func TestRandom(t *testing.T) {
 	al := alog.New(os.Stderr)
-	al.Info(0)
+	t1 := al.NewTag("t1")
+	t2 := al.NewTag("t2")
+	t3 := al.NewTag("t3")
+	println(unsafe.Sizeof(al))
+
+	println(t1, t2, t3)
 }
 
 func TestNew(t *testing.T) {
