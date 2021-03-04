@@ -19,7 +19,7 @@ func profile() {
 	{
 		al := alog.New(nil)
 		for i := 0; i < 1_000_000; i++ {
-			al.Error(0).Writes("hello")
+			al.Error(0).Write("hello")
 		}
 	}
 

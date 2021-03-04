@@ -23,7 +23,7 @@ type entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *entry) Writes(s string) {
+func (e *entry) Write(s string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -237,11 +237,4 @@ func (e *entry) Err(key string, val error) *entry {
 		})
 	}
 	return e
-}
-
-// Write will call *Logger.Writes() without param.
-// As Writes without parameter can be used frequently,
-// Alog has both Write() and Writes(string).
-func (e *entry) Write() {
-	e.Writes("")
 }
