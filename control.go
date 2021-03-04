@@ -1,7 +1,7 @@
 package alog
 
 type control struct {
-	Tags  TagBucket
+	Tags  *TagBucket
 	Hook  func(Level, Tag, []byte)
 	Fn    func(Level, Tag) bool
 	Level Level

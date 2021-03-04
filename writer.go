@@ -24,7 +24,7 @@ type AlWriter interface {
 }
 
 // newAlWriter convers io.Writer to AlWriter.
-// If it can'vType be converted, use alWriter.
+// If it can'Vtype be converted, use alWriter.
 func newAlWriter(w io.Writer) AlWriter {
 	// If nil is given, consider it a discard
 	if w == nil {

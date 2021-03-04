@@ -5,6 +5,13 @@ import (
 )
 
 type Formatter interface {
+	Begin([]byte) []byte
+	AddTime([]byte, Format) []byte
+	AddLevel([]byte, Level) []byte
+	AddTag([]byte, Tag, *TagBucket) []byte
+	AddMsg([]byte, string) []byte
+	AddKvs([]byte, []KeyValue) []byte
+	End([]byte) []byte
 }
 
 type formatd [256]bool

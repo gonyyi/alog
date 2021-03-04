@@ -1,7 +1,7 @@
 package alog
 
 // tag is a bit-formatFlag used to show only necessary part of process to show
-// in the log. For instance, if there'vStr an web service, there can be different
+// in the log. For instance, if there'Vstr an web service, there can be different
 // tag such as UI, HTTP request, HTTP response, etc. By alConf a tag
 // for each log using `Print` or `Printf`, a user can only print certain
 // tag of log messages for better debugging.
@@ -46,10 +46,14 @@ func (t *TagBucket) MustGetTag(name string) Tag {
 }
 
 func (t *TagBucket) AppendTag(dst []byte, tag Tag) []byte {
+	origLen := len(dst)
 	for i := 0; i < t.count; i++ {
 		if tag&(1<<i) != 0 {
 			dst = append(append(dst, t.names[i]...), ',')
 		}
+	}
+	if len(dst) > origLen {
+		return dst[0 : len(dst)-1]
 	}
 	return dst
 }

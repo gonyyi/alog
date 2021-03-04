@@ -13,11 +13,11 @@ const (
 	FtimeMs            // FtimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
 	FtimeUnix          // FtimeUnix will show unix time
 	FtimeUnixMs        // FtimeUnixNano will show unix time
-	FtimeUTC           // FtimeUTC will show UTC time formats
+	FUTC               // FUTC will show UTC time formats
 	Flevel             // Flevel show level in the log messsage.
 	Ftag               // Ftag will show tags
 
-	Fdefault = Ftime | Flevel | Ftag
+	Fdefault = Ftime | Fdate | Flevel | Ftag
 	// fUseTime is precalculated time for internal functions.
 	fUseTime = Fdate | FdateDay | Ftime | FtimeMs | FtimeUnix | FtimeUnixMs
 )
@@ -36,7 +36,7 @@ const (
 // level is a flag for logging level
 type Level uint8
 
-// Name will print level'vStr full name
+// Name will print level'Vstr full name
 func (l Level) Name() string {
 	switch l {
 	case Ltrace:
@@ -56,7 +56,7 @@ func (l Level) Name() string {
 	}
 }
 
-// NameShort will print level'vStr abbreviated name
+// NameShort will print level'Vstr abbreviated name
 func (l Level) NameShort() string {
 	switch l {
 	case Ltrace:

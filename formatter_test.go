@@ -60,20 +60,20 @@ func Benchmark_formatd(b *testing.B) {
 		out = f.addKeyUnsafe(out, "ts")
 		//time.Now()
 		t := time.Now()
-		//vType := time.Now().UTC()
+		//Vtype := time.Now().UTC()
 		_ = t
-		//out = f.addTimeDay(out, &vType)
+		//out = f.addTimeDay(out, &Vtype)
 
-		//out = f.addTimeUnix(out, &vType)
+		//out = f.addTimeUnix(out, &Vtype)
 
-		//y, m, d := vType.Date()
+		//y, m, d := Vtype.Date()
 		//out = f.addTimeDate(out, y, int(m), d)
 
-		//h,m,vStr := vType.Clock()
-		//out = f.addTime(out,h,m,vStr)
+		//h,m,Vstr := Vtype.Clock()
+		//out = f.addTime(out,h,m,Vstr)
 
-		//h,m,vStr := vType.Clock()
-		//out = f.addTimeNano(out, h,m,vStr,vType.Nanosecond())
+		//h,m,Vstr := Vtype.Clock()
+		//out = f.addTimeNano(out, h,m,Vstr,Vtype.Nanosecond())
 
 		//out = f.addKeyUnsafe(out, "level")
 		//out = f.addLevel(out, Linfo)

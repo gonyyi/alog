@@ -3,20 +3,20 @@ package alog
 type kvType uint8
 
 const (
-	kvInt kvType = iota + 1
-	kvFloat64
-	kvString
-	kvBool
-	kvError
+	KvInt kvType = iota + 1
+	KvFloat64
+	KvString
+	KvBool
+	KvError
 )
 
-// KeyVal holds key and value info
-type KeyVal struct {
-	key   string
-	vType kvType
-	vInt  int64
-	vF64  float64
-	vStr  string
-	vBool bool
-	vErr  error
+// KeyValue holds Key and value info
+type KeyValue struct {
+	Key   string
+	Vtype kvType
+	Vint  int64
+	Vf64  float64
+	Vstr  string
+	Vbool bool
+	Verr  error
 }

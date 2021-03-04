@@ -6,28 +6,36 @@ import (
 
 // New will return a Alog logger pointer with default values.
 // This function will take an io.Writer and convert it to AlWriter.
-// A user'vStr custom AlWriter will let the user steer more control.
+// A user'Vstr custom AlWriter will let the user steer more control.
 func New(w io.Writer) *Logger {
 	l := Logger{
-		out: w,
-		buf: newEntryPool(),
+		out:  w,
+		pool: newEntryPool(),
 	}
 	if w == nil {
 		l.out = discard{}
 	}
-	l.fmt.init()
+	//l.fmat.init()
 	l.Control.Level = Linfo
 	l.Control.Tag = 0
+	l.Control.Tags = &TagBucket{}
+	l.Format = Fdefault
 
 	return &l
 }
 
+var dFmt formatd
+
+func init() {
+	dFmt.init()
+}
+
 // logger is a main struct for Alog.
 type Logger struct {
-	out io.Writer
-	buf entryPool
-	fmt formatd
-	// Formatter Formatter
+	out  io.Writer
+	pool entryPool
+	//fmat formatd
+	CusFmat Formatter
 	Control control
 	Format  Format
 }
@@ -36,12 +44,11 @@ func (l *Logger) NewTag(name string) Tag {
 	return l.Control.Tags.MustGetTag(name)
 }
 
-// Do will run (series of) function(vStr) and is used for
+// Do will run (series of) function(Vstr) and is used for
 // quick macro like settings for the logger.
-func (l *Logger) Do(fns ...func(*Logger)) {
-	for _, f := range fns {
-		f(l)
-	}
+func (l *Logger) Do(fn func(*Logger)) *Logger {
+	fn(l)
+	return l
 }
 
 // Close will close io.Writer if applicable
@@ -60,7 +67,7 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 }
 func (l *Logger) getEntry(tag Tag, level Level) *entry {
 	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.out != nil {
-		buf := l.buf.Get(l)
+		buf := l.pool.Get(l)
 		buf.tag = tag
 		buf.level = level
 		buf.buf = buf.buf[:0]
