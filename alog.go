@@ -81,26 +81,22 @@ func (l Logger) SetFormatter(f Formatter) Logger {
 	return l
 }
 
-func (l Logger) entryInfo() entryInfo {
-	return entryInfo{
-		flag:    l.Flag,
-		tbucket: l.Control.TagBucket,
-		pool:    l.pool,
-		orFmtr:  l.orFmtr,
-		w:       l.w,
-	}
-}
-
 // getEntry gets entry from the entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
 func (l *Logger) getEntry(tag Tag, level Level) *entry {
-	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.w != nil {
-		//e := l.pool.Get(l.Flag, l.Control.TagBucket, l.pool, l.w, l.orFmtr)
-		e := l.pool.Get(l.entryInfo())
+	if l.Control.CheckFn(level, tag) || l.Control.Check(level, tag) {
+		e := l.pool.Get(entryInfo{
+			flag:    l.Flag,
+			tbucket: l.Control.TagBucket,
+			pool:    l.pool,
+			orFmtr:  l.orFmtr,
+			w:       l.w,
+		})
 		e.tag = tag
 		e.level = level
-		e.buf = e.buf[:0]
-		e.kvs = e.kvs[:0]
+		// buf and kvs are reset when *entryPool.Put()
+		// e.buf = e.buf[:0]
+		// e.kvs = e.kvs[:0]
 		return e
 	}
 	return nil
