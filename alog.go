@@ -9,11 +9,11 @@ import (
 // A user'Vstr custom AlWriter will let the user steer more control.
 func New(w io.Writer) *Logger {
 	l := Logger{
-		outd: w,
+		w:    w,
 		pool: newEntryPool(),
 	}
 	if w == nil {
-		l.outd = io.Discard
+		l.w = io.Discard
 	}
 	//l.fmat.init()
 	l.Control.Level = Linfo
@@ -26,8 +26,8 @@ func New(w io.Writer) *Logger {
 
 // logger is a main struct for Alog.
 type Logger struct {
-	outd    io.Writer
-	pool    entryPool
+	w       io.Writer
+	pool    *entryPool
 	orFmtr  Formatter
 	Control control
 	Flag    Flag
@@ -49,7 +49,7 @@ func (l *Logger) Close() error {
 	if l.orFmtr != nil {
 		return l.orFmtr.Close()
 	}
-	if c, ok := l.outd.(io.Closer); ok && c != nil {
+	if c, ok := l.w.(io.Closer); ok && c != nil {
 		return c.Close()
 	}
 	return nil
@@ -58,16 +58,16 @@ func (l *Logger) Close() error {
 // SetOutput will set the output writer to be used
 // in the logger. If nil is given, it will discard the output.
 func (l *Logger) SetOutput(w io.Writer) *Logger {
-	l.outd = w
+	l.w = w
 	if w == nil {
-		l.outd = io.Discard
+		l.w = io.Discard
 	}
 	return l
 }
 
 // Output will return currently used default writer.
 func (l *Logger) Output() io.Writer {
-	return l.outd
+	return l.w
 }
 
 // SetFormatter will take an object with Formatter interface
@@ -75,7 +75,7 @@ func (l *Logger) Output() io.Writer {
 func (l *Logger) SetFormatter(f Formatter) *Logger {
 	l.orFmtr = f
 	if l.orFmtr != nil {
-		l.orFmtr.Init(l.outd, l.Flag, *l.Control.TagBucket)
+		l.orFmtr.Init(l.w, l.Flag, *l.Control.TagBucket)
 	}
 	return l
 }
@@ -83,13 +83,13 @@ func (l *Logger) SetFormatter(f Formatter) *Logger {
 // getEntry gets entry from the entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
 func (l *Logger) getEntry(tag Tag, level Level) *entry {
-	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.outd != nil {
-		buf := l.pool.Get(l)
-		buf.tag = tag
-		buf.level = level
-		buf.buf = buf.buf[:0]
-		buf.kvs = buf.kvs[:0]
-		return buf
+	if (l.Control.CheckFn(level, tag) || l.Control.Check(level, tag)) && l.w != nil {
+		e := l.pool.Get(l.Flag, l.Control.TagBucket, l.pool, l.w, l.orFmtr)
+		e.tag = tag
+		e.level = level
+		e.buf = e.buf[:0]
+		e.kvs = e.kvs[:0]
+		return e
 	}
 	return nil
 }

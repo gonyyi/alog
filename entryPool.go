@@ -1,6 +1,9 @@
 package alog
 
-import "sync"
+import (
+	"io"
+	"sync"
+)
 
 // Default value for buffer is 512 bytes, and 10 KV items.
 const (
@@ -9,7 +12,7 @@ const (
 )
 
 // newEntryPoolItem is a function that returns new entry
-// This was with newEntryPool() but separated outd to make it
+// This was with newEntryPool() but separated w to make it
 // inline-able.
 func newEntryPoolItem() interface{} {
 	return &entry{
@@ -19,8 +22,8 @@ func newEntryPoolItem() interface{} {
 }
 
 // newEntryPool will create entry pool.
-func newEntryPool() entryPool {
-	return entryPool{
+func newEntryPool() *entryPool {
+	return &entryPool{
 		pool: sync.Pool{
 			New: newEntryPoolItem,
 		},
@@ -33,9 +36,13 @@ type entryPool struct {
 }
 
 // Get will obtain entry (pointer) from the pool
-func (p *entryPool) Get(logger *Logger) *entry {
+func (p *entryPool) Get(f Flag, tb *TagBucket, pool *entryPool, w io.Writer, orfmtr Formatter) *entry {
 	b := p.pool.Get().(*entry)
-	b.logger = logger
+	b.flag = f
+	b.tbucket = tb
+	b.pool = pool
+	b.orFmtr = orfmtr
+	b.w = w
 	return b
 }
 

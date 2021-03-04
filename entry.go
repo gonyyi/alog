@@ -1,17 +1,23 @@
 package alog
 
 import (
+	"io"
 	"time"
 )
 
 // entry is a log entry will be used with a entryPool to
 // reuse the resource.
 type entry struct {
-	buf    []byte
-	level  Level
-	tag    Tag
-	logger *Logger
-	kvs    []KeyValue
+	buf   []byte
+	level Level
+	tag   Tag
+	kvs   []KeyValue
+
+	flag    Flag
+	pool    *entryPool
+	tbucket *TagBucket
+	w       io.Writer
+	orFmtr  Formatter
 }
 
 // Writes will finalize the log message, format it, and
@@ -34,53 +40,53 @@ func (e *entry) Writes(s string) {
 	if e != nil {
 		// since pointer receiver *entry is obtained from the pool,
 		// make sure this will be put back to memory.
-		defer e.logger.pool.Put(e)
+		defer e.pool.Put(e)
 
 		// if custom formatter exists, use it instead of default formatter.
 		// for default formatter (formatd), it's a concrete function for speed.
 		// rather than using from the interface.
-		if e.logger.orFmtr != nil {
+		if e.orFmtr != nil {
 			// CUSTOM FORMATTER
-			e.buf = e.logger.orFmtr.Begin(e.buf)
-			e.buf = e.logger.orFmtr.AddTime(e.buf)
-			e.buf = e.logger.orFmtr.AddLevel(e.buf, e.level)
-			e.buf = e.logger.orFmtr.AddTag(e.buf, e.tag)
-			e.buf = e.logger.orFmtr.AddMsg(e.buf, s)
-			e.buf = e.logger.orFmtr.AddKVs(e.buf, e.kvs)
-			e.buf = e.logger.orFmtr.End(e.buf)
-			e.logger.orFmtr.Write(e.buf)
+			e.buf = e.orFmtr.Begin(e.buf)
+			e.buf = e.orFmtr.AddTime(e.buf)
+			e.buf = e.orFmtr.AddLevel(e.buf, e.level)
+			e.buf = e.orFmtr.AddTag(e.buf, e.tag)
+			e.buf = e.orFmtr.AddMsg(e.buf, s)
+			e.buf = e.orFmtr.AddKVs(e.buf, e.kvs)
+			e.buf = e.orFmtr.End(e.buf)
+			e.orFmtr.Write(e.buf)
 		} else {
 			// BUILT-IN FORMATTER
 			// using dFmt (of formatd)
 			e.buf = dFmt.addBegin(e.buf)
 
 			// APPEND TIME
-			if e.logger.Flag&fUseTime != 0 {
+			if e.flag&fUseTime != 0 {
 				t := time.Now()
-				if (FtimeUnix|FtimeUnixMs)&e.logger.Flag != 0 {
+				if (FtimeUnix|FtimeUnixMs)&e.flag != 0 {
 					e.buf = dFmt.addKeyUnsafe(e.buf, "ts")
-					if FtimeUnixMs&e.logger.Flag != 0 {
+					if FtimeUnixMs&e.flag != 0 {
 						e.buf = dFmt.addTimeUnix(e.buf, t.UnixNano()/1e6)
 					} else {
 						e.buf = dFmt.addTimeUnix(e.buf, t.Unix())
 					}
 				} else {
-					if FUTC&e.logger.Flag != 0 {
+					if FUTC&e.flag != 0 {
 						t = t.UTC()
 					}
-					if Fdate&e.logger.Flag != 0 {
+					if Fdate&e.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "date")
 						y, m, d := t.Date()
 						e.buf = dFmt.addTimeDate(e.buf, y, int(m), d)
 					}
-					if FdateDay&e.logger.Flag != 0 {
+					if FdateDay&e.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "day")
 						e.buf = dFmt.addTimeDay(e.buf, int(t.Weekday()))
 					}
-					if (Ftime|FtimeMs)&e.logger.Flag != 0 {
+					if (Ftime|FtimeMs)&e.flag != 0 {
 						e.buf = dFmt.addKeyUnsafe(e.buf, "time")
 						h, m, s := t.Clock()
-						if FtimeMs&e.logger.Flag != 0 {
+						if FtimeMs&e.flag != 0 {
 							e.buf = dFmt.addTimeMs(e.buf, h, m, s, t.Nanosecond())
 						} else {
 							e.buf = dFmt.addTime(e.buf, h, m, s)
@@ -90,15 +96,15 @@ func (e *entry) Writes(s string) {
 			}
 
 			// APPEND LEVEL
-			if e.logger.Flag&Flevel != 0 {
+			if e.flag&Flevel != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "level")
 				e.buf = dFmt.addLevel(e.buf, e.level)
 			}
 
 			// APPEND TAG
-			if e.logger.Flag&Ftag != 0 {
+			if e.flag&Ftag != 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "tag")
-				e.buf = dFmt.addTag(e.buf, e.logger.Control.TagBucket, e.tag)
+				e.buf = dFmt.addTag(e.buf, e.tbucket, e.tag)
 			}
 
 			// APPEND MSG
@@ -148,8 +154,9 @@ func (e *entry) Writes(s string) {
 			e.buf = dFmt.addEnd(e.buf)
 
 			// Write to output
-			if e.logger.outd != nil {
-				e.logger.outd.Write(e.buf)
+			if e.w != nil {
+				//e.logger.w.Write(e.buf)
+				e.w.Write(e.buf)
 			}
 		}
 	}
