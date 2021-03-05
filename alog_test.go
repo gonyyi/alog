@@ -33,6 +33,21 @@ var log = alog.New(&out).Do(func(l alog.Logger) alog.Logger {
 	return l
 })
 
+func Test(t *testing.T) {
+	if false {
+		println(alog.TraceLevel, alog.DebugLevel)
+		println(alog.UseLevel, alog.UseTag, alog.UseDate, alog.UseDefault)
+		println(alog.KvInt, alog.KvFloat64)
+	}
+}
+func reset() {
+	out.Reset()
+	log.Control.Fn = nil
+	log.Control.Level = alog.InfoLevel
+	log.Control.Tags = 0
+	log.Flag = alog.UseLevel | alog.UseTag
+	log = log.SetOutput(&out).SetFormatter(nil)
+}
 func check(t *testing.T, exp string) {
 	if exp != "" {
 		exp += "\n"
