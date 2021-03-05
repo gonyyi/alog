@@ -76,11 +76,11 @@ func (l Logger) NewTag(name string) Tag {
 	return 0
 }
 
-// Do will run functions that will act as a
+// Ext will run functions that will act as a
 // quick macro like settings for the logger.
 // See <https://github.com/gonyyi/alog/ext>
 // for examples.
-func (l Logger) Do(fn DoFn) Logger {
+func (l Logger) Ext(fn LoggerFn) Logger {
 	if fn != nil {
 		return fn(l)
 	}

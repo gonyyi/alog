@@ -7,8 +7,8 @@ import (
 
 var al = alog.New(os.Stderr)
 
-func Do(fn alog.DoFn) {
-	al = al.Do(fn)
+func Ext(fn alog.LoggerFn) {
+	al = al.Ext(fn)
 }
 
 func Control(level alog.Level, tag alog.Tag) {

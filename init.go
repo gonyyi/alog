@@ -55,8 +55,8 @@ func (l Level) NameShort() string {
 	}
 }
 
-// DoFn will be used to manipulate multiple functionality at once.
-type DoFn func(Logger) Logger
+// LoggerFn will be used to manipulate multiple functionality at once.
+type LoggerFn func(Logger) Logger
 
 // EntryFn will
 type EntryFn func(*Entry) *Entry

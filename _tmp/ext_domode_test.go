@@ -8,7 +8,7 @@ import (
 )
 
 func TestExtDoMode(t *testing.T) {
-	al := alog.New(nil).SetOutput(os.Stderr).Do(ext.DoMode.TEST("test.log"))
+	al := alog.New(nil).SetOutput(os.Stderr).Ext(ext.LogMode.TEST("test.log"))
 	tOS := al.NewTag("OS")
 	tSYS := al.NewTag("SYS")
 	al.Info(tOS).Str("status", "starting").Bool("isError", false).Write("starting")
