@@ -141,6 +141,9 @@ func TestEntry_Fn(t *testing.T) {
 		IsCurrent: false,
 	}
 	reset()
-	log.Info(0).Ext(fakeEntryFn(data)).Write("added fake data")
-	check(t, `{"level":"info","tag":[],"message":"added fake data","name":"Jon","city":"Goncity","state":"Gonstate","postal":"12345-1234","lat":5.10000001,"lon":-5.20000002,"age":50,"isCurrent":false}`)
+	log.Info(0).Ext(fakeEntryFn(data)).Write("added fake data1")
+	check(t, `{"level":"info","tag":[],"message":"added fake data1","name":"Jon","city":"Goncity","state":"Gonstate","postal":"12345-1234","lat":5.10000001,"lon":-5.20000002,"age":50,"isCurrent":false}`)
+
+	log.Debug(0).Ext(fakeEntryFn(data)).Write("added fake data2") // this shouldn't be added
+	check(t, ``)
 }
