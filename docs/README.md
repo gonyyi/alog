@@ -113,6 +113,17 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     al.Info(TEST).Str("testType", "backToJSON").Write("") // This will output the log with default JSON format.
     // Output: {"date":20210304,"time":181615,"level":"info","tag":["TEST"],"testType":"backToJSON"}
 
+
+    // EXTENSION: Custom Entry
+  	myEntry := func(s string) alog.EntryFn {
+	  	return func(entry *alog.Entry) *alog.Entry {
+		  	return entry.Str("name", s).Str("testStr", "myStr").Int("testInt", 123)
+  		}
+	  }
+  	al.Info(0).Ext(myEntry("GON")).Write("ok")
+    // Output: {"date":20210305,"time":81210,"level":"info","tag":[],"message":"ok","name":"GON","testStr":"myStr","testInt":123}
+    
+  
     // EXTENSION: MACRO LIKE EXTENSION (github.com/gonyyi/alog/ext)
     al = al.Ext(ext.LogMode.PROD("output.log")) // There are also DoMode.DEV(), DoMode.TEST().
     // When used with DoMode.TEST(), although it takes filename, it won't write it to file. It's just to make sure
