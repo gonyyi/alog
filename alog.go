@@ -70,7 +70,10 @@ type Logger struct {
 // NewTag will create a new tag
 // Using value receiver as this won't be used many times anyway
 func (l Logger) NewTag(name string) Tag {
-	return l.Control.Bucket().MustGetTag(name)
+	if l.Control.bucket != nil {
+		return l.Control.bucket.MustGetTag(name)
+	}
+	return 0
 }
 
 // Do will run functions that will act as a
