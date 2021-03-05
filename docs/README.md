@@ -107,7 +107,7 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
 
     al = al.Ext(ext.LogFmt.TXT())
     al.Info(TEST).Str("testType", "normalText").Write("") // This will output the log with ANSI colored text format.
-    // Output: 2021-0304 18:14:24 INF [TEST] testType="colorText"
+    // Output: 2021-0304 18:14:24 INF [TEST] testType="normalText"
 
     al = al.Ext(ext.LogFmt.NONE())
     al.Info(TEST).Str("testType", "backToJSON").Write("") // This will output the log with default JSON format.
