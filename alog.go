@@ -8,39 +8,37 @@ import (
 // This function will take an io.Writer and convert it to AlWriter.
 // A user'Vstr custom AlWriter will let the user steer more control.
 func New(w io.Writer) Logger {
-	l := Logger{
-		w:    w,
-		pool: newEntryPool(),
-	}
 	if w == nil {
-		l.w = io.Discard
+		w = io.Discard
 	}
-	//l.fmat.init()
-	l.Control.Level = InfoLevel
-	l.Control.Tags = 0
-	l.Control.TagBucket = &TagBucket{}
-	l.Flag = UseDefault
-
-	return l
+	return Logger{
+		w:       w,
+		pool:    newEntryPool(),
+		Control: newControl(),
+		Flag:    UseDefault,
+	}
 }
 
-// logger is a main struct for Alog.
+// Logger is a main struct for Alog.
+// This struct is 80 bytes.
 type Logger struct {
 	w       io.Writer
 	pool    *entryPool
 	orFmtr  Formatter
-	Control control
+	Control control // 32 bytes
 	Flag    Flag
 }
 
 // NewTag will create a new tag
 // Using value receiver as this won't be used many times anyway
 func (l Logger) NewTag(name string) Tag {
-	return l.Control.TagBucket.MustGetTag(name)
+	return l.Control.Bucket().MustGetTag(name)
 }
 
-// Do will run (series of) function(Vstr) and is used for
+// Do will run functions that will act as a
 // quick macro like settings for the logger.
+// See <https://github.com/gonyyi/alog/ext>
+// for examples.
 func (l Logger) Do(fn DoFn) Logger {
 	if fn != nil {
 		return fn(l)
@@ -49,7 +47,7 @@ func (l Logger) Do(fn DoFn) Logger {
 }
 
 // Close will close io.Writer if applicable
-func (l *Logger) Close() error {
+func (l Logger) Close() error {
 	if l.orFmtr != nil {
 		return l.orFmtr.Close()
 	}
@@ -76,10 +74,11 @@ func (l Logger) Output() io.Writer {
 
 // SetFormatter will take an object with Formatter interface
 // For Alog, nil can be used to disable the override.
+// See: <https://github.com/gonyyi/alog/ext> for examples.
 func (l Logger) SetFormatter(f Formatter) Logger {
 	l.orFmtr = f
 	if l.orFmtr != nil {
-		l.orFmtr.Init(l.w, l.Flag, *l.Control.TagBucket)
+		l.orFmtr.Init(l.w, l.Flag, *l.Control.bucket)
 	}
 	return l
 }
@@ -87,22 +86,30 @@ func (l Logger) SetFormatter(f Formatter) Logger {
 // getEntry gets Entry from the Entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
 func (l *Logger) getEntry(tag Tag, level Level) *Entry {
-	if l.Control.CheckFn(level, tag) || l.Control.Check(level, tag) {
-		e := l.pool.Get(entryInfo{
-			flag:    l.Flag,
-			tbucket: l.Control.TagBucket,
-			pool:    l.pool,
-			orFmtr:  l.orFmtr,
-			w:       l.w,
-		})
-		e.tag = tag
-		e.level = level
-
-		e.buf = e.buf[:0]
-		e.kvs = e.kvs[:0]
-		return e
+	// If a control function exists, BUT returns false,
+	// otherwise, use result from level/tag check.
+	if l.Control.Fn != nil {
+		if l.Control.Fn(level, tag) == false {
+			return nil
+		}
+	} else if l.Control.Check(level, tag) == false {
+		return nil
 	}
-	return nil
+
+	e := l.pool.Get(entryInfo{
+		flag:    l.Flag,
+		tbucket: l.Control.bucket,
+		pool:    l.pool,
+		orFmtr:  l.orFmtr,
+		w:       l.w,
+	})
+	e.tag = tag
+	e.level = level
+
+	e.buf = e.buf[:0]
+	e.kvs = e.kvs[:0]
+	return e
+
 }
 
 // Trace takes a tag (0 for no tag) and returns an Entry point.

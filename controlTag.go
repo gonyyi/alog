@@ -35,7 +35,7 @@ func (t *TagBucket) MustGetTag(name string) Tag {
 	}
 	// If the tag is not found, issue a tag using most recently created.
 	// When the maximum capacity of tag has met, return 0.
-	if t.count >= 63 {
+	if t.count >= 64 {
 		return 0
 	}
 	// Create a new tag and return the tag.

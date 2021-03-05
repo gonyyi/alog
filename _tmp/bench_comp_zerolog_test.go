@@ -47,6 +47,29 @@ func init() {
 	zl = zl.Level(zerolog.InfoLevel)
 }
 
+func TestWriteFile(t *testing.T) {
+	alo, _ := os.Create("testOutAl.log")
+	zlo, _ := os.Create("testOutZl.log")
+	al := alog.New(alo)
+	al.Flag = alog.UseLevel
+	zl := zl.Output(zlo)
+
+	for i := 0; i < 1_000_000; i++ {
+		al.Info(0).
+			Int64("count1", int64(i)).
+			Int("count2", i).
+			Str("randomStr", dataComp.StrSlice[i%5]).
+			Float("float64", dataComp.Float+float64(i)).
+			Bool("b", false).Write("")
+		zl.Info().
+			Int64("count1", int64(i)).
+			Int("count2", i).
+			Str("randomStr", dataComp.StrSlice[i%5]).
+			Float64("float64", dataComp.Float+float64(i)).
+			Bool("b", false).Send()
+	}
+}
+
 func TestCompSimple(t *testing.T) {
 	al = al.SetOutput(os.Stderr)
 	zl = zl.Output(os.Stderr)

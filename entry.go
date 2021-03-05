@@ -125,7 +125,12 @@ func (e *Entry) Write(s string) {
 			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
 				// Set name
-				e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
+				if ok, _ := dFmt.isSimpleStr(s); ok {
+					e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
+				} else {
+					e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
+				}
+
 				switch e.kvs[i].Vtype {
 				case KvInt:
 					e.buf = dFmt.addValInt(e.buf, e.kvs[i].Vint)
