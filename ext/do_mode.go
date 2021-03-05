@@ -5,11 +5,11 @@ import (
 	"os"
 )
 
-var DoMode doMode
+var LogMode logMode
 
-type doMode struct{}
+type logMode struct{}
 
-func (doMode) PROD(filename string) alog.DoFn {
+func (logMode) PROD(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.InfoLevel
 		l.Flag = alog.UseDefault | alog.UseUnixTimeMs
@@ -23,7 +23,7 @@ func (doMode) PROD(filename string) alog.DoFn {
 	}
 }
 
-func (doMode) DEV(filename string) alog.DoFn {
+func (logMode) DEV(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.TraceLevel
 		l.Flag = alog.UseTimeMs | alog.UseDefault
@@ -36,7 +36,7 @@ func (doMode) DEV(filename string) alog.DoFn {
 	}
 }
 
-func (doMode) TEST(filename string) alog.DoFn {
+func (logMode) TEST(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.TraceLevel
 		l.Flag = alog.UseTimeMs | alog.UseTag | alog.UseLevel

@@ -26,13 +26,28 @@ func (fakeWriter) Close() error {
 
 var out bytes.Buffer
 var tag1, tag2 alog.Tag
-var log = alog.New(&out).Do(func(l alog.Logger) alog.Logger {
+var log = alog.New(&out).Ext(func(l alog.Logger) alog.Logger {
 	l.Flag = alog.UseTag | alog.UseLevel
 	tag1 = l.NewTag("TAG1")
 	tag2 = l.NewTag("TAG2")
 	return l
 })
 
+func Test(t *testing.T) {
+	if false {
+		println(alog.TraceLevel, alog.DebugLevel)
+		println(alog.UseLevel, alog.UseTag, alog.UseDate, alog.UseDefault)
+		println(alog.KvInt, alog.KvFloat64)
+	}
+}
+func reset() {
+	out.Reset()
+	log.Control.Fn = nil
+	log.Control.Level = alog.InfoLevel
+	log.Control.Tags = 0
+	log.Flag = alog.UseLevel | alog.UseTag
+	log = log.SetOutput(&out).SetFormatter(nil)
+}
 func check(t *testing.T, exp string) {
 	if exp != "" {
 		exp += "\n"
@@ -130,7 +145,7 @@ func TestLogger_Fatal(t *testing.T) {
 }
 
 func TestLogger_SetFormatter(t *testing.T) {
-	log = log.Do(nil).Do(ext.DoFmt.TXT())
+	log = log.Ext(nil).Ext(ext.LogFmt.TXT())
 	log.Info(0).Str("test", "ok").Write("done")
 	check(t, `INF [] done // test="ok"`)
 

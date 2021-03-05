@@ -2,25 +2,25 @@ package ext
 
 import "github.com/gonyyi/alog"
 
-var DoFmt doFormatter
+var LogFmt logFormatter
 
-type doFormatter struct{}
+type logFormatter struct{}
 
-func (doFormatter) NONE() alog.DoFn {
+func (logFormatter) NONE() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(nil)
 		return l
 	}
 }
 
-func (doFormatter) TXT() alog.DoFn {
+func (logFormatter) TXT() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(NewFormatterTerminal())
 		return l
 	}
 }
 
-func (doFormatter) TXTColor() alog.DoFn {
+func (logFormatter) TXTColor() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(NewFormatterTerminalColor())
 		return l

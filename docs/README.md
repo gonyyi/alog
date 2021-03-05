@@ -1,9 +1,9 @@
-# Alog v0.6
+# Alog v0.6.2
 
 (c) 2021 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.6 (3/3/2021)
+Version 0.6.2
 
 [![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.6.1)
@@ -100,21 +100,21 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     // EXTENSIONS: FORMATTER EXTENSION (github.com/gonyyi/alog/ext)
     al.Control.Level = alog.InfoLevel // revert default logging to INFO level.
 
-    al = al.Do(ext.DoFmt.TXTColor()) // ext.DoFmt.TXTColor() will set the formatter with color terminal output.
+    al = al.Ext(ext.LogFmt.TXTColor()) // ext.LogFmt.TXTColor() will set the formatter with color terminal output.
 
     al.Info(TEST).Str("testType", "colorText").Write("") // This will output the log with ANSI colored text format.
     // Output (Color): 2021-0304 18:13:38  INF  [TEST] testType="colorText"
 
-    al = al.Do(ext.DoFmt.TXT())
+    al = al.Ext(ext.LogFmt.TXT())
     al.Info(TEST).Str("testType", "normalText").Write("") // This will output the log with ANSI colored text format.
     // Output: 2021-0304 18:14:24 INF [TEST] testType="colorText"
 
-    al = al.Do(ext.DoFmt.NONE())
+    al = al.Ext(ext.LogFmt.NONE())
     al.Info(TEST).Str("testType", "backToJSON").Write("") // This will output the log with default JSON format.
     // Output: {"date":20210304,"time":181615,"level":"info","tag":["TEST"],"testType":"backToJSON"}
 
     // EXTENSION: MACRO LIKE EXTENSION (github.com/gonyyi/alog/ext)
-    al = al.Do(ext.DoMode.PROD("output.log")) // There are also DoMode.DEV(), DoMode.TEST().
+    al = al.Ext(ext.LogMode.PROD("output.log")) // There are also DoMode.DEV(), DoMode.TEST().
     // When used with DoMode.TEST(), although it takes filename, it won't write it to file. It's just to make sure
     // a user can easily switch between TEST, DEV, and PROD mode.
     al.Info(TEST).Str("testType", "PROD").Write("") // This will write log into output.log file using buffered writer (bufio)

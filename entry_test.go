@@ -101,3 +101,46 @@ func TestEntry(t *testing.T) {
 		check(t, ``)
 	}
 }
+
+type fakeData struct {
+	Name      string
+	City      string
+	State     string
+	Postal    string
+	Lat       float64
+	Lon       float64
+	Age       int
+	IsCurrent bool
+}
+
+func fakeEntryFn(d fakeData) alog.EntryFn {
+	return func(entry *alog.Entry) *alog.Entry {
+		if entry == nil {
+			return entry
+		}
+		return entry.Str("name", d.Name).
+			Str("city", d.City).
+			Str("state", d.State).
+			Str("postal", d.Postal).
+			Float("lat", d.Lat).
+			Float("lon", d.Lon).
+			Int("age", d.Age).
+			Bool("isCurrent", d.IsCurrent)
+	}
+}
+
+func TestEntry_Fn(t *testing.T) {
+	data := fakeData{
+		Name:      "Jon",
+		City:      "Goncity",
+		State:     "Gonstate",
+		Postal:    "12345-1234",
+		Lat:       5.10000001,
+		Lon:       -5.20000002,
+		Age:       50,
+		IsCurrent: false,
+	}
+	reset()
+	log.Info(0).Ext(fakeEntryFn(data)).Write("added fake data")
+	check(t, `{"level":"info","tag":[],"message":"added fake data","name":"Jon","city":"Goncity","state":"Gonstate","postal":"12345-1234","lat":5.10000001,"lon":-5.20000002,"age":50,"isCurrent":false}`)
+}
