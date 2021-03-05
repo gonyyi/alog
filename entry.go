@@ -252,5 +252,8 @@ func (e *Entry) Err(key string, val error) *Entry {
 // Ext will take EntryFn and add an entry to it.
 // Pre-lease: v0.7.0
 func (e *Entry) Ext(fn EntryFn) *Entry {
+	if e == nil {
+		return e
+	}
 	return fn(e)
 }
