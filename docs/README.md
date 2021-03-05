@@ -5,7 +5,7 @@
 
 Version 0.6 (3/3/2021)
 
-[![Coverage Status](https://coveralls.io/repos/github/gonyyi/alog/badge.svg?branch=master)](https://coveralls.io/github/gonyyi/alog?branch=master)
+[![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.6.1)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
