@@ -6,6 +6,13 @@ var DoFmt doFormatter
 
 type doFormatter struct{}
 
+func (doFormatter) NONE() alog.DoFn {
+	return func(l alog.Logger) alog.Logger {
+		l = l.SetFormatter(nil)
+		return l
+	}
+}
+
 func (doFormatter) TXT() alog.DoFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(NewFormatterTerminal())
