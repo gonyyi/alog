@@ -1,9 +1,9 @@
-# Alog v0.7 beta
+# Alog v0.6.2
 
 (c) 2021 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.7 beta
+Version 0.6.2
 
 [![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.6.1)
