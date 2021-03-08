@@ -36,7 +36,7 @@ var log = alog.New(&out).Ext(func(l alog.Logger) alog.Logger {
 func Test(t *testing.T) {
 	if false {
 		println(alog.TraceLevel, alog.DebugLevel)
-		println(alog.WithLevel, alog.WithTag, alog.WithDate, alog.UseDefault)
+		println(alog.WithLevel, alog.WithTag, alog.WithDate, alog.WithDefault)
 		println(alog.KvInt, alog.KvFloat64)
 	}
 }
