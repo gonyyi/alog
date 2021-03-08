@@ -27,7 +27,7 @@ const (
 	WithUnixTimeMs                  // WithUnixTimeMs will show unix time with millisecond
 
 	// UseDefault holds default output format when no option is given.
-	UseDefault = WithTime | WithDate | WithLevel | WithTag
+	WithDefault = WithTime | WithDate | WithLevel | WithTag
 	// fHasTime is precalculated time for internal functions. Not that if WithUTC is used by it self,
 	// without any below, it won't print any time.
 	fHasTime = WithDate | WithDay | WithTime | WithTimeMs | WithUnixTime | WithUnixTimeMs
@@ -53,7 +53,7 @@ func New(w io.Writer) Logger {
 		w:       w,
 		pool:    newEntryPool(),
 		Control: newControl(),
-		Flag:    UseDefault,
+		Flag:    WithDefault,
 	}
 }
 
