@@ -11,6 +11,10 @@ func Ext(fn alog.LoggerFn) {
 	al = al.Ext(fn)
 }
 
+func Flag(flag alog.Flag) {
+	al.Flag = flag
+}
+
 func Control(level alog.Level, tag alog.Tag) {
 	al.Control.Level = level
 	al.Control.Tags = tag
