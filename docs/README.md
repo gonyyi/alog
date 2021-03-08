@@ -1,9 +1,9 @@
-# Alog v0.6.2
+# Alog v0.7.0
 
 (c) 2021 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.6.2
+Version 0.7.0
 
 [![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.6.2)
@@ -51,13 +51,14 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     NET := al.NewTag("NET")
     TEST := al.NewTag("TEST")
 
-    al.Warn(0).Int("id", 1).Write("") // tag 0 means no tag is given.
+    al.Warn().Int("id", 1).Write("") // tag 0 means no tag is given.
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":[],"id":1}
 
     al.Warn(IO).Int("id", 2).Write("this will print IO in the tag") // Use IO tag created above.
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":["IO"],"message":"this will print IO in the tag","id":2}
 
-    al.Warn(IO|DB|SYS|NET).Int("id", 3).Write("this will print IO/DB/SYS/NET to tag") // Use all tags by pipe
+    al.Warn(IO,DB,SYS,NET).Int("id", 3).Write("this will print IO/DB/SYS/NET to tag") // Use all tags by pipe
+    // Also can use `al.Warn(IO|DB|SYS|NET).Int("id", 3).Write("this will print IO/DB/SYS/NET to tag")`
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":["IO","DB","SYS","NET"],"message":"this will print IO/DB/SYS/NET to tag","id":3}
 
     al.Control.Level = alog.FatalLevel // Change loging level to Fatal or above.
@@ -115,12 +116,12 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
 
 
     // EXTENSION: Custom Entry
-  	myEntry := func(s string) alog.EntryFn {
-	  	return func(entry *alog.Entry) *alog.Entry {
-		  	return entry.Str("name", s).Str("testStr", "myStr").Int("testInt", 123)
-  		}
-	  }
-  	al.Info(0).Ext(myEntry("GON")).Write("ok")
+    myEntry := func(s string) alog.EntryFn {
+        return func(entry *alog.Entry) *alog.Entry {
+            return entry.Str("name", s).Str("testStr", "myStr").Int("testInt", 123)
+        }
+    }
+    al.Info().Ext(myEntry("GON")).Write("ok")
     // Output: {"date":20210305,"time":81210,"level":"info","tag":[],"message":"ok","name":"GON","testStr":"myStr","testInt":123}
     
   
@@ -168,7 +169,7 @@ Example 2.
   func main() {
     // Alog format is
     //    *Logger.`LOGLEVEL(TAG)`.`Str/Int/Int64/Float/Bool/Err(key, value)`.Write(`OPTIONAL MSG`)
-    log.Info(0).Str("name", "Alog").Int("buildNo", 6).Int("testID", 1).Write("Starting")
+    log.Info().Str("name", "Alog").Int("buildNo", 6).Int("testID", 1).Write("Starting")
 
     // Tag can be created by `NewTag(name string)`
     tagDB := log.NewTag("DB")
