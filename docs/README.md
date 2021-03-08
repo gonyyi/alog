@@ -234,7 +234,7 @@ Things to consider:
 - Alog's performance drops significantly when adding more variables. 
   This is a tradeoff between easy-to-use vs performance.  
 - Code
-  - Alog:  `al.Info(0).Str("name", "alog").Write("alog")`
+  - Alog:  `al.Info().Str("name", "alog").Write("alog")`
   - Zerolog: `zl.Info().Str("name", "zlog").Msg("zlog")`
 
 
