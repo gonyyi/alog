@@ -12,7 +12,7 @@ type logMode struct{}
 func (logMode) PROD(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.InfoLevel
-		l.Flag = alog.UseDefault | alog.WithUnixTimeMs
+		l.Flag = alog.WithDefault | alog.WithUnixTimeMs
 		bw, err := NewBufWriter(filename)
 		if err != nil {
 			l.Error(0).Err("err", err).Write("failed to open")
@@ -26,7 +26,7 @@ func (logMode) PROD(filename string) alog.LoggerFn {
 func (logMode) DEV(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.TraceLevel
-		l.Flag = alog.WithTimeMs | alog.UseDefault
+		l.Flag = alog.WithTimeMs | alog.WithDefault
 		if fo, err := os.Create(filename); err != nil {
 			l.Error(0).Err("error", err).Write("cannot create file")
 		} else {
