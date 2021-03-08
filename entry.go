@@ -56,7 +56,9 @@ func (e *Entry) Write(msg ...string) {
 			e.buf = e.info.orFmtr.AddTime(e.buf)
 			e.buf = e.info.orFmtr.AddLevel(e.buf, e.level)
 			e.buf = e.info.orFmtr.AddTag(e.buf, e.tag)
-			e.buf = e.info.orFmtr.AddMsg(e.buf, s)
+			if len(msg)>0 {
+				e.buf = e.info.orFmtr.AddMsg(e.buf, msg[0])
+			} 
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
 			e.info.orFmtr.Write(e.buf)
