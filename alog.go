@@ -16,21 +16,21 @@ const (
 
 // Formatting const
 const (
-	UseLevel      Flag = 1 << iota // UseLevel show level in the log messsage.
-	UseTag                         // UseTag will show tags
-	UseDate                        // UseDate will show both CCYY and MMDD
-	UseDay                         // UseDay will show 0-6 for JSON or (Sun-Mon)
-	UseTime                        // UseTime will show HHMMSS
-	UseTimeMs                      // UseTimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
-	UseUnixTime                    // UseUnixTime will show unix time
-	UseUnixTimeMs                  // UseUnixTimeMs will show unix time with millisecond
-	UseUTC                         // UseUTC will show UTC time formats
+	WithLevel      Flag = 1 << iota // WithLevel show level in the log messsage.
+	WithTag                         // WithTag will show tags
+	WithDate                        // WithDate will show both CCYY and MMDD
+	WithDay                         // WithDay will show 0-6 for JSON or (Sun-Mon)
+	WithTime                        // WithTime will show HHMMSS
+	WithTimeMs                      // WithTimeMs will show time + millisecond --> JSON: HHMMSS000, Text: HHMMSS,000
+	WithUTC                         // WithUTC will show UTC time formats
+	WithUnixTime                    // WithUnixTime will show unix time
+	WithUnixTimeMs                  // WithUnixTimeMs will show unix time with millisecond
 
 	// UseDefault holds default output format when no option is given.
-	UseDefault = UseTime | UseDate | UseLevel | UseTag
-	// fUseTime is precalculated time for internal functions. Not that if UseUTC is used by it self,
+	UseDefault = WithTime | WithDate | WithLevel | WithTag
+	// fHasTime is precalculated time for internal functions. Not that if WithUTC is used by it self,
 	// without any below, it won't print any time.
-	fUseTime = UseDate | UseDay | UseTime | UseTimeMs | UseUnixTime | UseUnixTimeMs
+	fHasTime = WithDate | WithDay | WithTime | WithTimeMs | WithUnixTime | WithUnixTimeMs
 )
 
 // KeyValue const

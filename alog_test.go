@@ -27,7 +27,7 @@ func (fakeWriter) Close() error {
 var out bytes.Buffer
 var tag1, tag2 alog.Tag
 var log = alog.New(&out).Ext(func(l alog.Logger) alog.Logger {
-	l.Flag = alog.UseTag | alog.UseLevel
+	l.Flag = alog.WithTag | alog.WithLevel
 	tag1 = l.NewTag("TAG1")
 	tag2 = l.NewTag("TAG2")
 	return l
@@ -36,7 +36,7 @@ var log = alog.New(&out).Ext(func(l alog.Logger) alog.Logger {
 func Test(t *testing.T) {
 	if false {
 		println(alog.TraceLevel, alog.DebugLevel)
-		println(alog.UseLevel, alog.UseTag, alog.UseDate, alog.UseDefault)
+		println(alog.WithLevel, alog.WithTag, alog.WithDate, alog.UseDefault)
 		println(alog.KvInt, alog.KvFloat64)
 	}
 }
@@ -45,7 +45,7 @@ func reset() {
 	log.Control.Fn = nil
 	log.Control.Level = alog.InfoLevel
 	log.Control.Tags = 0
-	log.Flag = alog.UseLevel | alog.UseTag
+	log.Flag = alog.WithLevel | alog.WithTag
 	log = log.SetOutput(&out).SetFormatter(nil)
 }
 func check(t *testing.T, exp string) {
@@ -155,12 +155,12 @@ func TestLogger_SetFormatter(t *testing.T) {
 }
 func TestNew(t *testing.T) {
 	log = alog.New(nil)
-	log.Flag = alog.UseLevel | alog.UseTag
+	log.Flag = alog.WithLevel | alog.WithTag
 	log.Fatal(0).Write("error!")
 	check(t, ``)
 
 	log = alog.New(&out)
-	log.Flag = alog.UseLevel | alog.UseTag
+	log.Flag = alog.WithLevel | alog.WithTag
 	log.Fatal(0).Write("error!")
 	check(t, `{"level":"fatal","tag":[],"message":"error!"}`)
 }
