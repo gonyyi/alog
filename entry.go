@@ -127,7 +127,7 @@ func (e *Entry) Write(msg ...string) {
 			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
 				// Set name
-				if ok, _ := dFmt.isSimpleStr(s); ok {
+				if ok, _ := dFmt.isSimpleStr(e.kvs[i].Key); ok {
 					e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
 				} else {
 					e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
