@@ -28,7 +28,7 @@ type Entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *Entry) Write(s string) {
+func (e *Entry) Write(msg ...string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -113,7 +113,8 @@ func (e *Entry) Write(s string) {
 			}
 
 			// APPEND MSG
-			if s != "" {
+			if len(msg) > 0 {
+				s := msg[0]
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
 				if ok, _ := dFmt.isSimpleStr(s); ok {
 					e.buf = dFmt.addValStringUnsafe(e.buf, s)
@@ -121,6 +122,7 @@ func (e *Entry) Write(s string) {
 					e.buf = dFmt.addValString(e.buf, s)
 				}
 			}
+
 
 			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
