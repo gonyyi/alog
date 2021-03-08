@@ -2,6 +2,7 @@ package log
 
 import (
 	"github.com/gonyyi/alog"
+	"io"
 	"os"
 )
 
@@ -13,6 +14,10 @@ func Ext(fn alog.LoggerFn) {
 
 func Flag(flag alog.Flag) {
 	al.Flag = flag
+}
+
+func SetOutput(w io.Writer) {
+	al = al.SetOutput(w)
 }
 
 func Control(level alog.Level, tag alog.Tag) {
