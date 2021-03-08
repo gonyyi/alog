@@ -52,6 +52,9 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     TEST := al.NewTag("TEST")
 
     al.Warn().Int("id", 1).Write("") // tag 0 means no tag is given.
+    // Also Write(...string) can omit value. 
+    // eg. al.Warn().Int("id", 1).Write()
+    // Note: If more than one string given, Alog will take the first one.
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":[],"id":1}
 
     al.Warn(IO).Int("id", 2).Write("this will print IO in the tag") // Use IO tag created above.
@@ -76,22 +79,22 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     al.Info(IO|SYS). // Tag contains tag IO; will be printed
       Int("id", 4).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     al.Info(IO). // Tag is IO; will be printed
       Int("id", 5).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     al.Error(DB). // Tag IO isn't used. And level is below Fatal. Will NOT be printed.
       Int("id", 6).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     al.Fatal(NET). // Tag is not matching, but Level is, so will be printed.
       Int("id", 7).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     // Output
     // {"date":20210304,"time":180942,"level":"info","tag":["IO","SYS"],"id":4,"attempt":2}
@@ -103,15 +106,15 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
 
     al = al.Ext(ext.LogFmt.TXTColor()) // ext.LogFmt.TXTColor() will set the formatter with color terminal output.
 
-    al.Info(TEST).Str("testType", "colorText").Write("") // This will output the log with ANSI colored text format.
+    al.Info(TEST).Str("testType", "colorText").Write() // This will output the log with ANSI colored text format.
     // Output (Color): 2021-0304 18:13:38  INF  [TEST] testType="colorText"
 
     al = al.Ext(ext.LogFmt.TXT())
-    al.Info(TEST).Str("testType", "normalText").Write("") // This will output the log with ANSI colored text format.
+    al.Info(TEST).Str("testType", "normalText").Write() // This will output the log with ANSI colored text format.
     // Output: 2021-0304 18:14:24 INF [TEST] testType="normalText"
 
     al = al.Ext(ext.LogFmt.NONE())
-    al.Info(TEST).Str("testType", "backToJSON").Write("") // This will output the log with default JSON format.
+    al.Info(TEST).Str("testType", "backToJSON").Write() // This will output the log with default JSON format.
     // Output: {"date":20210304,"time":181615,"level":"info","tag":["TEST"],"testType":"backToJSON"}
 
 
@@ -129,7 +132,7 @@ If you find any issues, please [create an issue](https://github.com/gonyyi/alog/
     al = al.Ext(ext.LogMode.PROD("output.log")) // There are also DoMode.DEV(), DoMode.TEST().
     // When used with DoMode.TEST(), although it takes filename, it won't write it to file. It's just to make sure
     // a user can easily switch between TEST, DEV, and PROD mode.
-    al.Info(TEST).Str("testType", "PROD").Write("") // This will write log into output.log file using buffered writer (bufio)
+    al.Info(TEST).Str("testType", "PROD").Write() // This will write log into output.log file using buffered writer (bufio)
     al.Close() // `*Logger.Close() error` will close io.Writer if Close() method is available. Since DoMode.PROD uses buffered writer with
     // a Close method to flush the buffer, al.Close() is necessary.
   }
