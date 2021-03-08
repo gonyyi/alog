@@ -42,7 +42,7 @@ var zl = zerolog.New(nil)
 const repeat = 3
 
 func init() {
-	al.Flag = alog.UseLevel
+	al.Flag = alog.WithLevel
 	al.Control.Level = alog.InfoLevel
 	zl = zl.Level(zerolog.InfoLevel)
 }
@@ -51,7 +51,7 @@ func TestWriteFile(t *testing.T) {
 	alo, _ := os.Create("testOutAl.log")
 	zlo, _ := os.Create("testOutZl.log")
 	al := alog.New(alo)
-	al.Flag = alog.UseLevel
+	al.Flag = alog.WithLevel
 	zl := zl.Output(zlo)
 
 	for i := 0; i < 1_000_000; i++ {
