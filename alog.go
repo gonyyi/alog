@@ -126,9 +126,15 @@ func (l Logger) SetFormatter(f Formatter) Logger {
 
 // getEntry gets Entry from the Entry pool. This is the very first point
 // where it evaluate if the tag/level is loggable.
-func (l *Logger) getEntry(tag Tag, level Level) *Entry {
+func (l *Logger) getEntry(level Level, tags ...Tag) *Entry {
 	// If a control function exists, BUT returns false,
 	// otherwise, use result from level/tag check.
+	var tag Tag = 0
+	if len(tags) > 0 {
+		for i := 0; i < len(tags); i++ {
+			tag = tag | tags[i]
+		}
+	}
 	if l.Control.Fn != nil {
 		if l.Control.Fn(level, tag) == false {
 			return nil
@@ -150,35 +156,34 @@ func (l *Logger) getEntry(tag Tag, level Level) *Entry {
 	e.buf = e.buf[:0]
 	e.kvs = e.kvs[:0]
 	return e
-
 }
 
 // Trace takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Trace(tag Tag) *Entry {
-	return l.getEntry(tag, TraceLevel)
+func (l *Logger) Trace(tags ...Tag) *Entry {
+	return l.getEntry(TraceLevel, tags...)
 }
 
 // Debug takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Debug(tag Tag) *Entry {
-	return l.getEntry(tag, DebugLevel)
+func (l *Logger) Debug(tags ...Tag) *Entry {
+	return l.getEntry(DebugLevel, tags...)
 }
 
 // Info takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Info(tag Tag) *Entry {
-	return l.getEntry(tag, InfoLevel)
+func (l *Logger) Info(tags ...Tag) *Entry {
+	return l.getEntry(InfoLevel, tags...)
 }
 
 // Warn takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Warn(tag Tag) *Entry {
-	return l.getEntry(tag, WarnLevel)
+func (l *Logger) Warn(tags ...Tag) *Entry {
+	return l.getEntry(WarnLevel, tags...)
 }
 
 // Error takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Error(tag Tag) *Entry {
-	return l.getEntry(tag, ErrorLevel)
+func (l *Logger) Error(tags ...Tag) *Entry {
+	return l.getEntry(ErrorLevel, tags...)
 }
 
 // Fatal takes a tag (0 for no tag) and returns an Entry point.
-func (l *Logger) Fatal(tag Tag) *Entry {
-	return l.getEntry(tag, FatalLevel)
+func (l *Logger) Fatal(tags ...Tag) *Entry {
+	return l.getEntry(FatalLevel, tags...)
 }
