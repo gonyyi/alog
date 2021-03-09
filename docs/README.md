@@ -69,7 +69,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ### Change Format
 
-![Alog Screen Shot 2](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_text_color_2.png)
+![Alog Screen Shot 2](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_text_color_ex1.png)
 
   ~~~go
   package main
