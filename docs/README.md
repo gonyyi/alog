@@ -69,7 +69,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ### Change Format
 
-![Alog Screen Shot 2](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_text_color_1.png)
+![Alog Screen Shot 2](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_text_color_2.png)
 
   ~~~go
   package main
@@ -81,10 +81,13 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
   )
 
   func main() {
-    // To color text format. 
-    al := alog.New(os.Stderr).Ext(ext.LogFmt.TextColor())
+    al := alog.New(os.Stderr)
     tagDisk := al.NewTag("Disk")
     tagDB := al.NewTag("DB")
+    
+    // To color text format
+    // Note: Use this after setting tag, flag, etc.
+    al = al.Ext(ext.LogFmt.TextColor())
     
     al.Info(tagDisk).Str("action", "reading disk").Write()
     al.Warn(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login")
