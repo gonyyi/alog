@@ -59,8 +59,13 @@ func (fmtTxtColor) Begin(dst []byte) []byte {
 }
 
 func (f *fmtTxtColor) AddTime(dst []byte) []byte {
-	if (alog.WithUnixTime|alog.WithDate|alog.WithTime)&f.format != 0 {
-		return append(append(dst, time.Now().Format(fcDIM+"2006-0102 "+fcCLEAR+ "15:04:05")...), ' ')
+	if (alog.WithUnixTime|alog.WithDate|alog.WithTime|alog.WithTimeMs)&f.format != 0 {
+		switch {
+		case alog.WithTimeMs&f.format != 0:
+			return append(append(dst, time.Now().Format(fcDIM+"2006/01/02 "+fcCLEAR+"15:04:05.000")...), ' ')
+		default:
+			return append(append(dst, time.Now().Format(fcDIM+"2006/01/02 "+fcCLEAR+"15:04:05")...), ' ')
+		}
 	}
 	return dst
 }
@@ -85,12 +90,12 @@ func (fmtTxtColor) AddLevel(dst []byte, level alog.Level) []byte {
 }
 
 func (f *fmtTxtColor) AddTag(dst []byte, tag alog.Tag) []byte {
-	return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR...), tag), fcDIM+"]"+fcCLEAR+" "...)
+	return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR+fcBOLD...), tag), fcCLEAR+fcDIM+"]"+fcCLEAR+" "...)
 }
 
 func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(append(dst, s...), ` // `...)
+		return append(append(dst, s...), fcDIM+` // `+fcCLEAR...)
 	}
 	return dst
 }

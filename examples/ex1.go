@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func main() {
+func ex1() {
 	al := alog.New(os.Stderr)
 	al.Flag = al.Flag | alog.WithTimeMs
 	al = al.Ext(ext.LogFmt.TextColor())

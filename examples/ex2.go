@@ -6,10 +6,10 @@ import (
 	"os"
 )
 
-func main() {
+func ex2() {
 	al := alog.New(os.Stderr)
 	al.Flag = al.Flag | alog.WithTimeMs
-	al = al.Ext(ext.LogFmt.TextColor())
+	al = al.Ext(ext.LogFmt.Text())
 
 	tagDisk := al.NewTag("Disk")
 	tagDB := al.NewTag("DB")

@@ -45,8 +45,13 @@ func (fmtTxt) Begin(dst []byte) []byte {
 }
 
 func (f *fmtTxt) AddTime(dst []byte) []byte {
-	if (alog.WithUnixTime|alog.WithDate|alog.WithTime)&f.format != 0 {
-		return append(append(dst, time.Now().Format("2006-0102 15:04:05")...), ' ')
+	if (alog.WithUnixTime|alog.WithDate|alog.WithTime|alog.WithTimeMs)&f.format != 0 {
+		switch {
+		case alog.WithTimeMs&f.format != 0:
+			return append(append(dst, time.Now().Format("2006/01/02 15:04:05.000")...), ' ')
+		default:
+			return append(append(dst, time.Now().Format("2006/01/02 15:04:05")...), ' ')
+		}
 	}
 	return dst
 }
