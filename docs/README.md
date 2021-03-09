@@ -82,23 +82,14 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
   func main() {
     // To color text format. 
-	  al := alog.New(os.Stderr).
-        Ext(ext.LogFmt.TextColor())
-	  tagDisk := al.NewTag("Disk")
-	  tagDB := al.NewTag("DB")
-	  al.Info(tagDisk).
-        Str("action", "reading disk").
-        Write()
-	  al.Info(tagDB).
-        Str("id", "myID").
-        Str("pwd", "myPasswd").
-        Write("Login")
-	  al.Info(tagDisk, tagDB).
-        Int("status", 200).
-        Write("Login")
-	  al.Info(tagDisk|tagDB).
-        Int("status", 200).
-        Write("Logout")
+    al := alog.New(os.Stderr).Ext(ext.LogFmt.TextColor())
+    tagDisk := al.NewTag("Disk")
+    tagDB := al.NewTag("DB")
+    
+    al.Info(tagDisk).Str("action", "reading disk").Write()
+    al.Warn(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login")
+    al.Error(tagDisk, tagDB).Int("status", 200).Write("Login")
+    al.Fatal(tagDisk|tagDB).Int("status", 200).Write("Logout")
   }
   ~~~
 
