@@ -7,7 +7,7 @@ Version 0.7
 
 
 [![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
-[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.7.6)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.7.7)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
 ![Alog Screen Shot 1](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_1.png)
@@ -39,7 +39,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 ### Hello World
 
   ~~~go
-  // always has to end with "Write()", otherwise, it won't log, and will cause memory allocations.
+  // always has to end with "Write(string)", otherwise, it won't log, and will cause memory allocations.
   // output example: 
   //   {"date":20210308,"time":203337,"level":"info","tag":[],"message":"Hello World"}
   al.Info().Write("Hello World")
@@ -52,9 +52,9 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
   // Create a tag "Disk"
   // Create a tag "DB"
   tagDisk := al.NewTag("Disk") 
-  tagDB := al.NewTag("DB")     
+  tagDB := al.NewTag("DB") 
 
-  al.Info(tagDisk).Str("action", "reading disk").Write()
+  al.Info(tagDisk).Str("action", "reading disk").Write("")
   al.Info(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login") // Anything in `Write(string)` will be printed as `message`.
   al.Info(tagDisk,tagDB).Int("status", 200).Write("Login")
   al.Info(tagDisk|tagDB).Int("status", 200).Write("Logout") // tags can be used as `tagDisk|tagDB` or `tagDisk,tagDB` format  
@@ -89,7 +89,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Note: Use this after setting tag, flag, etc.
     al = al.Ext(ext.LogFmt.TextColor())
     
-    al.Info(tagDisk).Str("action", "reading disk").Write()
+    al.Info(tagDisk).Str("action", "reading disk").Write("")
     al.Warn(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login")
     al.Error(tagDisk, tagDB).Int("status", 200).Write("Login")
     al.Fatal(tagDisk|tagDB).Int("status", 200).Write("Logout")
@@ -114,7 +114,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // alog.Discard will be used. (same as io.Discard)
     al := alog.New(os.Stderr) 
     
-    // Level + Optional Tag + Write(Optional Message)  
+    // Level + Optional Tag + Write(Message)  
     al.Info().Write("info level log message")
     // Output:
     // {"date":20210304,"time":175516,"level":"info","tag":[],"message":"info level log message"}
@@ -130,11 +130,9 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     TEST := al.NewTag("TEST")
 
     // Write warning log with id = 1.
-    // Note: Args for Write(...string) can omitted. 
-    //   eg. al.Warn().Int("id", 1).Write()
     // Note: If more than one string given, Alog will take the first one.
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":[],"id":1}
-    al.Warn().Int("id", 1).Write()
+    al.Warn().Int("id", 1).Write("")
     
 
     // Create a warning log with IO tag, and value of id = 2, message = "this will print IO in the tag"
@@ -174,27 +172,27 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     al.Info(IO|SYS). 
       Int("id", 4).
       Int("attempt", 2).
-      Write()
+      Write("")
 
     // Tag is IO; will be printed  
     // Output: {"date":20210304,"time":180942,"level":"info","tag":["IO"],"id":5,"attempt":2}
     al.Info(IO). 
       Int("id", 5).
       Int("attempt", 2).
-      Write()
+      Write("")
 
     // Tag IO isn't used. And level is below Fatal. Will NOT be printed.
     al.Error(DB). 
       Int("id", 6).
       Int("attempt", 2).
-      Write()
+      Write("")
 
     // Tag is not matching, but Level is, so will be printed.
     // Output: {"date":20210304,"time":180942,"level":"fatal","tag":["NET"],"id":7,"attempt":2}
     al.Fatal(NET). 
       Int("id", 7).
       Int("attempt", 2).
-      Write()
+      Write("")
 
 
     // EXTENSIONS: Formatter Extension <github.com/gonyyi/alog/ext>
@@ -207,7 +205,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output (in Color): 
     //   2021-0304 18:13:38  INF  [TEST] testType="colorText"
     al = al.Ext(ext.LogFmt.TextColor()) 
-    al.Info(TEST).Str("testType", "colorText").Write() 
+    al.Info(TEST).Str("testType", "colorText").Write("")
     
 
     // Use text formatter extension
@@ -215,7 +213,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output: 
     //   2021-0304 18:14:24 INF [TEST] testType="normalText"
     al = al.Ext(ext.LogFmt.Text())
-    al.Info(TEST).Str("testType", "normalText").Write() 
+    al.Info(TEST).Str("testType", "normalText").Write("") 
     
 
     // Use default formatter (JSON)
@@ -223,7 +221,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output: 
     //   {"date":20210304,"time":181615,"level":"info","tag":["TEST"],"testType":"backToJSON"}
     al = al.Ext(ext.LogFmt.None())
-    al.Info(TEST).Str("testType", "backToJSON").Write() 
+    al.Info(TEST).Str("testType", "backToJSON").Write("") 
     
 
     // EXTENSION: Custom Log Entry
@@ -250,7 +248,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // will be ignored. The reason it is still required for Test() is for users to quickly
     // switch between different modes.
     al = al.Ext(ext.LogMode.Prod("output.log")) 
-    al.Info(IO).Str("testType", "PROD").Write() 
+    al.Info(IO).Str("testType", "PROD").Write("") 
 
     // `*Logger.Close() error` will close io.Writer if Close() method is available. 
     // It is not required for testing, but when saved to a file, especially buffered
@@ -267,7 +265,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 `github.com/gonyyi/alog/log` _(see /log suffix)_, Alog can be used right away.
 
-Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(...MSG)`
+Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(MSG)`
 
 - __LEVEL:__ `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`
 - __TAG:__   defined by user. Can be used with comma or pipe.
@@ -289,7 +287,7 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(...MSG)`
   Str("city", "Gonway").Str("zip", "12345").
   Str("name", "Gon").Int("age", 50).
   Bool("isMarried", false).
-  Float("height", 5.8).Write() // Make sure all log entries must end with Write()
+  Float("height", 5.8).Write("") // Make sure all log entries must end with Write(string)
   ~~~
 
 
@@ -305,7 +303,7 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(...MSG)`
 
   func main() {
     // Alog format is
-    //    *Logger.`LOGLEVEL(TAG)`.`Str/Int/Int64/Float/Bool/Err(key, value)`.Write(`OPTIONAL MSG`)
+    //    *Logger.`LOGLEVEL(TAG)`.`Str/Int/Int64/Float/Bool/Err(key, value)`.Write(`MSG`)
     log.Info().Str("name", "Alog").Int("buildNo", 6).Int("testID", 1).Write("Starting")
 
     // Tag can be created by `NewTag(name string)`
@@ -315,8 +313,8 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(...MSG)`
     tagRES := log.NewTag("RES")
 
     // Below Debug will not be printed, because default log level is INFO or higher.
-    // Final message in Write(...string) is optional.
-    log.Debug(tagDB).Str("status", "started").Int("buildNo", 6).Int("testID", 2).Write()
+    // Final message in Write(string) is required.
+    log.Debug(tagDB).Str("status", "started").Int("buildNo", 6).Int("testID", 2).Write("")
 
     // Set level and tag. Since it is set to DebugLevel (and above) and/or tagHTTP,
     // log entriees with DebugLevel or higher AND also log entries containing tagHTTP will show up.
@@ -360,7 +358,7 @@ in ext folder (`github.com/gonyyi/alog/ext`). Current examples are
 as below:
 
 - Custom Log Entry
-  - Usage: `alog.Info().Ext(ext.EntryHTTP.ReqRx(h)).Write()`
+  - Usage: `alog.Info().Ext(ext.EntryHTTP.ReqRx(h)).Write(string)`
 - Custom Formatter
   - Usage
     - Color Text: `al = alog.New(nil).Ext(ext.LogFmt.TextColor())`

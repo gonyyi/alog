@@ -42,7 +42,7 @@ type Entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *Entry) Write(msg ...string) {
+func (e *Entry) Write(msg string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -70,9 +70,7 @@ func (e *Entry) Write(msg ...string) {
 			e.buf = e.info.orFmtr.AddTime(e.buf)
 			e.buf = e.info.orFmtr.AddLevel(e.buf, e.level)
 			e.buf = e.info.orFmtr.AddTag(e.buf, e.tag)
-			if len(msg) > 0 {
-				e.buf = e.info.orFmtr.AddMsg(e.buf, msg[0])
-			}
+			e.buf = e.info.orFmtr.AddMsg(e.buf, msg)
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
 			e.info.orFmtr.Write(e.buf)
@@ -129,13 +127,12 @@ func (e *Entry) Write(msg ...string) {
 			}
 
 			// APPEND MSG
-			if len(msg) > 0 {
-				s := msg[0]
+			if msg != "" {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
-				if ok, _ := dFmt.isSimpleStr(s); ok {
-					e.buf = dFmt.addValStringUnsafe(e.buf, s)
+				if ok, _ := dFmt.isSimpleStr(msg); ok {
+					e.buf = dFmt.addValStringUnsafe(e.buf, msg)
 				} else {
-					e.buf = dFmt.addValString(e.buf, s)
+					e.buf = dFmt.addValString(e.buf, msg)
 				}
 			}
 

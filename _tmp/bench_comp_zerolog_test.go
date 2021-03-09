@@ -22,11 +22,11 @@ var dataComp = struct {
 }
 
 func fal(i int) {
-	al.Info(0).
+	al.Info(0, 1, 2, 3).
 		Str("name", "gonal").
 		Int("count", i).
 		Str("block", dataComp.StrSlice[i%5]).
-		Write(dataComp.Msg)
+		Write(dataComp.StrSlice[i%5])
 }
 
 func fzl(i int) {
@@ -34,7 +34,7 @@ func fzl(i int) {
 		Str("name", "gonzl").
 		Int("count", i).
 		Str("block", dataComp.StrSlice[i%5]).
-		Msg(dataComp.Msg)
+		Msg(dataComp.StrSlice[i%5])
 }
 
 var al = alog.New(nil)
@@ -56,18 +56,18 @@ func TestWriteFile(t *testing.T) {
 	zl := zl.Output(zlo)
 
 	for i := 0; i < 1_000_000; i++ {
-		al.Info(0).
+		al.Info(0|1|2).
 			Int64("count1", int64(i)).
 			Int("count2", i).
 			Str("randomStr", dataComp.StrSlice[i%5]).
 			Float("float64", dataComp.Float+float64(i)).
-			Bool("b", false).Write("")
+			Bool("b", false).Write(dataComp.StrSlice[i%5])
 		zl.Info().
 			Int64("count1", int64(i)).
 			Int("count2", i).
 			Str("randomStr", dataComp.StrSlice[i%5]).
 			Float64("float64", dataComp.Float+float64(i)).
-			Bool("b", false).Send()
+			Bool("b", false).Msg(dataComp.StrSlice[i%5])
 	}
 }
 
