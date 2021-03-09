@@ -16,10 +16,10 @@ func NewFormatterTerminal() *fmtTxt {
 type fmtTxt struct {
 	out       io.Writer
 	format    alog.Flag
-	tagBucket alog.TagBucket
+	tagBucket *alog.TagBucket
 }
 
-func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket alog.TagBucket) {
+func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
 		f.out = io.Discard
