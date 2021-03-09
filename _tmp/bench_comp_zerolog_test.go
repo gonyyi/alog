@@ -28,6 +28,7 @@ func fal(i int) {
 		Str("block", dataComp.StrSlice[i%5]).
 		Write(dataComp.Msg)
 }
+
 func fzl(i int) {
 	zl.Info().
 		Str("name", "gonzl").

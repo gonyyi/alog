@@ -7,4 +7,5 @@ import (
 
 func TestLog(t *testing.T) {
 	log.Info().Write("Hello")
+	log.Info().Write()
 }

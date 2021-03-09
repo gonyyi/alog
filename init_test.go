@@ -22,5 +22,4 @@ func TestLevel(t *testing.T) {
 	check(5, "error", "ERR")
 	check(6, "fatal", "FTL")
 	check(7, "", "")
-
 }
