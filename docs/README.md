@@ -67,6 +67,43 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
   ~~~
 
 
+### Change Format
+
+![Alog Screen Shot 2](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_text_color.png)
+
+  ~~~go
+  package main
+   
+  import (
+	  "github.com/gonyyi/alog"
+	  "github.com/gonyyi/alog/ext"
+	  "os"
+  )
+
+  func main() {
+    // To color text format. 
+	  al := alog.New(os.Stderr).
+        Ext(ext.LogFmt.TextColor())
+	  tagDisk := al.NewTag("Disk")
+	  tagDB := al.NewTag("DB")
+	  al.Info(tagDisk).
+        Str("action", "reading disk").
+        Write()
+	  al.Info(tagDB).
+        Str("id", "myID").
+        Str("pwd", "myPasswd").
+        Write("Login")
+	  al.Info(tagDisk, tagDB).
+        Int("status", 200).
+        Write("Login")
+	  al.Info(tagDisk|tagDB).
+        Int("status", 200).
+        Write("Logout")
+  }
+  ~~~
+
+
+
 ### More example
 
   ~~~go
