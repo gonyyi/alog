@@ -4,7 +4,7 @@ import (
 	"io"
 )
 
-// Log level const
+// Level const
 const (
 	TraceLevel Level = iota + 1 // TraceLevel shows trace level, the most detailed debugging level.
 	DebugLevel                  // DebugLevel shows debug level or higher
@@ -14,7 +14,7 @@ const (
 	FatalLevel                  // FatalLevel shows fatal level or higher. This does not exit the process
 )
 
-// Formatting const
+// Flag const
 const (
 	WithLevel      Flag = 1 << iota // WithLevel show level in the log messsage.
 	WithTag                         // WithTag will show tags

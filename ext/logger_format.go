@@ -6,21 +6,21 @@ var LogFmt logFormatter
 
 type logFormatter struct{}
 
-func (logFormatter) NONE() alog.LoggerFn {
+func (logFormatter) None() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(nil)
 		return l
 	}
 }
 
-func (logFormatter) TXT() alog.LoggerFn {
+func (logFormatter) Text() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(NewFormatterTerminal())
 		return l
 	}
 }
 
-func (logFormatter) TXTColor() alog.LoggerFn {
+func (logFormatter) TextColor() alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l = l.SetFormatter(NewFormatterTerminalColor())
 		return l

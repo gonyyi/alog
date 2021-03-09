@@ -9,7 +9,7 @@ var LogMode logMode
 
 type logMode struct{}
 
-func (logMode) PROD(filename string) alog.LoggerFn {
+func (logMode) Prod(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.InfoLevel
 		l.Flag = alog.WithDefault | alog.WithUnixTimeMs
@@ -23,7 +23,7 @@ func (logMode) PROD(filename string) alog.LoggerFn {
 	}
 }
 
-func (logMode) DEV(filename string) alog.LoggerFn {
+func (logMode) Dev(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.TraceLevel
 		l.Flag = alog.WithTimeMs | alog.WithDefault
@@ -36,7 +36,7 @@ func (logMode) DEV(filename string) alog.LoggerFn {
 	}
 }
 
-func (logMode) TEST(filename string) alog.LoggerFn {
+func (logMode) Test(filename string) alog.LoggerFn {
 	return func(l alog.Logger) alog.Logger {
 		l.Control.Level = alog.TraceLevel
 		l.Flag = alog.WithTimeMs | alog.WithTag | alog.WithLevel

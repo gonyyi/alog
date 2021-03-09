@@ -145,7 +145,7 @@ func TestLogger_Fatal(t *testing.T) {
 }
 
 func TestLogger_SetFormatter(t *testing.T) {
-	log = log.Ext(nil).Ext(ext.LogFmt.TXT())
+	log = log.Ext(nil).Ext(ext.LogFmt.Text())
 	log.Info(0).Str("test", "ok").Write("done")
 	check(t, `INF [] done // test="ok"`)
 

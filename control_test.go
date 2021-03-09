@@ -58,5 +58,4 @@ func TestControl_Check(t *testing.T) {
 			t.Errorf("log.Cotrol.Tags does not retain updated value")
 		}
 	}
-
 }
