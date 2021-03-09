@@ -363,9 +363,10 @@ Running a benchmark is very tricky. Depend on which system the benchmark is perf
 the output can be vary and potentially misleading. Please note that this benchmark can be very
 differ than your own.
 
+__Please note that, this benchmark test is done based on very limited cases and can be misleading.__
 
 
-### Benchmark
+### Benchmark 1
 
 | Type     | Zerolog     | Alog        | Diffs        |
 |:---------|:------------|:------------|:-------------|
@@ -377,8 +378,20 @@ differ than your own.
 - Both Zerolog and Alog reported zero memory allocation (0 B/op, 0 allocs/op)
 - Zerolog version: v1.20.0
 - Alog version: v0.7.3
-- Please note that, this benchmark test is done based on
-  very limited cases and can be misleading.
+
+
+### Benchmark 2
+
+| Type     | Zerolog     | Alog        | Diffs        |
+|:---------|------------:|------------:|-------------:|
+| Single   | 145.5 ns/op | 142.2 ns/op |  2.2% faster |
+| Parallel |  31.5 ns/op |  25.5 ns/op | 19.0% faster |
+| Check    |  2.10 ns/op |  1.67 ns/op | 20.4% faster |
+
+- Tested on Intel Macbook Pro 15" (i9-8950HK, 32GB, 2018)
+- Both Zerolog and Alog reported zero memory allocation (0 B/op, 0 allocs/op)
+- Zerolog version: v1.20.0
+- Alog version: v0.7.3
 
 
 ### Benchmark Code 
