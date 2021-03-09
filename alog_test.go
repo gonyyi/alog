@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/gonyyi/alog"
 	"github.com/gonyyi/alog/ext"
-	"io"
 	"testing"
 )
 
@@ -79,12 +78,9 @@ func TestLogger_Close(t *testing.T) {
 
 	{
 		fw := &fakeWriter2{}
-		var tmp io.Writer
-		tmp = fw
-
-		log = log.SetOutput(tmp)
+		log = log.SetOutput(fw)
 		log.Info(0).Write("test123")
-		_, _ = log.Output().(*fakeWriter2)
+		log.Close()
 		check(t, ``)
 	}
 
