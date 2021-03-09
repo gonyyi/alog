@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestExtDoMode(t *testing.T) {
+func TestExtLogMode(t *testing.T) {
 	al := alog.New(nil).SetOutput(os.Stderr).Ext(ext.LogMode.Test("test.log"))
 	tOS := al.NewTag("OS")
 	tSYS := al.NewTag("SYS")

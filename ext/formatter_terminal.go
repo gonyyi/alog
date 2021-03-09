@@ -14,12 +14,14 @@ func NewFormatterTerminal() *fmtTxt {
 }
 
 type fmtTxt struct {
-	out       io.Writer
+	//out       io.Writer
+	out       alog.AlWriter
 	format    alog.Flag
 	tagBucket *alog.TagBucket
 }
 
-func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+//func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+func (f *fmtTxt) Init(w alog.AlWriter, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
 		f.out = alog.Discard{}
@@ -29,8 +31,9 @@ func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBuck
 	f.tagBucket = tagBucket
 }
 
-func (f *fmtTxt) Write(dst []byte) (int, error) {
-	return f.out.Write(dst)
+func (f *fmtTxt) Write(dst []byte, level alog.Level, tag alog.Tag) (int, error) {
+	//return f.out.Write(dst)
+	return f.out.WriteLt(dst, level, tag)
 }
 
 func (f *fmtTxt) Close() error {

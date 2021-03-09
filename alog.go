@@ -50,7 +50,8 @@ func New(w io.Writer) Logger {
 		w = Discard{}
 	}
 	return Logger{
-		w:       w,
+		//w:       w,
+		w:       writerToAlWriter(w),
 		pool:    newEntryPool(),
 		Control: newControl(),
 		Flag:    WithDefault,
@@ -60,7 +61,8 @@ func New(w io.Writer) Logger {
 // Logger is a main struct for Alog.
 // This struct is 80 bytes.
 type Logger struct {
-	w       io.Writer
+	//w       io.Writer
+	w       AlWriter
 	pool    *entryPool
 	orFmtr  Formatter
 	Control control // 32 bytes
@@ -101,7 +103,8 @@ func (l Logger) Close() error {
 // SetOutput will set the output writer to be used
 // in the logger. If nil is given, it will discard the output.
 func (l Logger) SetOutput(w io.Writer) Logger {
-	l.w = w
+	//l.w = w
+	l.w = writerToAlWriter(w)
 	if w == nil {
 		l.w = Discard{}
 	}
@@ -109,7 +112,7 @@ func (l Logger) SetOutput(w io.Writer) Logger {
 }
 
 // Output will return currently used default writer.
-func (l Logger) Output() io.Writer {
+func (l Logger) Output() AlWriter {
 	return l.w
 }
 
@@ -186,12 +189,4 @@ func (l *Logger) Error(tags ...Tag) *Entry {
 // Fatal takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Fatal(tags ...Tag) *Entry {
 	return l.getEntry(FatalLevel, tags...)
-}
-
-// devNull is a type for discard
-type Discard struct{}
-
-// Write discards everything
-func (Discard) Write([]byte) (int, error) {
-	return 0, nil
 }

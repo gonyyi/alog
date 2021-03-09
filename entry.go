@@ -1,7 +1,6 @@
 package alog
 
 import (
-	"io"
 	"time"
 )
 
@@ -24,8 +23,9 @@ type entryInfo struct {
 	flag    Flag
 	tbucket *TagBucket
 	pool    *entryPool
+	w       AlWriter
 	orFmtr  Formatter
-	w       io.Writer
+	//w       io.Writer
 }
 
 // Entry is a log Entry will be used with a entryPool to
@@ -73,7 +73,8 @@ func (e *Entry) Write(msg string) {
 			e.buf = e.info.orFmtr.AddMsg(e.buf, msg)
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
-			e.info.orFmtr.Write(e.buf)
+			//e.info.orFmtr.Write(e.buf)
+			e.info.orFmtr.Write(e.buf, e.level, e.tag)
 		} else {
 			// BUILT-IN FORMATTER
 			// using dFmt (of formatd)
@@ -180,7 +181,8 @@ func (e *Entry) Write(msg string) {
 			// Write to output
 			if e.info.w != nil {
 				//e.logger.w.Write(e.buf)
-				e.info.w.Write(e.buf)
+				//e.info.w.Write(e.buf)
+				e.info.w.WriteLt(e.buf, e.level, e.tag)
 			}
 		}
 	}
