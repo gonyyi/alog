@@ -35,7 +35,7 @@ const (
 
 // KeyValue const
 const (
-	KvInt     kvType = iota + 1 // KvInt indiciates int64 type KeyValue
+	KvInt     KvType = iota + 1 // KvInt indiciates int64 type KeyValue
 	KvFloat64                   // KvFloat64 indicates float64 type KeyValue
 	KvString                    // KvString indicates string type KeyValue
 	KvBool                      // KvBool indicates bool type KeyValue

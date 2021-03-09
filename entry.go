@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-// kvType hold diff
-type kvType uint8
+// KvType hold diff
+type KvType uint8
 
 // KeyValue holds Key and value info
 type KeyValue struct {
 	Key   string
-	Vtype kvType
+	Vtype KvType
 	Vint  int64
 	Vf64  float64
 	Vstr  string
