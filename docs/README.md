@@ -111,7 +111,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
   func main() {
     // When creating, if nil is given for io.Writer, 
-    // io.Discard will be used. 
+    // alog.Discard will be used. (same as io.Discard)
     al := alog.New(os.Stderr) 
     
     // Level + Optional Tag + Write(Optional Message)  

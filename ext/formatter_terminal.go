@@ -22,7 +22,7 @@ type fmtTxt struct {
 func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
-		f.out = io.Discard
+		f.out = alog.Discard{}
 	}
 
 	f.format = formatFlag

@@ -47,7 +47,7 @@ const (
 // A user'Vstr custom AlWriter will let the user steer more control.
 func New(w io.Writer) Logger {
 	if w == nil {
-		w = io.Discard
+		w = Discard{}
 	}
 	return Logger{
 		w:       w,
@@ -103,7 +103,7 @@ func (l Logger) Close() error {
 func (l Logger) SetOutput(w io.Writer) Logger {
 	l.w = w
 	if w == nil {
-		l.w = io.Discard
+		l.w = Discard{}
 	}
 	return l
 }
@@ -186,4 +186,12 @@ func (l *Logger) Error(tags ...Tag) *Entry {
 // Fatal takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Fatal(tags ...Tag) *Entry {
 	return l.getEntry(FatalLevel, tags...)
+}
+
+// devNull is a type for discard
+type Discard struct{}
+
+// Write discards everything
+func (Discard) Write([]byte) (int, error) {
+	return 0, nil
 }
