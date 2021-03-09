@@ -119,7 +119,7 @@ func (l Logger) Output() io.Writer {
 func (l Logger) SetFormatter(f Formatter) Logger {
 	l.orFmtr = f
 	if l.orFmtr != nil {
-		l.orFmtr.Init(l.w, l.Flag, *l.Control.bucket)
+		l.orFmtr.Init(l.w, &l.Flag, l.Control.bucket)
 	}
 	return l
 }
