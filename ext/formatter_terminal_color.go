@@ -60,7 +60,7 @@ func (fmtTxtColor) Begin(dst []byte) []byte {
 
 func (f *fmtTxtColor) AddTime(dst []byte) []byte {
 	if (alog.WithUnixTime|alog.WithDate|alog.WithTime)&f.format != 0 {
-		return append(append(dst, time.Now().Format(fcDIM+"2006-0102 15:04:05"+fcCLEAR)...), ' ')
+		return append(append(dst, time.Now().Format(fcDIM+"2006-0102 "+fcCLEAR+ "15:04:05")...), ' ')
 	}
 	return dst
 }
