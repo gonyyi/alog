@@ -6,7 +6,7 @@ import "io"
 type Formatter interface {
 	// Init will initialize or update the formatter setting.
 	// This will be run by Alog when used.
-	Init(writer io.Writer, format Flag, tagBucket TagBucket)
+	Init(writer io.Writer, format Flag, tagBucket *TagBucket)
 
 	// Begin will be used for formats requiring prefix such as `{` in JSON.
 	Begin([]byte) []byte
