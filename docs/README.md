@@ -29,14 +29,14 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 ## Example Usage
 
-Create logger
+### Create logger
 
   ~~~go
   al := alog.New(os.Stderr)
   ~~~
 
 
-Hello World
+### Hello World
 
   ~~~go
   // always has to end with "Write()", otherwise, it won't log, and will cause memory allocations.
@@ -46,7 +46,7 @@ Hello World
   ~~~
 
 
-New Tag
+### New Tag
 
   ~~~go
   // Create a tag "Disk"
@@ -67,7 +67,7 @@ New Tag
   ~~~
 
 
-More example
+### More example
 
   ~~~go
   package main
@@ -247,7 +247,7 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(...MSG)`
 
 
 
-Example 1.
+### Example 1.
 
   ~~~go
   // Create an info level log with "MyTag",
@@ -262,7 +262,7 @@ Example 1.
   ~~~
 
 
-Example 2.
+### Example 2.
 
   ~~~go
   package main
@@ -347,6 +347,11 @@ as below:
 
 ## Limitation and Benchmark
 
+### TL;DR:
+
+- Alog does not support fancy features supported by Zerolog.
+- Alog's performance drops significantly when string escape is needed.
+
 Alog has been optimized for simple leveled and tag-based logging with zero memory allocation.
 To get the performance, Alog does not check duplicate keys.
 
@@ -359,14 +364,8 @@ the output can be vary and potentially misleading. Please note that this benchma
 differ than your own.
 
 
-Summary:
 
-- Alog's sole goal is making a logger that support tagging with zero memory allocation.
-- Alog does not support fancy features supported by Zerolog.
-- Alog's performance drops significantly when string escape is needed.
-
-
-Tested on Mac Mini (M1, 8GB, 2020):
+### Benchmark
 
 | Type     | Zerolog     | Alog        | Diffs        |
 |:---------|:------------|:------------|:-------------|
@@ -374,6 +373,7 @@ Tested on Mac Mini (M1, 8GB, 2020):
 | Parallel | 24.21 ns/op | 19.21 ns/op | 20.6% faster |
 | Check    | 1.581 ns/op | 1.357 ns/op | 14.1% faster |
 
+- Tested on Mac Mini (M1, 8GB, 2020)
 - Both Zerolog and Alog reported zero memory allocation (0 B/op, 0 allocs/op)
 - Zerolog version: v1.20.0
 - Alog version: v0.7.3
@@ -381,7 +381,9 @@ Tested on Mac Mini (M1, 8GB, 2020):
   very limited cases and can be misleading.
 
 
-Code used (see `github.com/gonyyi/alog/_tmp`):
+### Benchmark Code 
+
+See `github.com/gonyyi/alog/_tmp` for benchmark used.
 
   ~~~go
   al.Info(0).
