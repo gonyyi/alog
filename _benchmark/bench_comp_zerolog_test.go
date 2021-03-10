@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+var skip_write_to_file = true
+
 var dataComp = struct {
 	StrSlice []string
 	Str1     string
@@ -50,6 +52,9 @@ func init() {
 }
 
 func TestWriteFile(t *testing.T) {
+	if skip_write_to_file {
+		t.SkipNow()
+	}
 	alo, _ := os.Create("testOutAl.log")
 	zlo, _ := os.Create("testOutZl.log")
 	al := alog.New(alo)
@@ -70,15 +75,6 @@ func TestWriteFile(t *testing.T) {
 			Float64("float64", dataComp.Float+float64(i)).
 			Bool("b", false).Send()
 	}
-}
-
-func TestCompSimple(t *testing.T) {
-	al = al.SetOutput(os.Stderr)
-	zl = zl.Output(os.Stderr)
-	fal(123)
-	fzl(123)
-	al = al.SetOutput(nil)
-	zl = zl.Output(nil)
 }
 
 func BenchmarkCompSingleThread(b *testing.B) {
@@ -107,6 +103,10 @@ func BenchmarkZlogWrite(b *testing.B) {
 	// M1: 918042	      1266 ns/op	       0 B/op	       0 allocs/op
 	// M1: 901912	      1283 ns/op	       0 B/op	       0 allocs/op
 	// M1: 920892	      1275 ns/op	       0 B/op	       0 allocs/op
+
+	if skip_write_to_file {
+		b.SkipNow()
+	}
 	out, _ := os.Create("./test-zl.log")
 	zl := zerolog.New(out)
 
@@ -134,6 +134,9 @@ func BenchmarkAlWriter(b *testing.B) {
 	// M1: 898946	      1297 ns/op	       0 B/op	       0 allocs/op
 	// M1: 948003	      1236 ns/op	       0 B/op	       0 allocs/op
 	// M1: 930661	      1258 ns/op	       0 B/op	       0 allocs/op
+	if skip_write_to_file {
+		b.SkipNow()
+	}
 	out, _ := os.Create("./test-al.log")
 	al := alog.New(ext.NewFilterWriter(out, alog.TraceLevel, 0))
 	al.Control.Level = alog.TraceLevel
