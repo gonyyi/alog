@@ -10,6 +10,7 @@ import (
 )
 
 var skip_write_to_file = true
+var skip_print = true 
 
 var dataComp = struct {
 	StrSlice []string

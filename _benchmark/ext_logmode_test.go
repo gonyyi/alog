@@ -8,6 +8,9 @@ import (
 )
 
 func TestExtLogMode(t *testing.T) {
+  if skip_print {
+    t.SkipNow()
+  }
 	al := alog.New(nil).SetOutput(os.Stderr).Ext(ext.LogMode.Test("test.log"))
 	tOS := al.NewTag("OS")
 	tSYS := al.NewTag("SYS")
