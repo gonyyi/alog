@@ -254,6 +254,8 @@ func BenchmarkLogger_Info(b *testing.B) {
 				}
 			})
 		})
+	}
+	for rep := 0; rep < repeat; rep++ {
 		b.Run("simple", func(c *testing.B) {
 			c.ReportAllocs()
 			for i := 0; i < c.N; i++ {
@@ -266,11 +268,13 @@ func BenchmarkLogger_Info(b *testing.B) {
 func BenchmarkControl_Check(b *testing.B) {
 	al.Control.Level = alog.FatalLevel
 	for rep := 0; rep < repeat; rep++ {
-		b.ReportAllocs()
-		b.RunParallel(func(p *testing.PB) {
-			for p.Next() {
-				fal(rep)
-			}
+		b.Run("", func(c *testing.B) {
+			c.ReportAllocs()
+			c.RunParallel(func(p *testing.PB) {
+				for p.Next() {
+					fal(rep)
+				}
+			})
 		})
 	}
 	al.Control.Level = alog.InfoLevel
