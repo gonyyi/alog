@@ -23,7 +23,7 @@ var dataComp = struct {
 }
 
 func fal(i int) {
-	al.Info(0, 1, 2, 3).
+	al.Info().
 		Str("name", "gonal").
 		Int("count", i).
 		Str("block", dataComp.StrSlice[i%5]).
@@ -57,18 +57,18 @@ func TestWriteFile(t *testing.T) {
 	zl := zl.Output(zlo)
 
 	for i := 0; i < 1_000_000; i++ {
-		al.Info(0|1|2).
+		al.Info().
 			Int64("count1", int64(i)).
 			Int("count2", i).
 			Str("randomStr", dataComp.StrSlice[i%5]).
 			Float("float64", dataComp.Float+float64(i)).
-			Bool("b", false).Write(dataComp.StrSlice[i%5])
+			Bool("b", false).Write("")
 		zl.Info().
 			Int64("count1", int64(i)).
 			Int("count2", i).
 			Str("randomStr", dataComp.StrSlice[i%5]).
 			Float64("float64", dataComp.Float+float64(i)).
-			Bool("b", false).Msg(dataComp.StrSlice[i%5])
+			Bool("b", false).Send()
 	}
 }
 
@@ -104,6 +104,9 @@ func BenchmarkZlogWrite(b *testing.B) {
 	// 287367	      3774 ns/op	       0 B/op	       0 allocs/op
 	// 305935	      4031 ns/op	       0 B/op	       0 allocs/op
 	// 303000	      3944 ns/op	       0 B/op	       0 allocs/op
+	// M1: 918042	      1266 ns/op	       0 B/op	       0 allocs/op
+	// M1: 901912	      1283 ns/op	       0 B/op	       0 allocs/op
+	// M1: 920892	      1275 ns/op	       0 B/op	       0 allocs/op
 	out, _ := os.Create("./test-zl.log")
 	zl := zerolog.New(out)
 
@@ -128,6 +131,9 @@ func BenchmarkAlWriter(b *testing.B) {
 	// 310676	      3689 ns/op	       0 B/op	       0 allocs/op
 	// 309205	      3783 ns/op	       0 B/op	       0 allocs/op
 	// 327218	      3853 ns/op	       0 B/op	       0 allocs/op
+	// M1: 898946	      1297 ns/op	       0 B/op	       0 allocs/op
+	// M1: 948003	      1236 ns/op	       0 B/op	       0 allocs/op
+	// M1: 930661	      1258 ns/op	       0 B/op	       0 allocs/op
 	out, _ := os.Create("./test-al.log")
 	al := alog.New(ext.NewFilterWriter(out, alog.TraceLevel, 0))
 	al.Control.Level = alog.TraceLevel

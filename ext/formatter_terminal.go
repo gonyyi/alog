@@ -15,13 +15,13 @@ func NewFormatterTerminal() *fmtTxt {
 
 type fmtTxt struct {
 	//out       io.Writer
-	out       alog.AlWriter
+	out       alog.Writer
 	format    alog.Flag
 	tagBucket *alog.TagBucket
 }
 
 //func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
-func (f *fmtTxt) Init(w alog.AlWriter, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+func (f *fmtTxt) Init(w alog.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
 		f.out = alog.Discard{}

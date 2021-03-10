@@ -43,15 +43,15 @@ const (
 )
 
 // New will return a Alog logger pointer with default values.
-// This function will take an io.Writer and convert it to AlWriter.
-// A user'Vstr custom AlWriter will let the user steer more control.
+// This function will take an io.Writer and convert it to Writer.
+// A user'Vstr custom Writer will let the user steer more control.
 func New(w io.Writer) Logger {
 	if w == nil {
 		w = Discard{}
 	}
 	return Logger{
 		//w:       w,
-		w:       writerToAlWriter(w),
+		w:       iowToAlw(w),
 		pool:    newEntryPool(),
 		Control: newControl(),
 		Flag:    WithDefault,
@@ -62,7 +62,7 @@ func New(w io.Writer) Logger {
 // This struct is 80 bytes.
 type Logger struct {
 	//w       io.Writer
-	w       AlWriter
+	w       Writer
 	pool    *entryPool
 	orFmtr  Formatter
 	Control control // 32 bytes
@@ -104,7 +104,7 @@ func (l Logger) Close() error {
 // in the logger. If nil is given, it will discard the output.
 func (l Logger) SetOutput(w io.Writer) Logger {
 	//l.w = w
-	l.w = writerToAlWriter(w)
+	l.w = iowToAlw(w)
 	if w == nil {
 		l.w = Discard{}
 	}
@@ -112,7 +112,7 @@ func (l Logger) SetOutput(w io.Writer) Logger {
 }
 
 // Output will return currently used default writer.
-func (l Logger) Output() AlWriter {
+func (l Logger) Output() Writer {
 	return l.w
 }
 

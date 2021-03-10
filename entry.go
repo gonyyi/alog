@@ -23,7 +23,7 @@ type entryInfo struct {
 	flag    Flag
 	tbucket *TagBucket
 	pool    *entryPool
-	w       AlWriter
+	w       Writer
 	orFmtr  Formatter
 	//w       io.Writer
 }
