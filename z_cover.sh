@@ -1,2 +1,3 @@
 #!/bin/sh
-go test -coverprofile ./_tmp/cover.out && go tool cover -html=./_tmp/cover.out
+mkdir -p ./tmp
+go test -coverprofile ./tmp/coverage.out && go tool cover -html=./tmp/coverage.out
