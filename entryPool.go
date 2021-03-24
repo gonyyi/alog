@@ -51,6 +51,10 @@ func (p *entryPool) Get(info entryInfo) *Entry {
 
 // Put will put Entry back to the pool
 func (p *entryPool) Put(b *Entry) {
+	// When buffer became too big, do not put it back.
+	if cap(b.buf) > 64<<10 {
+		return
+	}
 	b.buf = b.buf[:0]
 	b.kvs = b.kvs[:0]
 	p.pool.Put(b)
