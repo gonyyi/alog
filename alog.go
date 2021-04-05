@@ -44,15 +44,13 @@ const (
 
 // New will return a Alog logger pointer with default values.
 // This function will take an io.Writer and convert it to Writer.
-// A user'Vstr custom Writer will let the user steer more control.
+// A user's custom Writer will let the user steer more control.
 func New(w io.Writer) Logger {
 	if w == nil {
 		w = Discard{}
 	}
 	return Logger{
-		//w:       w,
 		w:       iowToAlw(w),
-		pool:    newEntryPool(),
 		Control: newControl(),
 		Flag:    WithDefault,
 	}
@@ -63,7 +61,6 @@ func New(w io.Writer) Logger {
 type Logger struct {
 	//w       io.Writer
 	w       Writer
-	pool    *entryPool
 	orFmtr  Formatter
 	Control control // 32 bytes
 	Flag    Flag
@@ -146,13 +143,14 @@ func (l *Logger) getEntry(level Level, tags ...Tag) *Entry {
 		return nil
 	}
 
-	e := l.pool.Get(entryInfo{
+	e := pool.Get().(*Entry)
+	e.info = entryInfo{
 		flag:    l.Flag,
 		tbucket: l.Control.bucket,
-		pool:    l.pool,
 		orFmtr:  l.orFmtr,
 		w:       l.w,
-	})
+	}
+
 	e.tag = tag
 	e.level = level
 
