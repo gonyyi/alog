@@ -28,12 +28,14 @@ const (
 )
 
 type fmtTxtColor struct {
-	out       io.Writer
+	//out       io.Writer
+	out       alog.Writer
 	format    alog.Flag
 	tagBucket *alog.TagBucket
 }
 
-func (f *fmtTxtColor) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+// func (f *fmtTxtColor) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+func (f *fmtTxtColor) Init(w alog.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
 		f.out = alog.Discard{}
@@ -43,8 +45,9 @@ func (f *fmtTxtColor) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.Ta
 	f.tagBucket = tagBucket
 }
 
-func (f *fmtTxtColor) Write(dst []byte) (int, error) {
-	return f.out.Write(dst)
+func (f *fmtTxtColor) Write(dst []byte, level alog.Level, tag alog.Tag) (int, error) {
+	//return f.out.Write(dst)
+	return f.out.WriteLt(dst, level, tag)
 }
 
 func (f *fmtTxtColor) Close() error {
@@ -95,12 +98,16 @@ func (f *fmtTxtColor) AddTag(dst []byte, tag alog.Tag) []byte {
 
 func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(append(dst, s...), fcDIM+` // `+fcCLEAR...)
+		return append(dst, s...)
 	}
 	return dst
 }
 
 func (f *fmtTxtColor) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
+	if len(kvs) > 0 {
+		dst = append(dst, fcDIM+` // `+fcCLEAR...)
+	}
+
 	for i := 0; i < len(kvs); i++ {
 		dst = append(append(append(dst, fcDIM...), kvs[i].Key...), "="+fcCLEAR...)
 		switch kvs[i].Vtype {
@@ -127,8 +134,11 @@ func (f *fmtTxtColor) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 
 func (fmtTxtColor) End(dst []byte) []byte {
 	if len(dst) > 1 {
-		dst[len(dst)-2] = '\n'
-		return dst[:len(dst)-1]
+		if dst[len(dst)-2] == ' ' || dst[len(dst)-2] == ',' {
+			dst[len(dst)-2] = '\n'
+			return dst[:len(dst)-1]
+		}
+		return append(dst, '\n')
 	}
 	return dst
 }

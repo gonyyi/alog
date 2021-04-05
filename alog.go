@@ -43,15 +43,14 @@ const (
 )
 
 // New will return a Alog logger pointer with default values.
-// This function will take an io.Writer and convert it to AlWriter.
-// A user'Vstr custom AlWriter will let the user steer more control.
+// This function will take an io.Writer and convert it to Writer.
+// A user's custom Writer will let the user steer more control.
 func New(w io.Writer) Logger {
 	if w == nil {
 		w = Discard{}
 	}
 	return Logger{
-		w:       w,
-		pool:    newEntryPool(),
+		w:       iowToAlw(w),
 		Control: newControl(),
 		Flag:    WithDefault,
 	}
@@ -60,8 +59,8 @@ func New(w io.Writer) Logger {
 // Logger is a main struct for Alog.
 // This struct is 80 bytes.
 type Logger struct {
-	w       io.Writer
-	pool    *entryPool
+	//w       io.Writer
+	w       Writer
 	orFmtr  Formatter
 	Control control // 32 bytes
 	Flag    Flag
@@ -101,7 +100,8 @@ func (l Logger) Close() error {
 // SetOutput will set the output writer to be used
 // in the logger. If nil is given, it will discard the output.
 func (l Logger) SetOutput(w io.Writer) Logger {
-	l.w = w
+	//l.w = w
+	l.w = iowToAlw(w)
 	if w == nil {
 		l.w = Discard{}
 	}
@@ -109,7 +109,7 @@ func (l Logger) SetOutput(w io.Writer) Logger {
 }
 
 // Output will return currently used default writer.
-func (l Logger) Output() io.Writer {
+func (l Logger) Output() Writer {
 	return l.w
 }
 
@@ -143,13 +143,14 @@ func (l *Logger) getEntry(level Level, tags ...Tag) *Entry {
 		return nil
 	}
 
-	e := l.pool.Get(entryInfo{
+	e := pool.Get().(*Entry)
+	e.info = entryInfo{
 		flag:    l.Flag,
 		tbucket: l.Control.bucket,
-		pool:    l.pool,
 		orFmtr:  l.orFmtr,
 		w:       l.w,
-	})
+	}
+
 	e.tag = tag
 	e.level = level
 
@@ -186,12 +187,4 @@ func (l *Logger) Error(tags ...Tag) *Entry {
 // Fatal takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Fatal(tags ...Tag) *Entry {
 	return l.getEntry(FatalLevel, tags...)
-}
-
-// devNull is a type for discard
-type Discard struct{}
-
-// Write discards everything
-func (Discard) Write([]byte) (int, error) {
-	return 0, nil
 }

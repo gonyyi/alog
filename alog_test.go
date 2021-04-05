@@ -2,9 +2,9 @@ package alog_test
 
 import (
 	"bytes"
+	"errors"
 	"github.com/gonyyi/alog"
 	"github.com/gonyyi/alog/ext"
-	"io"
 	"testing"
 )
 
@@ -79,12 +79,9 @@ func TestLogger_Close(t *testing.T) {
 
 	{
 		fw := &fakeWriter2{}
-		var tmp io.Writer
-		tmp = fw
-
-		log = log.SetOutput(tmp)
+		log = log.SetOutput(fw)
 		log.Info(0).Write("test123")
-		_, _ = log.Output().(*fakeWriter2)
+		log.Close()
 		check(t, ``)
 	}
 
@@ -218,4 +215,67 @@ func TestLogger_getEntry(t *testing.T) {
 		log.Trace(0).Write("test")
 		check(t, ``)
 	}
+}
+
+// Benchmark
+
+var dataComp = struct {
+	StrSlice []string
+	Str1     string
+	Float    float64
+	Int      int
+	Error    error
+	Msg      string
+}{
+	StrSlice: []string{"a", "b", "c", "d", "e"},
+	Error:    errors.New("err test"),
+	Msg:      "test message",
+}
+
+var al = alog.New(nil)
+
+const repeat = 3
+
+func fal(i int) {
+	al.Info().
+		Str("name", "gonal").
+		Int("count", i).
+		Str("block", dataComp.StrSlice[i%5]).
+		Write(dataComp.StrSlice[i%5])
+}
+
+func BenchmarkLogger_Info(b *testing.B) {
+	for rep := 0; rep < repeat; rep++ {
+		b.Run("parallel", func(c *testing.B) {
+			c.ReportAllocs()
+			c.RunParallel(func(p *testing.PB) {
+				for p.Next() {
+					fal(rep)
+				}
+			})
+		})
+	}
+	for rep := 0; rep < repeat; rep++ {
+		b.Run("simple", func(c *testing.B) {
+			c.ReportAllocs()
+			for i := 0; i < c.N; i++ {
+				fal(i)
+			}
+		})
+	}
+}
+
+func BenchmarkControl_Check(b *testing.B) {
+	al.Control.Level = alog.FatalLevel
+	for rep := 0; rep < repeat; rep++ {
+		b.Run("", func(c *testing.B) {
+			c.ReportAllocs()
+			c.RunParallel(func(p *testing.PB) {
+				for p.Next() {
+					fal(rep)
+				}
+			})
+		})
+	}
+	al.Control.Level = alog.InfoLevel
 }

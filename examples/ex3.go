@@ -6,8 +6,10 @@ import (
 	"os"
 )
 
-func main() {
-	al := alog.New(os.Stderr)
+func ex3() {
+	al := alog.New(
+		ext.NewFilterWriter(os.Stderr, alog.InfoLevel, 0),
+	)
 	al.Flag = al.Flag | alog.WithTimeMs
 	al = al.Ext(ext.LogFmt.TextColor())
 
@@ -17,9 +19,9 @@ func main() {
 	al.Control.Level = alog.TraceLevel
 
 	al.Trace(tagDisk).
-		Int("testId", 1).Write("ok")
+		Int("testId", 1).Write()
 	al.Debug(tagDisk).
-		Int("testId", 2).Write("ok")
+		Int("testId", 2).Write("okb", "bari")
 	al.Info(tagDisk).
 		Int("testId", 3).Write("ok")
 	al.Warn().

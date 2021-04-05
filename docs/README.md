@@ -3,10 +3,10 @@
 (c) 2020-2021 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.7
+Version 0.8c
 
 
-[![codecov](https://codecov.io/gh/gonyyi/alog/branch/master/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
+[![codecov](https://codecov.io/gh/gonyyi/alog/branch/v0.8.0c/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.7.7)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 

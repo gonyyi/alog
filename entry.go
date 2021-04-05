@@ -1,7 +1,6 @@
 package alog
 
 import (
-	"io"
 	"time"
 )
 
@@ -23,9 +22,9 @@ type KeyValue struct {
 type entryInfo struct {
 	flag    Flag
 	tbucket *TagBucket
-	pool    *entryPool
+	w       Writer
 	orFmtr  Formatter
-	w       io.Writer
+	//w       io.Writer
 }
 
 // Entry is a log Entry will be used with a entryPool to
@@ -42,7 +41,7 @@ type Entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *Entry) Write(msg string) {
+func (e *Entry) Write(msg ...string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -59,7 +58,7 @@ func (e *Entry) Write(msg string) {
 	if e != nil {
 		// since pointer receiver *Entry is obtained from the pool,
 		// make sure this will be put back to memory.
-		defer e.info.pool.Put(e)
+		defer pool.Put(e)
 
 		// if custom formatter exists, use it instead of default formatter.
 		// for default formatter (formatd), it's a concrete function for speed.
@@ -70,10 +69,13 @@ func (e *Entry) Write(msg string) {
 			e.buf = e.info.orFmtr.AddTime(e.buf)
 			e.buf = e.info.orFmtr.AddLevel(e.buf, e.level)
 			e.buf = e.info.orFmtr.AddTag(e.buf, e.tag)
-			e.buf = e.info.orFmtr.AddMsg(e.buf, msg)
+			if len(msg) > 0 {
+				e.buf = e.info.orFmtr.AddMsg(e.buf, msg[0])
+			}
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
-			e.info.orFmtr.Write(e.buf)
+			//e.info.orFmtr.Write(e.buf)
+			e.info.orFmtr.Write(e.buf, e.level, e.tag)
 		} else {
 			// BUILT-IN FORMATTER
 			// using dFmt (of formatd)
@@ -127,23 +129,19 @@ func (e *Entry) Write(msg string) {
 			}
 
 			// APPEND MSG
-			if msg != "" {
+			if len(msg) > 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
-				if ok, _ := dFmt.isSimpleStr(msg); ok {
-					e.buf = dFmt.addValStringUnsafe(e.buf, msg)
-				} else {
-					e.buf = dFmt.addValString(e.buf, msg)
+				e.buf = append(e.buf, '"')
+				for i:=0; i < len(msg); i++ {
+					e.buf = appendString(e.buf, msg[i], false)
 				}
+				e.buf = append(e.buf, '"', ',')
 			}
 
 			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
 				// Set name
-				if ok, _ := dFmt.isSimpleStr(e.kvs[i].Key); ok {
-					e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
-				} else {
-					e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
-				}
+				e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
 
 				switch e.kvs[i].Vtype {
 				case KvInt:
@@ -180,7 +178,8 @@ func (e *Entry) Write(msg string) {
 			// Write to output
 			if e.info.w != nil {
 				//e.logger.w.Write(e.buf)
-				e.info.w.Write(e.buf)
+				//e.info.w.Write(e.buf)
+				e.info.w.WriteLt(e.buf, e.level, e.tag)
 			}
 		}
 	}
@@ -252,11 +251,11 @@ func (e *Entry) Int64(key string, val int64) *Entry {
 }
 
 // Err adds KeyValue for error item.
-func (e *Entry) Err(key string, val error) *Entry {
+func (e *Entry) Err(val error) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvError,
-			Key:   key,
+			Key:   "error",
 			Verr:  val,
 		})
 	}

@@ -14,12 +14,14 @@ func NewFormatterTerminal() *fmtTxt {
 }
 
 type fmtTxt struct {
-	out       io.Writer
+	//out       io.Writer
+	out       alog.Writer
 	format    alog.Flag
 	tagBucket *alog.TagBucket
 }
 
-func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+//func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
+func (f *fmtTxt) Init(w alog.Writer, formatFlag alog.Flag, tagBucket *alog.TagBucket) {
 	f.out = w
 	if w == nil {
 		f.out = alog.Discard{}
@@ -29,8 +31,9 @@ func (f *fmtTxt) Init(w io.Writer, formatFlag alog.Flag, tagBucket *alog.TagBuck
 	f.tagBucket = tagBucket
 }
 
-func (f *fmtTxt) Write(dst []byte) (int, error) {
-	return f.out.Write(dst)
+func (f *fmtTxt) Write(dst []byte, level alog.Level, tag alog.Tag) (int, error) {
+	//return f.out.Write(dst)
+	return f.out.WriteLt(dst, level, tag)
 }
 
 func (f *fmtTxt) Close() error {
@@ -66,12 +69,16 @@ func (f *fmtTxt) AddTag(dst []byte, tag alog.Tag) []byte {
 
 func (fmtTxt) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(append(dst, s...), ` // `...)
+		return append(dst, s...)
 	}
 	return dst
 }
 
 func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
+	if len(kvs) > 0 {
+		dst = append(dst, ` // `...)
+	}
+
 	for i := 0; i < len(kvs); i++ {
 		dst = append(append(dst, kvs[i].Key...), '=')
 		switch kvs[i].Vtype {
@@ -98,8 +105,11 @@ func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 
 func (fmtTxt) End(dst []byte) []byte {
 	if len(dst) > 1 {
-		dst[len(dst)-2] = '\n'
-		return dst[:len(dst)-1]
+		if dst[len(dst)-2] == ' ' || dst[len(dst)-2] == ',' {
+			dst[len(dst)-2] = '\n'
+			return dst[:len(dst)-1]
+		}
+		return append(dst, '\n')
 	}
 	return dst
 }

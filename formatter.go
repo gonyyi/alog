@@ -1,12 +1,11 @@
 package alog
 
-import "io"
-
 // Formatter is an interface for a combination of formatter and writer.
 type Formatter interface {
 	// Init will initialize or update the formatter setting.
 	// This will be run by Alog when used.
-	Init(writer io.Writer, format Flag, tagBucket *TagBucket)
+	//Init(writer io.Writer, format Flag, tagBucket *TagBucket)
+	Init(writer Writer, format Flag, tagBucket *TagBucket)
 
 	// Begin will be used for formats requiring prefix such as `{` in JSON.
 	Begin([]byte) []byte
@@ -35,7 +34,7 @@ type Formatter interface {
 	// Using Write, AddLevel (and AddTag),
 	// this Formatter interface will be used to create
 	// multi output logger such as for a syslog.
-	Write([]byte) (int, error)
+	Write([]byte, Level, Tag) (int, error)
 
 	// Close will, if applicable, close the writer.
 	Close() error

@@ -23,7 +23,7 @@ func (formatd) addEnd(dst []byte) []byte {
 }
 
 func (formatd) addKey(dst []byte, s string) []byte {
-	return append(strconv.AppendQuote(dst, s), ':')
+	return append(appendString(dst, s, true), ':')
 }
 
 func (formatd) addKeyUnsafe(dst []byte, s string) []byte {
@@ -31,7 +31,7 @@ func (formatd) addKeyUnsafe(dst []byte, s string) []byte {
 }
 
 func (formatd) addValString(dst []byte, s string) []byte {
-	return append(strconv.AppendQuote(dst, s), ',')
+	return append(appendString(dst, s, true), ',')
 }
 
 func (formatd) addValStringUnsafe(dst []byte, s string) []byte {
