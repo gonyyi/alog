@@ -5,8 +5,11 @@ import (
 	"github.com/gonyyi/alog/ext"
 	"os"
 )
-
 func main() {
+	al := alog.New(os.Stderr)
+	al.Info().Write("test")
+}
+func t1() {
 	al := alog.New(os.Stderr)
 	al.Flag = al.Flag | alog.WithTimeMs
 	al = al.Ext(ext.LogFmt.TextColor())

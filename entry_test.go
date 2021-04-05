@@ -15,9 +15,9 @@ func TestEntry(t *testing.T) {
 		Float("height", 5.8).
 		Int("age", 50).
 		Int64("age2", int64(50)).
-		Err("myErr", errors.New("testMyErr")).
+		Err(errors.New("testMyErr")).
 		Write("done")
-	check(t, `{"level":"info","tag":["TAG1","TAG2"],"message":"done","hello":"gon","isSingle":true,"height":5.8,"age":50,"age2":50,"myErr":"testMyErr"}`)
+	check(t, `{"level":"info","tag":["TAG1","TAG2"],"message":"done","hello":"gon","isSingle":true,"height":5.8,"age":50,"age2":50,"error":"testMyErr"}`)
 
 	// WithTime
 	{
@@ -86,8 +86,7 @@ func TestEntry(t *testing.T) {
 			resetA()
 			log.Flag = alog.WithTimeMs
 			log.Info(0).Str("k", "v\t").
-				Err("er1", nil).
-				Err("er", errors.New("a\tb")).
+				Err(errors.New("a\tb")).
 				Bool("b\t1", true).Bool("b2", false).
 				Write("done5\ta")
 			json.Unmarshal(out.Bytes(), &a)

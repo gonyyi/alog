@@ -253,11 +253,11 @@ func (e *Entry) Int64(key string, val int64) *Entry {
 }
 
 // Err adds KeyValue for error item.
-func (e *Entry) Err(key string, val error) *Entry {
+func (e *Entry) Err(val error) *Entry {
 	if e != nil {
 		e.kvs = append(e.kvs, KeyValue{
 			Vtype: KvError,
-			Key:   key,
+			Key:   "error",
 			Verr:  val,
 		})
 	}
