@@ -129,21 +129,13 @@ func (e *Entry) Write(msg string) {
 			// APPEND MSG
 			if msg != "" {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
-				if ok, _ := dFmt.isSimpleStr(msg); ok {
-					e.buf = dFmt.addValStringUnsafe(e.buf, msg)
-				} else {
-					e.buf = dFmt.addValString(e.buf, msg)
-				}
+				e.buf = dFmt.addValString(e.buf, msg)
 			}
 
 			// APPEND KEY VALUES
 			for i := 0; i < len(e.kvs); i++ {
 				// Set name
-				if ok, _ := dFmt.isSimpleStr(e.kvs[i].Key); ok {
-					e.buf = dFmt.addKeyUnsafe(e.buf, e.kvs[i].Key)
-				} else {
-					e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
-				}
+				e.buf = dFmt.addKey(e.buf, e.kvs[i].Key)
 
 				switch e.kvs[i].Vtype {
 				case KvInt:

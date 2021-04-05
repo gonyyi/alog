@@ -101,8 +101,11 @@ func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 
 func (fmtTxt) End(dst []byte) []byte {
 	if len(dst) > 1 {
-		dst[len(dst)-2] = '\n'
-		return dst[:len(dst)-1]
+		if dst[len(dst)-2] == ' ' || dst[len(dst)-2] == ',' {
+			dst[len(dst)-2] = '\n'
+			return dst[:len(dst)-1]
+		}
+		return append(dst, '\n')
 	}
 	return dst
 }
