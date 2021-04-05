@@ -69,12 +69,16 @@ func (f *fmtTxt) AddTag(dst []byte, tag alog.Tag) []byte {
 
 func (fmtTxt) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(append(dst, s...), ` // `...)
+		return append(dst, s...)
 	}
 	return dst
 }
 
 func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
+	if len(kvs) > 0 {
+		dst = append(dst, ` // `...)
+	}
+
 	for i := 0; i < len(kvs); i++ {
 		dst = append(append(dst, kvs[i].Key...), '=')
 		switch kvs[i].Vtype {

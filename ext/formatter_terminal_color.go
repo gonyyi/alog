@@ -98,12 +98,16 @@ func (f *fmtTxtColor) AddTag(dst []byte, tag alog.Tag) []byte {
 
 func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(append(dst, s...), fcDIM+` // `+fcCLEAR...)
+		return append(dst, s...)
 	}
 	return dst
 }
 
 func (f *fmtTxtColor) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
+	if len(kvs) > 0 {
+		dst = append(dst, fcDIM+` // `+fcCLEAR...)
+	}
+
 	for i := 0; i < len(kvs); i++ {
 		dst = append(append(append(dst, fcDIM...), kvs[i].Key...), "="+fcCLEAR...)
 		switch kvs[i].Vtype {
