@@ -41,7 +41,7 @@ type Entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *Entry) Write(msg string) {
+func (e *Entry) Write(msg ...string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
@@ -69,7 +69,9 @@ func (e *Entry) Write(msg string) {
 			e.buf = e.info.orFmtr.AddTime(e.buf)
 			e.buf = e.info.orFmtr.AddLevel(e.buf, e.level)
 			e.buf = e.info.orFmtr.AddTag(e.buf, e.tag)
-			e.buf = e.info.orFmtr.AddMsg(e.buf, msg)
+			if len(msg) > 0 {
+				e.buf = e.info.orFmtr.AddMsg(e.buf, msg[0])
+			}
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
 			//e.info.orFmtr.Write(e.buf)
@@ -127,9 +129,13 @@ func (e *Entry) Write(msg string) {
 			}
 
 			// APPEND MSG
-			if msg != "" {
+			if len(msg) > 0 {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
-				e.buf = dFmt.addValString(e.buf, msg)
+				e.buf = append(e.buf, '"')
+				for i:=0; i < len(msg); i++ {
+					e.buf = appendString(e.buf, msg[i], false)
+				}
+				e.buf = append(e.buf, '"', ',')
 			}
 
 			// APPEND KEY VALUES

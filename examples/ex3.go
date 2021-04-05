@@ -19,9 +19,9 @@ func ex3() {
 	al.Control.Level = alog.TraceLevel
 
 	al.Trace(tagDisk).
-		Int("testId", 1).Write("ok")
+		Int("testId", 1).Write()
 	al.Debug(tagDisk).
-		Int("testId", 2).Write("ok")
+		Int("testId", 2).Write("okb", "bari")
 	al.Info(tagDisk).
 		Int("testId", 3).Write("ok")
 	al.Warn().
