@@ -7,6 +7,17 @@ package alog
 // tag of log messages for better debugging.
 type Tag uint64
 
+func (t Tag) Has(tag Tag) bool {
+	if t & tag == tag {
+		return true
+	}
+	return false
+}
+
+func (t Tag) Sub(tag Tag) Tag {
+	return t & ^tag
+}
+
 // TagBucket can issue a tag and also holds the total number
 // of tags issued AND also names given to each tag.
 // Not that TagBucket is not using any mutex as it is designed
