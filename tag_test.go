@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+func TestTag_Has(t *testing.T) {
+	l := alog.New(nil)
+	t1 := l.NewTag("test1")
+	t2 := l.NewTag("test2")
+	t3 := l.NewTag("test3")
+	t12 := t1|t2 // test1 + test2
+
+	// Has
+	if t1.Has(t12) != false {t.Fail()}
+	if t12.Has(t1) != true {t.Fail()}
+	if t3.Has(t1) != false {t.Fail()}
+	if t3.Has(t12) != false {t.Fail()}
+
+	// Sub
+	if t12.Sub(t2) != t1 {t.Fail()}
+	if t12.Sub(t1) != t2 {t.Fail()}
+}
+
+
 func TestTagBucket_GetTag(t *testing.T) {
 	b := alog.TagBucket{}
 	if tag, ok := b.GetTag("GON"); ok || tag != 0 {
