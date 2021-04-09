@@ -159,6 +159,11 @@ func (l *Logger) getEntry(level Level, tags ...Tag) *Entry {
 	return e
 }
 
+// Log will log the item. This is to be used when alog is embedded in other struct.
+func (l *Logger) Log(level Level, tag Tag) *Entry {
+	return l.getEntry(level, tag)
+}
+
 // Trace takes a tag (0 for no tag) and returns an Entry point.
 func (l *Logger) Trace(tags ...Tag) *Entry {
 	return l.getEntry(TraceLevel, tags...)
