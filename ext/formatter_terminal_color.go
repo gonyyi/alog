@@ -14,21 +14,22 @@ func NewFormatterTerminalColor() *fmtTxtColor {
 }
 
 const (
-	fcCLEAR  = "\033[0m"
-	fcDIM    = "\033[0;90m"
-	fcBOLD   = "\033[0;1m"
-	fcITALIC = "\033[0;1;3m"
+	fcCLEAR   = "\033[0m"
+	fcDIM     = "\033[0;90m"
+	fcBOLD    = "\033[0;1m"
+	fcDIMBOLD = "\033[1;90m"
+	fcITALIC  = "\033[0;1;3m"
 
-	fcTRACE = "\033[100;37m"
-	fcDEBUG = "\033[102;90m"
-	fcINFO  = "\033[104;90m"
-	fcWARN  = "\033[1;103;90m"
-	fcERROR = "\033[1;101;90m"
-	fcFATAL = "\033[1;105;90m"
+	fcTRACE = "\033[100;30m"
+	fcDEBUG = "\033[102;30m"
+	fcINFO  = "\033[104;30m"
+	fcWARN  = "\033[1;103;30m"
+	fcERROR = "\033[1;101;30m"
+	fcFATAL = "\033[1;105;30m"
 )
 
 type fmtTxtColor struct {
-	//out       io.Writer
+	// out       io.Writer
 	out       alog.Writer
 	format    alog.Flag
 	tagBucket *alog.TagBucket
@@ -46,7 +47,7 @@ func (f *fmtTxtColor) Init(w alog.Writer, formatFlag alog.Flag, tagBucket *alog.
 }
 
 func (f *fmtTxtColor) Write(dst []byte, level alog.Level, tag alog.Tag) (int, error) {
-	//return f.out.Write(dst)
+	// return f.out.write(dst)
 	return f.out.WriteLt(dst, level, tag)
 }
 
@@ -93,19 +94,19 @@ func (fmtTxtColor) AddLevel(dst []byte, level alog.Level) []byte {
 }
 
 func (f *fmtTxtColor) AddTag(dst []byte, tag alog.Tag) []byte {
-	return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR+fcBOLD...), tag), fcCLEAR+fcDIM+"]"+fcCLEAR+" "...)
+	return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR+fcDIMBOLD...), tag), fcCLEAR+fcDIM+"]"+fcCLEAR+" "...)
 }
 
 func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(dst, s...)
+		return append(append(dst, s...), ' ')
 	}
 	return dst
 }
 
 func (f *fmtTxtColor) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 	if len(kvs) > 0 {
-		dst = append(dst, fcDIM+` // `+fcCLEAR...)
+		dst = append(dst, fcDIM+`// `+fcCLEAR...)
 	}
 
 	for i := 0; i < len(kvs); i++ {
