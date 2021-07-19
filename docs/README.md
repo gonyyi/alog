@@ -3,11 +3,11 @@
 (c) 2020-2021 Gon Y Yi. <https://gonyyi.com>.  
 [MIT License](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
-Version 0.8c
+Version 1.0.0
 
 
-[![codecov](https://codecov.io/gh/gonyyi/alog/branch/v0.8.0c/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
-[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v0.7.7)
+[![codecov](https://codecov.io/gh/gonyyi/alog/branch/v1.0.0/graph/badge.svg?token=Y9RT0VRUQZ)](https://codecov.io/gh/gonyyi/alog)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gonyyi/alog.svg)](https://pkg.go.dev/github.com/gonyyi/alog@v1.0.0)
 [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/gonyyi/alog/master/LICENSE)
 
 ![Alog Screen Shot 1](https://github.com/gonyyi/alog/blob/master/docs/alog_screen_1.png)
@@ -42,7 +42,8 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
   // always has to end with "Write(string)", otherwise, it won't log, and will cause memory allocations.
   // output example: 
   //   {"date":20210308,"time":203337,"level":"info","tag":[],"message":"Hello World"}
-  al.Info().Write("Hello World")
+  al.Info().Writes("Hello World") // Writes takes a string argument
+  al.Info().Write() // Write does not take any argument
   ~~~
 
 
@@ -54,10 +55,10 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
   tagDisk := al.NewTag("Disk") 
   tagDB := al.NewTag("DB") 
 
-  al.Info(tagDisk).Str("action", "reading disk").Write("")
-  al.Info(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login") // Anything in `Write(string)` will be printed as `message`.
-  al.Info(tagDisk,tagDB).Int("status", 200).Write("Login")
-  al.Info(tagDisk|tagDB).Int("status", 200).Write("Logout") // tags can be used as `tagDisk|tagDB` or `tagDisk,tagDB` format  
+  al.Info(tagDisk).Str("action", "reading disk").Write()
+  al.Info(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Writes("Login") // Anything in `Write(string)` will be printed as `message`.
+  al.Info(tagDisk,tagDB).Int("status", 200).Writes("Login")
+  al.Info(tagDisk|tagDB).Int("status", 200).Writes("Logout") // tags can be used as `tagDisk|tagDB` or `tagDisk,tagDB` format
   
   // Output:
   // {"date":20210308,"time":203835,"level":"info","tag":["Disk"],"action":"reading disk"}
@@ -89,10 +90,10 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Note: Use this after setting tag, flag, etc.
     al = al.Ext(ext.LogFmt.TextColor())
     
-    al.Info(tagDisk).Str("action", "reading disk").Write("")
-    al.Warn(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write("Login")
-    al.Error(tagDisk, tagDB).Int("status", 200).Write("Login")
-    al.Fatal(tagDisk|tagDB).Int("status", 200).Write("Logout")
+    al.Info(tagDisk).Str("action", "reading disk").Write()
+    al.Warn(tagDB).Str("id", "myID").Str("pwd", "myPasswd").Write()
+    al.Error(tagDisk, tagDB).Int("status", 200).Writes("Login")
+    al.Fatal(tagDisk|tagDB).Int("status", 200).Writes("Logout")
   }
   ~~~
 
@@ -115,7 +116,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     al := alog.New(os.Stderr) 
     
     // Level + Optional Tag + Write(Message)  
-    al.Info().Write("info level log message")
+    al.Info().Writes("info level log message")
     // Output:
     // {"date":20210304,"time":175516,"level":"info","tag":[],"message":"info level log message"}
 
@@ -132,19 +133,19 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Write warning log with id = 1.
     // Note: If more than one string given, Alog will take the first one.
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":[],"id":1}
-    al.Warn().Int("id", 1).Write("")
+    al.Warn().Int("id", 1).Write()
     
 
     // Create a warning log with IO tag, and value of id = 2, message = "this will print IO in the tag"
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":["IO"],"message":"this will print IO in the tag","id":2}
-    al.Warn(IO).Int("id", 2).Write("this will print IO in the tag") 
+    al.Warn(IO).Int("id", 2).Writes("this will print IO in the tag")
     
 
     // Create a warning log with IO/DB/SYS/NET tag, id = 3, message = "this will print IO/DB/SYS/NET to tag"
     // Tags can be listed with with pipe as well instead of comma: 
     //   `al.Warn(IO|DB|SYS|NET).Int("id", 3).Write("this will print IO/DB/SYS/NET to tag")`
     // Output: {"date":20210304,"time":180012,"level":"warn","tag":["IO","DB","SYS","NET"],"message":"this will print IO/DB/SYS/NET to tag","id":3}
-    al.Warn(IO,DB,SYS,NET).Int("id", 3).Write("this will print IO/DB/SYS/NET to tag") 
+    al.Warn(IO,DB,SYS,NET).Int("id", 3).Writes("this will print IO/DB/SYS/NET to tag")
     
     
     // Change logging level to Fatal. (highest logging level)
@@ -152,14 +153,14 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
 
     // No output as below Fatal level
-    al.Info(IO|SYS).Int("id", 4).Write("this will not print") 
-    al.Info(IO).Int("id", 5).Write("this will not print")     
-    al.Error(DB).Int("id", 6).Write("this will not print")
+    al.Info(IO|SYS).Int("id", 4).Writes("this will not print")
+    al.Info(IO).Int("id", 5).Writes("this will not print")
+    al.Error(DB).Int("id", 6).Writes("this will not print")
 
 
     // This will print because it's a Fatal level log entry
     // Output: {"date":20210304,"time":180150,"level":"fatal","tag":["NET"],"message":"this will print","id":7}
-    al.Fatal(NET).Int("id", 7).Write("this will print") 
+    al.Fatal(NET).Int("id", 7).Writes("this will print")
     
 
     // By adding Tags to control, any log entries with Fatal level or above (as set above),
@@ -172,27 +173,27 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     al.Info(IO|SYS). 
       Int("id", 4).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     // Tag is IO; will be printed  
     // Output: {"date":20210304,"time":180942,"level":"info","tag":["IO"],"id":5,"attempt":2}
     al.Info(IO). 
       Int("id", 5).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     // Tag IO isn't used. And level is below Fatal. Will NOT be printed.
     al.Error(DB). 
       Int("id", 6).
       Int("attempt", 2).
-      Write("")
+      Write()
 
     // Tag is not matching, but Level is, so will be printed.
     // Output: {"date":20210304,"time":180942,"level":"fatal","tag":["NET"],"id":7,"attempt":2}
     al.Fatal(NET). 
       Int("id", 7).
       Int("attempt", 2).
-      Write("")
+      Write()
 
 
     // EXTENSIONS: Formatter Extension <github.com/gonyyi/alog/ext>
@@ -205,7 +206,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output (in Color): 
     //   2021-0304 18:13:38  INF  [TEST] testType="colorText"
     al = al.Ext(ext.LogFmt.TextColor()) 
-    al.Info(TEST).Str("testType", "colorText").Write("")
+    al.Info(TEST).Str("testType", "colorText").Write()
     
 
     // Use text formatter extension
@@ -213,7 +214,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output: 
     //   2021-0304 18:14:24 INF [TEST] testType="normalText"
     al = al.Ext(ext.LogFmt.Text())
-    al.Info(TEST).Str("testType", "normalText").Write("") 
+    al.Info(TEST).Str("testType", "normalText").Write()
     
 
     // Use default formatter (JSON)
@@ -221,7 +222,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // Output: 
     //   {"date":20210304,"time":181615,"level":"info","tag":["TEST"],"testType":"backToJSON"}
     al = al.Ext(ext.LogFmt.None())
-    al.Info(TEST).Str("testType", "backToJSON").Write("") 
+    al.Info(TEST).Str("testType", "backToJSON").Write()
     
 
     // EXTENSION: Custom Log Entry
@@ -236,7 +237,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
 
     // When using custom log entry function, use Ext() method from the *Entry.
     // Output: {"date":20210305,"time":81210,"level":"info","tag":[],"message":"ok","name":"GON","testStr":"myStr","testInt":123}
-    al.Info().Ext(myEntry("GON")).Write("ok")
+    al.Info().Ext(myEntry("GON")).Writes("ok")
     
     
     // EXTENSION: Macro Type <github.com/gonyyi/alog/ext>
@@ -248,7 +249,7 @@ please [create an issue](https://github.com/gonyyi/alog/issues/new).
     // will be ignored. The reason it is still required for Test() is for users to quickly
     // switch between different modes.
     al = al.Ext(ext.LogMode.Prod("output.log")) 
-    al.Info(IO).Str("testType", "PROD").Write("") 
+    al.Info(IO).Str("testType", "PROD").Write()
 
     // `*Logger.Close() error` will close io.Writer if Close() method is available. 
     // It is not required for testing, but when saved to a file, especially buffered
@@ -287,7 +288,7 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(MSG)`
   Str("city", "Gonway").Str("zip", "12345").
   Str("name", "Gon").Int("age", 50).
   Bool("isMarried", false).
-  Float("height", 5.8).Write("") // Make sure all log entries must end with Write(string)
+  Float("height", 5.8).Write() // Make sure all log entries must end with Write(string)
   ~~~
 
 
@@ -304,7 +305,7 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(MSG)`
   func main() {
     // Alog format is
     //    *Logger.`LOGLEVEL(TAG)`.`Str/Int/Int64/Float/Bool/Err(key, value)`.Write(`MSG`)
-    log.Info().Str("name", "Alog").Int("buildNo", 6).Int("testID", 1).Write("Starting")
+    log.Info().Str("name", "Alog").Int("buildNo", 6).Int("testID", 1).Writes("Starting")
 
     // Tag can be created by `NewTag(name string)`
     tagDB := log.NewTag("DB")
@@ -314,15 +315,15 @@ Default format is `*Logger.LEVEL(...TAG).TYPE(KEY, VALUE)...Write(MSG)`
 
     // Below Debug will not be printed, because default log level is INFO or higher.
     // Final message in Write(string) is required.
-    log.Debug(tagDB).Str("status", "started").Int("buildNo", 6).Int("testID", 2).Write("")
+    log.Debug(tagDB).Str("status", "started").Int("buildNo", 6).Int("testID", 2).Write()
 
     // Set level and tag. Since it is set to DebugLevel (and above) and/or tagHTTP,
     // log entriees with DebugLevel or higher AND also log entries containing tagHTTP will show up.
     log.Control(alog.DebugLevel, tagHTTP)
 
-    log.Debug(tagHTTP|tagREQ).Str("requestFrom", "123.0.1.100").Int("testID", 3).Write("will show")
-    log.Trace(tagDB).Int("status", 200).Str("dest", "123.0.1.100").Int("testID", 4).Write("will not show")
-    log.Trace(tagHTTP|tagRES).Int("status", 200).Str("dest", "123.0.1.100").Int("testID", 5).Write("will show")
+    log.Debug(tagHTTP|tagREQ).Str("requestFrom", "123.0.1.100").Int("testID", 3).Writes("will show")
+    log.Trace(tagDB).Int("status", 200).Str("dest", "123.0.1.100").Int("testID", 4).Writes("will not show")
+    log.Trace(tagHTTP|tagRES).Int("status", 200).Str("dest", "123.0.1.100").Int("testID", 5).Writes("will show")
 
     // Output:
     // {"date":20210304,"time":173510,"level":"info","tag":[],"message":"Starting","name":"Alog","buildNo":6,"testID":1}
