@@ -24,7 +24,7 @@ type entryInfo struct {
 	tbucket *TagBucket
 	w       Writer
 	orFmtr  Formatter
-	//w       io.Writer
+	// w       io.Writer
 }
 
 // Entry is a log Entry will be used with a entryPool to
@@ -41,17 +41,23 @@ type Entry struct {
 // Writes will finalize the log message, format it, and
 // write it to writer. Besides *logger.getEntry(), this is
 // the only other method which isn't inline-able.
-func (e *Entry) Write(msg ...string) {
+func (e *Entry) Writes(msg string) {
+	e.write(msg)
+}
+func (e *Entry) Write() {
+	e.write("")
+}
+func (e *Entry) write(msg string) {
 	// When log message was created from *Logger.getEntry(),
 	// it examines logability (should log or not). Once it's not eligible,
 	// it will return nil.
-	// eg. log.Trace(0).Str("name", "gon").Int("age", 39).Write()
+	// eg. log.Trace(0).Str("name", "gon").Int("age", 39).write()
 	//   1. Trace(0) will call getEntry(), if it determines the log shouldn't be
 	//      logged, it will return nil.
 	//   2. Next method with Str() receives nil for the pointer and will ignore,
 	//      and return nil to next.
 	//   3. Int method will receive nil, and just pass nil to next.
-	//   4. Write method finally receives it, if Entry pointer is nil, it won't
+	//   4. write method finally receives it, if Entry pointer is nil, it won't
 	//      do anything as it's not eligible to log.
 
 	// if Entry is not nil (=loggable),
@@ -69,12 +75,11 @@ func (e *Entry) Write(msg ...string) {
 			e.buf = e.info.orFmtr.AddTime(e.buf)
 			e.buf = e.info.orFmtr.AddLevel(e.buf, e.level)
 			e.buf = e.info.orFmtr.AddTag(e.buf, e.tag)
-			if len(msg) > 0 {
-				e.buf = e.info.orFmtr.AddMsg(e.buf, msg[0])
+			if msg != "" {
+				e.buf = e.info.orFmtr.AddMsg(e.buf, msg)
 			}
 			e.buf = e.info.orFmtr.AddKVs(e.buf, e.kvs)
 			e.buf = e.info.orFmtr.End(e.buf)
-			//e.info.orFmtr.Write(e.buf)
 			e.info.orFmtr.Write(e.buf, e.level, e.tag)
 		} else {
 			// BUILT-IN FORMATTER
@@ -129,12 +134,10 @@ func (e *Entry) Write(msg ...string) {
 			}
 
 			// APPEND MSG
-			if len(msg) > 0 {
+			if msg != "" {
 				e.buf = dFmt.addKeyUnsafe(e.buf, "message")
 				e.buf = append(e.buf, '"')
-				for i:=0; i < len(msg); i++ {
-					e.buf = appendString(e.buf, msg[i], false)
-				}
+				e.buf = appendString(e.buf, msg, false)
 				e.buf = append(e.buf, '"', ',')
 			}
 
@@ -175,10 +178,10 @@ func (e *Entry) Write(msg ...string) {
 			// APPEND FINAL
 			e.buf = dFmt.addEnd(e.buf)
 
-			// Write to output
+			// write to output
 			if e.info.w != nil {
-				//e.logger.w.Write(e.buf)
-				//e.info.w.Write(e.buf)
+				// e.logger.w.write(e.buf)
+				// e.info.w.write(e.buf)
 				e.info.w.WriteLt(e.buf, e.level, e.tag)
 			}
 		}
