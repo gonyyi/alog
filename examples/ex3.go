@@ -21,13 +21,13 @@ func ex3() {
 	al.Trace(tagDisk).
 		Int("testId", 1).Write()
 	al.Debug(tagDisk).
-		Int("testId", 2).Write("okb", "bari")
+		Int("testId", 2).Writes("ok bari")
 	al.Info(tagDisk).
-		Int("testId", 3).Write("ok")
+		Int("testId", 3).Writes("ok")
 	al.Warn().
-		Int("testId", 4).Write("ok")
+		Int("testId", 4).Writes("ok")
 	al.Error(tagDisk, tagDB).
-		Int("testId", 5).Write("ok")
+		Int("testId", 5).Writes("ok")
 	al.Fatal(tagDisk|tagDB).
-		Int("testId", 6).Write("ok")
+		Int("testId", 6).Writes("ok")
 }
