@@ -17,15 +17,15 @@ func ex2() {
 	al.Control.Level = alog.TraceLevel
 
 	al.Trace(tagDisk).
-		Int("testId", 1).Write("ok")
+		Int("testId", 1).Writes("ok")
 	al.Debug(tagDisk).
-		Int("testId", 2).Write("ok")
+		Int("testId", 2).Writes("ok")
 	al.Info(tagDisk).
-		Int("testId", 3).Write("ok")
+		Int("testId", 3).Writes("ok")
 	al.Warn().
-		Int("testId", 4).Write("ok")
+		Int("testId", 4).Writes("ok")
 	al.Error(tagDisk, tagDB).
-		Int("testId", 5).Write("ok")
+		Int("testId", 5).Writes("ok")
 	al.Fatal(tagDisk|tagDB).
-		Int("testId", 6).Write("ok")
+		Int("testId", 6).Writes("ok")
 }
