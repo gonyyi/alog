@@ -80,14 +80,14 @@ func TestLogger_Close(t *testing.T) {
 	{
 		fw := &fakeWriter2{}
 		log = log.SetOutput(fw)
-		log.Info(0).Write("test123")
+		log.Info(0).Writes("test123")
 		log.Close()
 		check(t, ``)
 	}
 
 	{
 		log = log.SetOutput(nil)
-		log.Info(0).Write("test")
+		log.Info(0).Writes("test")
 		log.Close()
 		check(t, ``)
 	}
@@ -95,70 +95,70 @@ func TestLogger_Close(t *testing.T) {
 }
 
 func TestLogger_Trace(t *testing.T) {
-	log.Trace(0).Write("test1")
+	log.Trace(0).Writes("test1")
 	check(t, ``)
 	log.Control.Level = alog.TraceLevel
-	log.Trace(0).Write("test2")
+	log.Trace(0).Writes("test2")
 	check(t, `{"level":"trace","tag":[],"message":"test2"}`)
 }
 
 func TestLogger_Debug(t *testing.T) {
-	log.Debug(0).Write("test")
+	log.Debug(0).Writes("test")
 	check(t, ``)
 	log.Control.Level = alog.DebugLevel
-	log.Debug(0).Write("test")
+	log.Debug(0).Writes("test")
 	check(t, `{"level":"debug","tag":[],"message":"test"}`)
 }
 
 func TestLogger_Info(t *testing.T) {
-	log.Info(0).Write("test")
+	log.Info(0).Writes("test")
 	check(t, `{"level":"info","tag":[],"message":"test"}`)
 	log.Control.Level = alog.ErrorLevel
-	log.Info(0).Write("test")
+	log.Info(0).Writes("test")
 	check(t, ``)
 }
 
 func TestLogger_Warn(t *testing.T) {
-	log.Warn(0).Write("test")
+	log.Warn(0).Writes("test")
 	check(t, `{"level":"warn","tag":[],"message":"test"}`)
 	log.Control.Level = alog.ErrorLevel
-	log.Warn(0).Write("test")
+	log.Warn(0).Writes("test")
 	check(t, ``)
 }
 
 func TestLogger_Error(t *testing.T) {
-	log.Error(0).Write("test")
+	log.Error(0).Writes("test")
 	check(t, `{"level":"error","tag":[],"message":"test"}`)
 	log.Control.Level = alog.FatalLevel
-	log.Error(0).Write("test")
+	log.Error(0).Writes("test")
 	check(t, ``)
 }
 func TestLogger_Fatal(t *testing.T) {
-	log.Fatal(0).Write("test")
+	log.Fatal(0).Writes("test")
 	check(t, `{"level":"fatal","tag":[],"message":"test"}`)
 	log.Control.Level = alog.FatalLevel
-	log.Fatal(0).Write("test")
+	log.Fatal(0).Writes("test")
 	check(t, `{"level":"fatal","tag":[],"message":"test"}`)
 }
 
 func TestLogger_SetFormatter(t *testing.T) {
 	log = log.Ext(nil).Ext(ext.LogFmt.Text())
-	log.Info(0).Str("test", "ok").Write("done")
+	log.Info(0).Str("test", "ok").Writes("done")
 	check(t, `INF [] done // test="ok"`)
 
 	tmp := log.SetFormatter(nil)
-	tmp.Info(0).Str("test", "ok").Write("done")
+	tmp.Info(0).Str("test", "ok").Writes("done")
 	check(t, `{"level":"info","tag":[],"message":"done","test":"ok"}`)
 }
 func TestNew(t *testing.T) {
 	log = alog.New(nil)
 	log.Flag = alog.WithLevel | alog.WithTag
-	log.Fatal(0).Write("error!")
+	log.Fatal(0).Writes("error!")
 	check(t, ``)
 
 	log = alog.New(&out)
 	log.Flag = alog.WithLevel | alog.WithTag
-	log.Fatal(0).Write("error!")
+	log.Fatal(0).Writes("error!")
 	check(t, `{"level":"fatal","tag":[],"message":"error!"}`)
 }
 func TestLogger_getEntry(t *testing.T) {
@@ -172,7 +172,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= YES --> true
 	{
 		log.Control.Fn = newFakeControlFn(false) // always return false
-		log.Fatal(0).Write("test")               // this shouldn't print
+		log.Fatal(0).Writes("test")               // this shouldn't print
 		check(t, "")
 	}
 
@@ -180,7 +180,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= YES --> false
 	{
 		log.Control.Fn = newFakeControlFn(false) // always return false
-		log.Trace(0).Write("test")               // this shouldn't print
+		log.Trace(0).Writes("test")               // this shouldn't print
 		check(t, "")
 	}
 
@@ -188,7 +188,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= YES --> true
 	{
 		log.Control.Fn = newFakeControlFn(true)
-		log.Fatal(0).Write("test")
+		log.Fatal(0).Writes("test")
 		check(t, `{"level":"fatal","tag":[],"message":"test"}`)
 	}
 
@@ -196,7 +196,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= YES --> false
 	{
 		log.Control.Fn = newFakeControlFn(true)
-		log.Trace(0).Write("test")
+		log.Trace(0).Writes("test")
 		check(t, `{"level":"trace","tag":[],"message":"test"}`)
 	}
 
@@ -204,7 +204,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= true
 	{
 		log.Control.Fn = nil
-		log.Info(0).Write("test")
+		log.Info(0).Writes("test")
 		check(t, `{"level":"info","tag":[],"message":"test"}`)
 	}
 
@@ -212,7 +212,7 @@ func TestLogger_getEntry(t *testing.T) {
 	// Control 	= false
 	{
 		log.Control.Fn = nil
-		log.Trace(0).Write("test")
+		log.Trace(0).Writes("test")
 		check(t, ``)
 	}
 }
@@ -241,7 +241,7 @@ func fal(i int) {
 		Str("name", "gonal").
 		Int("count", i).
 		Str("block", dataComp.StrSlice[i%5]).
-		Write(dataComp.StrSlice[i%5])
+		Writes(dataComp.StrSlice[i%5])
 }
 
 func BenchmarkLogger_Info(b *testing.B) {
