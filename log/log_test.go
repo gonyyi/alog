@@ -6,7 +6,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	//log.Info().Write("Hello")
-	//log.Info().Write()
-	log.Info().Write("")
+	//log.Info().write("Hello")
+	//log.Info().write()
+	log.Info().Writes("")
 }
