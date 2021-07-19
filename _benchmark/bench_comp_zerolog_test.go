@@ -157,7 +157,7 @@ func BenchmarkAlWriter(b *testing.B) {
 		case 4:
 			al.Error().Int("count", i).Write("")
 			//case 5:
-			//	al.Fatal(fail).Int("count", i).Write("")
+			//	al.Fatal(fail).Int("count", i).write("")
 		}
 	}
 }
