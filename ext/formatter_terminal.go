@@ -32,7 +32,7 @@ func (f *fmtTxt) Init(w alog.Writer, formatFlag alog.Flag, tagBucket *alog.TagBu
 }
 
 func (f *fmtTxt) Write(dst []byte, level alog.Level, tag alog.Tag) (int, error) {
-	//return f.out.Write(dst)
+	//return f.out.write(dst)
 	return f.out.WriteLt(dst, level, tag)
 }
 
@@ -69,14 +69,14 @@ func (f *fmtTxt) AddTag(dst []byte, tag alog.Tag) []byte {
 
 func (fmtTxt) AddMsg(dst []byte, s string) []byte {
 	if s != "" {
-		return append(dst, s...)
+		return append(append(dst, s...), ' ')
 	}
 	return dst
 }
 
 func (f *fmtTxt) AddKVs(dst []byte, kvs []alog.KeyValue) []byte {
 	if len(kvs) > 0 {
-		dst = append(dst, ` // `...)
+		dst = append(dst, `// `...)
 	}
 
 	for i := 0; i < len(kvs); i++ {
