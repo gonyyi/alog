@@ -16,7 +16,7 @@ func TestEntry(t *testing.T) {
 		Int("age", 50).
 		Int64("age2", int64(50)).
 		Err(errors.New("testMyErr")).
-		Write("done")
+		Writes("done")
 	check(t, `{"level":"info","tag":["TAG1","TAG2"],"message":"done","hello":"gon","isSingle":true,"height":5.8,"age":50,"age2":50,"error":"testMyErr"}`)
 
 	// WithTime
@@ -41,7 +41,7 @@ func TestEntry(t *testing.T) {
 
 		{
 			log.Flag = alog.WithTime
-			log.Info(0).Write("done")
+			log.Info(0).Writes("done")
 			json.Unmarshal(out.Bytes(), &a)
 			if a.Time < 1 {
 				t.Errorf("TestEntry: flag WithTime 1")
@@ -55,7 +55,7 @@ func TestEntry(t *testing.T) {
 		{
 			resetA()
 			log.Flag = alog.WithUnixTimeMs
-			log.Info(0).Write("done2")
+			log.Info(0).Writes("done2")
 			json.Unmarshal(out.Bytes(), &a)
 			if a.TS < 1000 || a.Message != "done2" {
 				t.Errorf("TestEntry: flag WithTime 3")
@@ -65,7 +65,7 @@ func TestEntry(t *testing.T) {
 		{
 			resetA()
 			log.Flag = alog.WithUnixTime
-			log.Info(0).Write("done3")
+			log.Info(0).Writes("done3")
 			json.Unmarshal(out.Bytes(), &a)
 			if a.TS < 1000 || a.Message != "done3" {
 				t.Errorf("TestEntry: flag WithTime 4 // TS: <%d>, MSG: <%s>", a.TS, a.Message)
@@ -75,7 +75,7 @@ func TestEntry(t *testing.T) {
 		{
 			resetA()
 			log.Flag = alog.WithDate | alog.WithDay | alog.WithUTC
-			log.Info(0).Write("done4")
+			log.Info(0).Writes("done4")
 			json.Unmarshal(out.Bytes(), &a)
 			if a.TS != 0 || a.Message != "done4" || a.Date < 1 || a.Day > 6 {
 				t.Errorf("TestEntry: flag WithTime 5 // TS: <%d>, MSG: <%s>, Date: <%d>, Day: <%d>", a.TS, a.Message, a.Date, a.Day)
@@ -88,7 +88,7 @@ func TestEntry(t *testing.T) {
 			log.Info(0).Str("k", "v\t").
 				Err(errors.New("a\tb")).
 				Bool("b\t1", true).Bool("b2", false).
-				Write("done5\ta")
+				Writes("done5\ta")
 			json.Unmarshal(out.Bytes(), &a)
 			if a.TS != 0 || a.Message != "done5\ta" || a.Date != 0 || a.Day != 0 ||
 				a.Time < 1 {
@@ -140,9 +140,9 @@ func TestEntry_Fn(t *testing.T) {
 		IsCurrent: false,
 	}
 	reset()
-	log.Info(0).Ext(fakeEntryFn(data)).Write("added fake data1")
+	log.Info(0).Ext(fakeEntryFn(data)).Writes("added fake data1")
 	check(t, `{"level":"info","tag":[],"message":"added fake data1","name":"Jon","city":"Goncity","state":"Gonstate","postal":"12345-1234","lat":5.10000001,"lon":-5.20000002,"age":50,"isCurrent":false}`)
 
-	log.Debug(0).Ext(fakeEntryFn(data)).Write("added fake data2") // this shouldn't be added
+	log.Debug(0).Ext(fakeEntryFn(data)).Writes("added fake data2") // this shouldn't be added
 	check(t, ``)
 }
