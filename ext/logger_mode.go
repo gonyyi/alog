@@ -15,7 +15,7 @@ func (logMode) Prod(filename string) alog.LoggerFn {
 		l.Flag = alog.WithDefault | alog.WithUnixTimeMs
 		bw, err := NewBufWriter(filename)
 		if err != nil {
-			l.Error(0).Err( err).Write("failed to open")
+			l.Error(0).Err( err).Writes("failed to open")
 		} else {
 			l = l.SetOutput(bw)
 		}
@@ -28,7 +28,7 @@ func (logMode) Dev(filename string) alog.LoggerFn {
 		l.Control.Level = alog.TraceLevel
 		l.Flag = alog.WithTimeMs | alog.WithDefault
 		if fo, err := os.Create(filename); err != nil {
-			l.Error(0).Err( err).Write("cannot create file")
+			l.Error(0).Err( err).Writes("cannot create file")
 		} else {
 			l = l.SetOutput(fo)
 		}
