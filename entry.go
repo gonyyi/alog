@@ -1,6 +1,7 @@
 package alog
 
 import (
+	"os"
 	"time"
 )
 
@@ -184,6 +185,9 @@ func (e *Entry) write(msg string) {
 				// e.info.w.write(e.buf)
 				e.info.w.WriteLt(e.buf, e.level, e.tag)
 			}
+		}
+		if e.level == FatalLevel {
+			os.Exit(1)
 		}
 	}
 }
