@@ -64,7 +64,10 @@ func (fmtTxt) AddLevel(dst []byte, level alog.Level) []byte {
 }
 
 func (f *fmtTxt) AddTag(dst []byte, tag alog.Tag) []byte {
-	return append(f.tagBucket.AppendTag(append(dst, '['), tag), ']', ' ')
+	if f.tagBucket != nil {
+		return append(f.tagBucket.AppendTag(append(dst, '['), tag), ']', ' ')
+	}
+	return dst 
 }
 
 func (fmtTxt) AddMsg(dst []byte, s string) []byte {
