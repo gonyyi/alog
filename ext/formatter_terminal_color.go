@@ -94,7 +94,10 @@ func (fmtTxtColor) AddLevel(dst []byte, level alog.Level) []byte {
 }
 
 func (f *fmtTxtColor) AddTag(dst []byte, tag alog.Tag) []byte {
-	return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR+fcDIMBOLD...), tag), fcCLEAR+fcDIM+"]"+fcCLEAR+" "...)
+	if f.tagBucket != nil {
+		return append(f.tagBucket.AppendTag(append(dst, fcDIM+"["+fcCLEAR+fcDIMBOLD...), tag), fcCLEAR+fcDIM+"]"+fcCLEAR+" "...)
+	}
+	return dst
 }
 
 func (fmtTxtColor) AddMsg(dst []byte, s string) []byte {
